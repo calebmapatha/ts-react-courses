@@ -1,8 +1,19 @@
-# Modern JavaScript (ES2015+): A Practical Course
+# Modern JavaScript: A Practical Course
 
-A foundational course for developers who want to be comfortable with modern JavaScript before tackling TypeScript and React. By the end you will know every modern feature you need to read and write professional code. Total time: roughly 12 to 18 hours with exercises.
+Revised for 2026. A foundational course for developers who want to be
+comfortable with modern JavaScript before tackling TypeScript and React. By the
+end you will know every modern feature you need to read and write professional
+code. Total time: roughly 12 to 18 hours with exercises.
 
-This course assumes you know basic programming concepts (variables, loops, functions, conditionals) but does not assume any JavaScript expertise.
+This course assumes you know basic programming concepts (variables, loops,
+functions, conditionals) but does not assume any JavaScript expertise.
+
+Material added or changed in the 2026 revision is marked **(2026)**. If you
+worked through an earlier version of this course, those markers are the diff.
+
+**Baseline (2026):** Node.js 24 (Active LTS), ES modules only, no build step.
+Every sample in this course was run on Node 24.20.0 before publication. The
+version table lives in `STACK.md` at the root of this repository.
 
 ---
 
@@ -10,30 +21,62 @@ This course assumes you know basic programming concepts (variables, loops, funct
 
 ### What is JavaScript?
 
-JavaScript is a programming language originally designed to run inside web browsers. It is now used everywhere: in browsers (frontend), on servers (Node.js), in desktop apps (Electron), and on mobile (React Native).
+JavaScript is a programming language originally designed to run inside web
+browsers. It is now used everywhere: in browsers (frontend), on servers
+(Node.js), in desktop apps (Electron), on mobile (React Native), and inside
+native shells (Capacitor).
 
-> **Background: What does "ES2015+" mean?**
+> **Background: What does "ES2026" mean?**
 >
-> ES stands for ECMAScript, which is the official specification that JavaScript implements. ES2015 (also called ES6) was a major upgrade in 2015 that added classes, modules, arrow functions, and many other features. Every year since then has brought small additions: ES2016, ES2017, and so on. When people say "modern JavaScript", they mean the language as it has existed since 2015.
+> ES stands for ECMAScript, which is the official specification that JavaScript
+> implements. ES2015 (also called ES6) was a major upgrade in 2015 that added
+> classes, modules, and arrow functions. Every year since has brought a smaller
+> set of additions, named by year: ES2023 added `findLast` and the non-mutating
+> array methods, ES2024 added `Object.groupBy` and `Promise.withResolvers`,
+> ES2025 added iterator helpers, Set operations and `RegExp.escape`. When
+> people say "modern JavaScript" they mean the language as it has existed since
+> 2015. This course teaches all of it, and marks anything newer than ES2022
+> with **(2026)** so you know what an older runtime will not have.
 
 ### What is Node.js?
 
-Node.js is a runtime that lets you execute JavaScript outside the browser. You will use it to run scripts and install tools.
+Node.js is a runtime that lets you execute JavaScript outside the browser. You
+will use it to run scripts and install tools.
 
-Install Node.js (version 18 or newer) from https://nodejs.org. Then verify:
+**(2026)** Install **Node.js 24**, the Active LTS line, from
+https://nodejs.org. Then verify:
 
 ```bash
-node --version
+node --version   # expect v24.x.x
 npm --version
 ```
 
+> **Background: Which Node version should I install?**
+>
+> Node ships a new major version every six months. Even-numbered versions
+> become "Active LTS" (long term support) each October and are supported for
+> about three years. Odd-numbered versions are for trying things out and are
+> never LTS. As at September 2026, Node 24 is the Active LTS line, Node 22 is
+> in maintenance until April 2027, and Node 20 reached end of life on 30 April
+> 2026. Node 26 becomes Active LTS at the end of October 2026. Install the
+> Active LTS line unless a project tells you otherwise.
+
+Some samples in this course need Node 24 specifically. They are marked. If you
+are on Node 22, `Promise.try`, `RegExp.escape` and `Error.isError` will be
+`undefined` and those samples will fail.
+
 > **Background: What is npm?**
 >
-> npm stands for Node Package Manager. It is bundled with Node.js. It does two main things: it installs third-party libraries (called "packages") into your project, and it tracks which versions you are using in a file called `package.json`.
+> npm stands for Node Package Manager. It is bundled with Node.js. It does two
+> main things: it installs third-party libraries (called "packages") into your
+> project, and it tracks which versions you are using in a file called
+> `package.json`. Other package managers do the same job. Casey Journals uses
+> pnpm, which is stricter about which packages a file may import; Mentisflow
+> uses npm. The commands differ, the idea does not.
 
 ### Setting up a project
 
-Create a folder and initialize it:
+Create a folder and initialise it:
 
 ```bash
 mkdir js-course
@@ -43,36 +86,103 @@ npm init -y
 
 > **Background: What just happened?**
 >
-> The `npm init -y` command created a `package.json` file. This is a manifest that describes your project: its name, version, dependencies, and scripts. The `-y` flag accepts all defaults. You can open `package.json` in any editor to see what is in it.
+> The `npm init -y` command created a `package.json` file. This is a manifest
+> that describes your project: its name, version, dependencies, and scripts.
+> The `-y` flag accepts all defaults. You can open `package.json` in any editor
+> to see what is in it.
 
-Add `"type": "module"` to your `package.json` so you can use modern import syntax:
+**(2026)** Add `"type": "module"` to your `package.json`. This course is ES
+modules only. There is no CommonJS anywhere in it.
 
 ```json
 {
   "name": "js-course",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js"
+  "main": "src/main.js",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js"
+  }
 }
 ```
 
-> **Background: What does `"type": "module"` do?**
+> **Background (2026): What does `"type": "module"` do, and why only modules?**
 >
-> JavaScript has two module systems. The older one is CommonJS (`require` and `module.exports`). The newer one is ES Modules (`import` and `export`). Setting `"type": "module"` tells Node.js to treat `.js` files as ES Modules. This course uses ES Modules throughout because they are the modern standard.
+> JavaScript has two module systems. The older one is CommonJS (`require` and
+> `module.exports`). The newer one is ES Modules (`import` and `export`).
+> Setting `"type": "module"` tells Node.js to treat `.js` files as ES Modules.
+>
+> Earlier versions of this course taught both. This one teaches only ES
+> modules, because that is what every tool now assumes. Vite, Vitest, ESLint 9
+> flat config, and Node itself all default to modules. Both Casey Journals
+> (`packages/core/package.json`) and Mentisflow (`mentisflow/package.json`)
+> declare `"type": "module"`. You will still meet CommonJS in old packages, and
+> `import` can load them, but you should not write it.
 
-Create `hello.js`:
+### The `node:` prefix (2026)
+
+When you import something built into Node, prefix it with `node:`.
 
 ```javascript
-console.log("Hello, JavaScript!");
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { parseArgs } from "node:util";
+import test from "node:test";
+```
+
+> **Background (2026): Why the prefix?**
+>
+> Without it, `import "fs"` is ambiguous: Node has to check whether a package
+> called `fs` exists in `node_modules` first. Someone could publish one. The
+> `node:` prefix says "the built-in, always" and cannot be shadowed by any
+> package. It is faster to resolve and it is safer. Some newer built-ins, such
+> as `node:test` and `node:sqlite`, are *only* importable with the prefix. Use
+> it everywhere.
+
+### Running your code (2026)
+
+Create `src/main.js`:
+
+```javascript
+console.log("Hello, JavaScript.");
 ```
 
 Run it:
 
 ```bash
-node hello.js
+node src/main.js
 ```
 
-If you see `Hello, JavaScript!`, you are ready.
+Three flags are worth learning now.
+
+```bash
+# Restart automatically when a file changes. No nodemon needed.
+node --watch src/main.js
+
+# Run a script from package.json without npm in the middle.
+node --run dev
+
+# Load a .env file into process.env without the dotenv package.
+node --env-file=.env src/main.js
+```
+
+> **Background (2026): What replaced the tools I have read about?**
+>
+> Tutorials written before 2024 tell you to install `nodemon` for reloading and
+> `dotenv` for environment variables. Node does both itself now. `node --watch`
+> replaces `nodemon`. `--env-file` replaces `dotenv` for the common case. And
+> as you will see in the TypeScript course, `node file.ts` replaces `ts-node`.
+> Fewer dependencies is not a style preference. Every package you do not
+> install is a package that cannot be compromised, which is a point the
+> workbook returns to under supply chain security.
+
+**Never put a real secret in a file you commit.** A `.env` file belongs in
+`.gitignore`. Both Casey products keep an `.env.example` with empty values
+committed and the real `.env` ignored. Copy that habit from the first day.
+
+If you see `Hello, JavaScript.`, you are ready.
 
 ---
 
@@ -558,6 +668,89 @@ const words = sentences.flatMap((s) => s.split(" "));
 console.log(words); // ["hello", "world", "foo", "bar"]
 ```
 
+### at, findLast, and findLastIndex (2026)
+
+`at` accepts a negative index, so the last element no longer needs
+`arr[arr.length - 1]`.
+
+```javascript
+const scores = [10, 20, 30, 40];
+console.log(scores.at(-1)); // 40
+console.log(scores.at(0));  // 10
+console.log("habit".at(-1)); // "t" (strings have it too)
+```
+
+`findLast` and `findLastIndex` search from the end. They are the mirror of
+`find` and `findIndex`.
+
+```javascript
+const entries = [
+  { day: "2026-09-01", done: true },
+  { day: "2026-09-02", done: false },
+  { day: "2026-09-03", done: true },
+];
+
+const lastDone = entries.findLast((e) => e.done);
+console.log(lastDone.day); // "2026-09-03"
+```
+
+> **Background (2026): Why does `findLast` matter?**
+>
+> The old way was `[...arr].reverse().find(...)`, which copies the whole array
+> and then throws the copy away. `findLast` walks backwards and stops at the
+> first match. For a habit history or an audit log, where the interesting row is
+> almost always near the end, this is the difference between reading three rows
+> and reading three thousand.
+
+### toSorted, toReversed, toSpliced, and with (2026)
+
+`sort`, `reverse` and `splice` change the array in place. That is a frequent
+source of bugs, especially in React, where mutating state that another
+component is reading produces a screen that does not update. Four methods do
+the same jobs and return a new array instead.
+
+```javascript
+const habits = ["Walk", "Read", "Stretch"];
+
+const sorted = habits.toSorted();          // ["Read", "Stretch", "Walk"]
+const reversed = habits.toReversed();      // ["Stretch", "Read", "Walk"]
+const replaced = habits.with(1, "Journal"); // ["Walk", "Journal", "Stretch"]
+const removed = habits.toSpliced(0, 1);    // ["Read", "Stretch"]
+
+console.log(habits); // ["Walk", "Read", "Stretch"], untouched
+```
+
+`toSorted` takes the same comparator as `sort`:
+
+```javascript
+const orders = [
+  { item: "book", cents: 24999 },
+  { item: "pen", cents: 3500 },
+  { item: "lamp", cents: 129900 },
+];
+
+const cheapestFirst = orders.toSorted((a, b) => a.cents - b.cents);
+console.log(cheapestFirst.map((o) => o.item)); // ["pen", "book", "lamp"]
+```
+
+> **Background (2026): Why are the amounts integers?**
+>
+> `129900` is one thousand two hundred and ninety nine rand, held as cents.
+> Money is never stored as a floating point number, because `0.1 + 0.2` is not
+> `0.3` in any language that uses IEEE 754 doubles, JavaScript included. Store
+> an integer number of the smallest unit and format only at the edge:
+>
+> ```javascript
+> const rands = new Intl.NumberFormat("en-ZA", {
+>   style: "currency",
+>   currency: "ZAR",
+> });
+> console.log(rands.format(129900 / 100)); // "R 1 299,00"
+> ```
+>
+> This course uses integer cents everywhere from here on. So does every
+> production codebase worth reading.
+
 ### Chaining
 
 Methods return arrays, so you can chain them:
@@ -618,6 +811,55 @@ const discounted = Object.fromEntries(
 
 console.log(discounted); // { apple: 9, banana: 18, cherry: 27 }
 ```
+
+### Object.groupBy and Map.groupBy (2026)
+
+Grouping a list by some key used to be a `reduce` with an accumulator. It is
+now one call.
+
+```javascript
+const tasks = [
+  { title: "File the notice", list: "today" },
+  { title: "Draft the letter", list: "today" },
+  { title: "Renew the licence", list: "later" },
+];
+
+const byList = Object.groupBy(tasks, (task) => task.list);
+
+console.log(Object.keys(byList));   // ["today", "later"]
+console.log(byList.today.length);   // 2
+console.log(byList.nothing);        // undefined
+```
+
+`Object.groupBy` returns a null-prototype object, so keys such as
+`"constructor"` or `"toString"` are safe. Keys are always coerced to strings.
+
+When you need keys that are not strings, use `Map.groupBy`:
+
+```javascript
+const done = Map.groupBy(tasks, (task) => task.list === "today");
+console.log(done.get(true).length);  // 2
+console.log(done.get(false).length); // 1
+```
+
+> **Background (2026): Is this really better than `reduce`?**
+>
+> Compare the two:
+>
+> ```javascript
+> // Before
+> const byList = tasks.reduce((acc, task) => {
+>   (acc[task.list] ??= []).push(task);
+>   return acc;
+> }, {});
+>
+> // After
+> const byList = Object.groupBy(tasks, (task) => task.list);
+> ```
+>
+> The second version says what it does. The first version says how. When you
+> read code six months later, "what" is the one you want. That is the whole
+> argument for every method on this page.
 
 **Exercise:** Write a function `pick(obj, keys)` that returns a new object containing only the specified keys.
 
@@ -876,6 +1118,32 @@ export { default as log } from "./logger.js";
 >
 > When you set `"type": "module"` in `package.json`, Node.js follows the official ES Modules specification, which requires file extensions. Bundlers like Vite and Webpack often let you skip the extension, but native Node.js does not. When in doubt, include the extension.
 
+### Import attributes (2026)
+
+You can import a JSON file directly, provided you state the type.
+
+```javascript
+import fixtures from "./fixtures/habits.json" with { type: "json" };
+
+console.log(fixtures.length);
+```
+
+> **Background (2026): Why the `with { type: "json" }`?**
+>
+> A module specifier such as `"./habits.json"` says where to fetch something,
+> not what it is. Without a declared type, a server could answer that request
+> with JavaScript, and the importer would execute it. The attribute makes the
+> expectation explicit: if the resource is not JSON, the import fails rather
+> than running. It is a security boundary, not a formality, which is why it is
+> mandatory rather than optional.
+>
+> The older syntax was `assert { type: "json" }`. That spelling is deprecated.
+> Write `with`.
+
+A JSON import is frozen and read-only in effect: treat it as a fixture, not as
+mutable state. If you need to change the data, copy it first with
+`structuredClone(fixtures)`.
+
 **Exercise:** Split a project into three files: `math.js` exporting `add` and `subtract`, `string.js` exporting `capitalize` and `reverse`, and `index.js` re-exporting everything. Test it from a `main.js`.
 
 ---
@@ -970,6 +1238,97 @@ Promise.race([fetchData(), timeout(1000)])
   .catch((err) => console.error(err.message)); // "timeout"
 ```
 
+### Promise.withResolvers (2026)
+
+Sometimes you need a Promise whose `resolve` and `reject` are called from
+somewhere else entirely: an event listener, a callback API, a message handler.
+The old pattern leaked the two functions out of the executor by hand.
+
+```javascript
+// Before
+let resolve, reject;
+const promise = new Promise((res, rej) => {
+  resolve = res;
+  reject = rej;
+});
+```
+
+`Promise.withResolvers()` returns all three together.
+
+```javascript
+const { promise, resolve, reject } = Promise.withResolvers();
+
+// Somewhere else, later:
+setTimeout(() => resolve("done"), 100);
+
+console.log(await promise); // "done"
+```
+
+A realistic use: turning a one-shot event into something you can `await`.
+
+```javascript
+function once(emitter, eventName) {
+  const { promise, resolve } = Promise.withResolvers();
+  emitter.once(eventName, resolve);
+  return promise;
+}
+```
+
+### Promise.try (2026, needs Node 24)
+
+`Promise.try(fn)` runs `fn` and always gives you a Promise back, whether `fn`
+is synchronous, asynchronous, or throws immediately.
+
+```javascript
+function parseConfig(text) {
+  return JSON.parse(text); // throws synchronously on bad input
+}
+
+// Without Promise.try, the throw escapes the chain:
+// parseConfig("{").then(...).catch(...)  <- TypeError, .then of undefined
+
+const result = await Promise.try(() => parseConfig("{"))
+  .catch((error) => ({ error: error.message }));
+
+console.log(result); // { error: "Expected property name or '}' ..." }
+```
+
+> **Background (2026): Why is a synchronous throw a problem?**
+>
+> A function that is "sometimes async" is one of the classic sources of
+> unhandled errors. If it returns a Promise, `.catch` handles the failure. If
+> it throws before returning, `.catch` never runs, because there is no Promise
+> to attach to. `Promise.try` removes the "sometimes" and gives you one shape.
+> When you write a plugin system, an adapter, or anything that calls code you
+> did not write, wrap the call in `Promise.try`.
+
+### Array.fromAsync (2026)
+
+`Array.from` collects an iterable into an array. `Array.fromAsync` does the
+same for an async iterable, and awaits each value.
+
+```javascript
+async function* pages(total) {
+  for (let n = 1; n <= total; n++) {
+    yield { page: n };
+  }
+}
+
+const all = await Array.fromAsync(pages(3));
+console.log(all); // [{ page: 1 }, { page: 2 }, { page: 3 }]
+
+// It also awaits an array of promises, one at a time
+const settled = await Array.fromAsync([
+  Promise.resolve("a"),
+  Promise.resolve("b"),
+]);
+console.log(settled); // ["a", "b"]
+```
+
+Note the difference from `Promise.all`: `Array.fromAsync` awaits **in
+sequence**. Use `Promise.all` when the work is independent and should overlap,
+and `Array.fromAsync` when you are draining a stream or paging an API in order.
+
 **Exercise:** Write a function `delay(ms, value)` that returns a Promise resolving to `value` after `ms` milliseconds. Use it with `Promise.all` to wait for three different delays in parallel.
 
 ---
@@ -978,17 +1337,34 @@ Promise.race([fetchData(), timeout(1000)])
 
 `async` and `await` are syntactic sugar over Promises. They let you write asynchronous code that reads like synchronous code.
 
+**(2026)** The examples in this lesson read from disk rather than from a
+network, so that every one of them runs on your machine with nothing installed
+and nobody else's server involved. Lesson 14 explains why that is the default
+and shows the same shapes over HTTP.
+
+Create `fixtures/practitioners.json`:
+
+```json
+[
+  { "id": "p1", "name": "T. Nkosi", "profession": "psychologist", "feeCents": 95000 },
+  { "id": "p2", "name": "A. Petersen", "profession": "psychiatrist", "feeCents": 180000 },
+  { "id": "p3", "name": "M. van Wyk", "profession": "psychologist", "feeCents": 72000 }
+]
+```
+
 ```javascript
-// Function declared with async always returns a Promise
-async function fetchUser(id) {
+import { readFile } from "node:fs/promises";
+
+// A function declared async always returns a Promise
+async function loadPractitioners() {
   // await pauses until the Promise resolves
-  const response = await fetch(`https://api.example.com/users/${id}`);
-  const user = await response.json();
-  return user;
+  const url = new URL("./fixtures/practitioners.json", import.meta.url);
+  const text = await readFile(url, "utf8");
+  return JSON.parse(text);
 }
 
 // Calling it returns a Promise
-fetchUser(1).then((user) => console.log(user));
+loadPractitioners().then((list) => console.log(list.length)); // 3
 ```
 
 ### try/catch with async/await
@@ -996,18 +1372,23 @@ fetchUser(1).then((user) => console.log(user));
 Error handling looks like normal synchronous code:
 
 ```javascript
-async function fetchUserSafe(id) {
+import { readFile } from "node:fs/promises";
+
+async function loadFixture(name) {
   try {
-    const response = await fetch(`https://api.example.com/users/${id}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json();
+    const url = new URL(`./fixtures/${name}.json`, import.meta.url);
+    return JSON.parse(await readFile(url, "utf8"));
   } catch (error) {
-    console.error("Failed to fetch user:", error.message);
-    return null;
+    // Keep the original. See Lesson 17 on Error cause.
+    throw new Error(`Could not load fixture "${name}"`, { cause: error });
   }
 }
+
+const missing = await loadFixture("does-not-exist").catch((error) => {
+  console.error(error.message);          // Could not load fixture "does-not-exist"
+  console.error(error.cause.code);       // ENOENT
+  return null;
+});
 ```
 
 ### Sequential vs parallel
@@ -1015,25 +1396,34 @@ async function fetchUserSafe(id) {
 This is a common mistake. Compare:
 
 ```javascript
+const wait = (ms, value) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
+
 // Sequential: each await waits for the previous one
 async function loadAllSequential() {
-  const a = await fetchUser(1); // wait
-  const b = await fetchUser(2); // wait
-  const c = await fetchUser(3); // wait
+  const a = await wait(100, "a"); // wait
+  const b = await wait(100, "b"); // wait
+  const c = await wait(100, "c"); // wait
   return [a, b, c];
-  // Total time: sum of all three
+  // Total time: sum of all three, about 300ms
 }
 
 // Parallel: start all three, then await
 async function loadAllParallel() {
-  const [a, b, c] = await Promise.all([
-    fetchUser(1),
-    fetchUser(2),
-    fetchUser(3),
+  return await Promise.all([
+    wait(100, "a"),
+    wait(100, "b"),
+    wait(100, "c"),
   ]);
-  return [a, b, c];
-  // Total time: the slowest of the three
+  // Total time: the slowest of the three, about 100ms
 }
+
+console.time("sequential");
+await loadAllSequential();
+console.timeEnd("sequential"); // sequential: ~300ms
+
+console.time("parallel");
+await loadAllParallel();
+console.timeEnd("parallel");   // parallel: ~100ms
 ```
 
 Use parallel whenever the operations do not depend on each other.
@@ -1043,111 +1433,211 @@ Use parallel whenever the operations do not depend on each other.
 Inside a module (file with `"type": "module"`), you can use `await` outside of an async function:
 
 ```javascript
-// This works inside a module file
-const response = await fetch("https://api.example.com/data");
-const data = await response.json();
-console.log(data);
+// This works at the top level of a module file
+import { readFile } from "node:fs/promises";
+
+const url = new URL("./fixtures/practitioners.json", import.meta.url);
+const practitioners = JSON.parse(await readFile(url, "utf8"));
+
+console.log(practitioners.at(0).name); // "T. Nkosi"
 ```
+
+Top-level `await` blocks the module's importers until it settles. That is fine
+for a script and for reading configuration at startup. It is a poor idea in a
+library, where every consumer then pays your latency at import time.
 
 **Exercise:** Convert this Promise chain to use async/await with proper error handling:
 
 ```javascript
-fetchUser(1)
-  .then((user) => fetchPostsForUser(user.id))
-  .then((posts) => posts.length)
-  .then((count) => console.log(`Found ${count} posts`))
-  .catch((err) => console.error(err));
+loadPractitioners()
+  .then((list) => list.filter((p) => p.profession === "psychologist"))
+  .then((psychologists) => psychologists.length)
+  .then((count) => console.log(`Found ${count} psychologists`))
+  .catch((error) => console.error(error));
 ```
 
 ---
 
-## Lesson 14: Fetch and HTTP
+## Lesson 14: Fetch, HTTP, and Local Fixtures
 
-`fetch` is the modern built-in way to make HTTP requests. It returns a Promise.
+`fetch` is the built-in way to make HTTP requests. It returns a Promise. It is
+the same function in the browser and in Node.
+
+### A rule before the syntax (2026)
+
+**Do not point a learning exercise at somebody else's server.** Earlier
+versions of this course used a public placeholder API for every example. That
+is a bad habit for three reasons. The endpoint can disappear, and then the
+course is broken. It makes your tests depend on a network you do not control,
+so a red test tells you nothing. And it sends traffic to a service that never
+agreed to host a course.
+
+So: **fixtures on disk by default, a real request only where a real request is
+the point.** This is not only a teaching convenience. Both Casey products test
+against fixtures for the same reasons, and Casey Legal Tools ships a mock
+runner that returns fixture results so every feature can be built and verified
+without calling a provider at all.
+
+### Reading a fixture
+
+Create `fixtures/practitioners.json`:
+
+```json
+[
+  { "id": "p1", "name": "T. Nkosi", "profession": "psychologist", "feeCents": 95000 },
+  { "id": "p2", "name": "A. Petersen", "profession": "psychiatrist", "feeCents": 180000 },
+  { "id": "p3", "name": "M. van Wyk", "profession": "psychologist", "feeCents": 72000 }
+]
+```
+
+Two ways to load it. The first reads it at runtime, so the file can change
+between runs:
+
+```javascript
+import { readFile } from "node:fs/promises";
+
+const text = await readFile(new URL("./fixtures/practitioners.json", import.meta.url), "utf8");
+const practitioners = JSON.parse(text);
+
+console.log(practitioners.length); // 3
+```
+
+The second imports it as a module, which is faster and checked once at load
+time:
+
+```javascript
+import practitioners from "./fixtures/practitioners.json" with { type: "json" };
+```
+
+> **Background (2026): Why `new URL(..., import.meta.url)`?**
+>
+> A bare relative path such as `"./fixtures/practitioners.json"` is resolved
+> against the **working directory**, which is wherever the user happened to be
+> when they typed `node`. `import.meta.url` is the URL of the current module,
+> so resolving against it gives you a path relative to the **file**, which is
+> what you meant. In CommonJS this was `__dirname`; in modules it is this. Get
+> into the habit now, because the bug it prevents only shows up when someone
+> runs your script from a different folder.
 
 ### GET request
 
-```javascript
-async function getPosts() {
-  const response = await fetch("https://jsonplaceholder.typicode.com/posts");
-
-  if (!response.ok) {
-    throw new Error(`HTTP error: ${response.status}`);
-  }
-
-  const posts = await response.json();
-  return posts;
-}
-
-const posts = await getPosts();
-console.log(`Loaded ${posts.length} posts`);
-console.log(posts[0]);
-```
-
-> **Background: Why two awaits?**
->
-> The first await (`await fetch(...)`) waits for the HTTP response headers to arrive. The second (`await response.json()`) waits for the body to be downloaded and parsed as JSON. They are separate steps because in some cases (like streaming) you might want to handle them differently.
-
-### POST request
+When you do need the network, the shape is this:
 
 ```javascript
-async function createPost(post) {
-  const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(post),
+async function getJSON(url) {
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error: ${response.status}`);
+    throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
   }
 
   return await response.json();
 }
-
-const newPost = await createPost({
-  title: "Hello",
-  body: "World",
-  userId: 1,
-});
-
-console.log(newPost);
 ```
 
-### Other methods
+> **Background: Why two awaits?**
+>
+> The first await (`await fetch(...)`) waits for the HTTP response headers to
+> arrive. The second (`await response.json()`) waits for the body to be
+> downloaded and parsed as JSON. They are separate steps because in some cases,
+> such as streaming a large download, you want to handle them differently.
 
-PUT, PATCH, and DELETE work the same way, just change `method`:
+> **Background (2026): What is `AbortSignal.timeout`?**
+>
+> `fetch` waits forever by default. A request that never answers will hold your
+> process open until something else kills it. `AbortSignal.timeout(5000)`
+> aborts after five seconds and rejects with a `TimeoutError`. Always set one
+> on a call to a service you do not control. `AbortSignal.any([...])` combines
+> a timeout with a user-initiated cancellation.
+
+### POST request
 
 ```javascript
-await fetch("https://api.example.com/items/1", {
-  method: "DELETE",
-});
+async function createBookingRequest(baseUrl, body) {
+  const response = await fetch(new URL("/booking-requests", baseUrl), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`HTTP ${response.status}: ${detail}`);
+  }
+
+  return await response.json();
+}
 ```
 
-### Handling errors
+PUT, PATCH and DELETE work the same way. Only `method` changes.
+
+### A real server, on your own machine (2026)
+
+If you want to practise against HTTP without depending on anyone, serve the
+fixture yourself. Node has a server built in.
 
 ```javascript
-async function safeFetch(url) {
+// server.js
+import { createServer } from "node:http";
+import practitioners from "./fixtures/practitioners.json" with { type: "json" };
+
+const server = createServer((request, response) => {
+  if (request.method === "GET" && request.url === "/practitioners") {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify(practitioners));
+    return;
+  }
+  response.writeHead(404, { "Content-Type": "application/json" });
+  response.end(JSON.stringify({ error: "Not found" }));
+});
+
+server.listen(3100, () => console.log("Fixture server on http://localhost:3100"));
+```
+
+Run it with `node --watch server.js` in one terminal and call it from another:
+
+```javascript
+const practitioners = await getJSON("http://localhost:3100/practitioners");
+console.log(practitioners.at(0).name); // "T. Nkosi"
+```
+
+### Handling errors honestly
+
+```javascript
+async function safeGetJSON(url) {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return await response.json();
+    return { ok: true, data: await getJSON(url) };
   } catch (error) {
-    if (error instanceof TypeError) {
-      console.error("Network error or bad URL:", error.message);
-    } else {
-      console.error("Request failed:", error.message);
+    if (error.name === "TimeoutError") {
+      return { ok: false, reason: "timeout", detail: `${url} did not answer in time` };
     }
-    return null;
+    if (error instanceof TypeError) {
+      return { ok: false, reason: "network", detail: error.message };
+    }
+    return { ok: false, reason: "http", detail: error.message };
   }
 }
 ```
 
-**Exercise:** Write an async function `getUserAndPosts(userId)` that fetches a user from `jsonplaceholder.typicode.com/users/{id}` and their posts from `jsonplaceholder.typicode.com/posts?userId={id}` in parallel, and returns an object with both.
+> **Background (2026): Why return a result instead of throwing?**
+>
+> Both are defensible. The rule that is not defensible is swallowing the error:
+> an empty `catch {}` turns a failure into silence, and silence is the hardest
+> bug there is. Casey Journals states this as a ground rule ("An empty `catch`
+> is a bug. Record the last failure detail somewhere a human can read it") and
+> Casey Legal Tools records a `last_error` on every run for the same reason.
+> Whichever style you pick, the detail must survive.
+
+**Exercise:** Using the `fixtures/practitioners.json` above, write
+`cheapestByProfession(practitioners)` that returns an object mapping each
+profession to the name of its cheapest practitioner. Use `Object.groupBy` and
+`toSorted`. Then write the same function against the fixture server, fetching
+the list over HTTP, and note which of the two you would rather have a test
+depend on.
 
 ---
 
@@ -1200,6 +1690,40 @@ for (const tag of tags) {
   console.log(tag);
 }
 ```
+
+### Set operations (2026)
+
+A `Set` now does the arithmetic you would expect of a set. Seven methods, all
+of which take any set-like argument and none of which mutate.
+
+```javascript
+const assigned = new Set(["walk", "read", "stretch"]);
+const doneToday = new Set(["read", "journal"]);
+
+console.log([...assigned.intersection(doneToday)]);  // ["read"]
+console.log([...assigned.difference(doneToday)]);    // ["walk", "stretch"]
+console.log([...assigned.union(doneToday)]);
+// ["walk", "read", "stretch", "journal"]
+console.log([...assigned.symmetricDifference(doneToday)]);
+// ["walk", "stretch", "journal"]
+
+console.log(assigned.isSubsetOf(doneToday));   // false
+console.log(assigned.isSupersetOf(new Set(["walk"])));  // true
+console.log(assigned.isDisjointFrom(new Set(["swim"]))); // true
+```
+
+> **Background (2026): What is the practical use?**
+>
+> Permission checks and reconciliation. "Which habits were assigned but not
+> done" is `assigned.difference(doneToday)`. "Does this user hold every role
+> this page requires" is `userRoles.isSupersetOf(requiredRoles)`. Written with
+> arrays and `filter`, both of those are quadratic and easy to get subtly
+> wrong. Written with sets, they are one call and linear.
+>
+> A caution that matters: these are **set** operations, not permission
+> decisions. Deciding what a user may see happens on the server, in Firestore
+> rules or a row-level security policy. A `Set` in the browser decides what to
+> draw. The workbook has a part on exactly this distinction.
 
 > **Background: When to use Map vs object, and Set vs array?**
 >
@@ -1265,46 +1789,352 @@ for (const n of range(1, 5)) {
 
 The `*` after `function` makes it a generator. The `yield` keyword produces the next value. Generators are mostly used by libraries to build custom iterables.
 
+### Iterator helpers (2026)
+
+Generators and other iterators now carry the same methods arrays have. The
+difference is that they are **lazy**: nothing is computed until something pulls
+a value, and `take` stops the source.
+
+```javascript
+function* naturals() {
+  let n = 1;
+  while (true) yield n++;
+}
+
+const firstFiveSquares = naturals()
+  .map((n) => n * n)
+  .take(5)
+  .toArray();
+
+console.log(firstFiveSquares); // [1, 4, 9, 16, 25]
+```
+
+The full set: `map`, `filter`, `take`, `drop`, `flatMap`, `reduce`, `toArray`,
+`forEach`, `some`, `every`, `find`.
+
+```javascript
+const evens = naturals().filter((n) => n % 2 === 0);
+console.log(evens.take(3).toArray()); // [2, 4, 6]
+
+console.log(naturals().drop(10).take(2).toArray()); // [11, 12]
+console.log(naturals().find((n) => n % 7 === 0));   // 7
+```
+
+They work on anything iterable, not just generators:
+
+```javascript
+const scores = new Map([["alex", 100], ["maria", 85], ["jordan", 92]]);
+
+const topName = scores
+  .entries()
+  .filter(([, score]) => score > 90)
+  .map(([name]) => name)
+  .toArray();
+
+console.log(topName); // ["alex", "jordan"]
+```
+
+> **Background (2026): When is lazy better?**
+>
+> `naturals().map(...).take(5)` computes five squares. Writing the same thing
+> with an array is impossible, because `naturals()` never ends and
+> `[...naturals()]` would hang.
+>
+> For a finite array that already sits in memory, array methods are usually
+> faster: they are heavily optimised and involve no iterator protocol. Reach
+> for helpers when the source is infinite, expensive, or streamed, and when you
+> only want the first few results. Reach for array methods otherwise.
+
 **Exercise:** Write a generator function `fibonacci(limit)` that yields Fibonacci numbers until they exceed `limit`. Iterate it with `for...of`.
 
 ---
 
-## Capstone Project: Habit Tracker CLI
+## Lesson 17: The Smaller 2026 Additions
 
-Build a command-line habit tracker that exercises every modern JavaScript feature you have learned.
+Four additions that do not need a lesson each, but that you will meet.
+
+### RegExp.escape (2026, needs Node 24)
+
+Building a regular expression out of user input without escaping it is an
+injection bug. `RegExp.escape` fixes that.
+
+```javascript
+function highlight(text, term) {
+  const pattern = new RegExp(RegExp.escape(term), "gi");
+  return text.replace(pattern, (match) => `[${match}]`);
+}
+
+console.log(highlight("Rate: R1,200.00 per hour", "R1,200.00"));
+// "Rate: [R1,200.00] per hour"
+```
+
+Without the escape, `"R1,200.00"` would be a pattern in which `.` matches any
+character, and a search term such as `"("` would throw a syntax error and take
+the request down with it.
+
+> **Background (2026): Is this really a security issue?**
+>
+> Yes, and it has a name: regular expression denial of service. An attacker who
+> can put text into a pattern can craft input that takes exponential time to
+> match, and one request then occupies a CPU for minutes. The workbook covers
+> the general rule under injection: **data must never become code**. A search
+> box that becomes a regular expression, a string that becomes SQL and a
+> document that becomes an instruction to a model are the same bug wearing
+> three hats.
+
+### Error.isError (2026, needs Node 24)
+
+```javascript
+try {
+  JSON.parse("{");
+} catch (thrown) {
+  if (Error.isError(thrown)) {
+    console.error(thrown.name, thrown.message);
+  } else {
+    console.error("Something non-Error was thrown:", thrown);
+  }
+}
+```
+
+`instanceof Error` fails when the error crossed a boundary: a worker thread, a
+different realm, a structured clone. `Error.isError` asks what the value
+actually is. In a `catch` block, prefer it.
+
+### Error cause
+
+Available since ES2022 and under-used. When you re-throw, keep the original.
+
+```javascript
+import { readFile } from "node:fs/promises";
+
+async function loadHabits(path) {
+  try {
+    return JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    throw new Error(`Could not load habits from ${path}`, { cause: error });
+  }
+}
+```
+
+The caller sees your message; the log sees the whole chain. Losing the cause is
+one of the two ways people destroy a stack trace. The other is the empty
+`catch`.
+
+### structuredClone
+
+A deep copy, built in, no library and no `JSON.parse(JSON.stringify(x))`.
+
+```javascript
+const original = { name: "Walk", history: new Map([["2026-09-01", true]]) };
+const copy = structuredClone(original);
+
+copy.history.set("2026-09-02", true);
+console.log(original.history.size); // 1
+```
+
+It handles `Map`, `Set`, `Date`, `ArrayBuffer` and cycles, which the JSON trick
+does not. It cannot clone functions, DOM nodes or class identity: a clone of a
+class instance comes back as a plain object.
+
+**Exercise:** Write `safeSearch(items, term)` that filters a list of objects by
+a case-insensitive match on `name`, using `RegExp.escape`. Prove it with the
+term `"a.b"` that it matches the literal string `"a.b"` and not `"axb"`.
+
+---
+
+## Lesson 18: Temporal, a Preview (2026)
+
+`Date` has been the worst part of JavaScript since 1995. It is mutable, it
+counts months from zero, it parses inconsistently, and it has no concept of a
+date without a time or a time without a zone. **Temporal** replaces it.
+
+### Status, honestly
+
+At the time of writing, Temporal is **not on by default in Node 24**. It is
+present behind a flag:
+
+```bash
+node --harmony-temporal your-script.js
+```
+
+Browser support is partial. For production today you still use `Date`, or a
+library such as `date-fns` (which is what Mentisflow does: see `date-fns` in
+`mentisflow/package.json`). This lesson is a preview so that you recognise
+Temporal when it lands and so you understand what problem it solves.
+
+### The types
+
+Temporal splits apart what `Date` conflated.
+
+```javascript
+// node --harmony-temporal
+
+const today = Temporal.Now.plainDateISO();
+console.log(today.toString()); // "2026-09-06", a date with no time and no zone
+
+const time = Temporal.PlainTime.from("14:00");
+const appointment = today.toPlainDateTime(time);
+console.log(appointment.toString()); // "2026-09-06T14:00:00"
+
+const inJohannesburg = appointment.toZonedDateTime("Africa/Johannesburg");
+console.log(inJohannesburg.toString());
+// "2026-09-06T14:00:00+02:00[Africa/Johannesburg]"
+```
+
+| Type | What it is | Example |
+| --- | --- | --- |
+| `Temporal.PlainDate` | A calendar date, no time, no zone | A person's date of birth |
+| `Temporal.PlainTime` | A wall-clock time | "The practice opens at 08:00" |
+| `Temporal.PlainDateTime` | Both, still no zone | A form's raw input |
+| `Temporal.ZonedDateTime` | An exact instant in a named zone | A confirmed appointment |
+| `Temporal.Instant` | A point on the timeline, no calendar | A log timestamp |
+| `Temporal.Duration` | A length of time | "Fifty minutes" |
+
+### Arithmetic that does not lie
+
+```javascript
+const start = Temporal.PlainDate.from("2026-01-31");
+console.log(start.add({ months: 1 }).toString()); // "2026-02-28"
+
+const consultation = Temporal.Duration.from({ minutes: 50 });
+const ends = Temporal.PlainTime.from("14:00").add(consultation);
+console.log(ends.toString()); // "14:50:00"
+
+const a = Temporal.PlainDate.from("2026-09-06");
+const b = Temporal.PlainDate.from("2026-12-25");
+console.log(a.until(b, { largestUnit: "day" }).days); // 110
+```
+
+Every object is immutable. `add` returns a new one, exactly like `toSorted`.
+
+> **Background (2026): Why does this matter for a South African product?**
+>
+> `Africa/Johannesburg` is UTC+02:00 and does not observe daylight saving, so
+> local arithmetic is easy here. The moment a practitioner in Cape Town books a
+> patient who is travelling in London, it is not. `ZonedDateTime` carries the
+> zone identifier with the instant, so "14:00 in Johannesburg" survives being
+> stored, sent and read somewhere else. A `Date` cannot express that: it is an
+> instant and nothing more, and the zone is whatever the reading machine
+> happens to be set to.
+>
+> Mentisflow sidesteps the whole problem by formatting every patient-facing
+> date through one function, `utils/dateUtils.formatAppointmentWhen`, which
+> always renders South African Standard Time and says so: "29 July 2026 14:00
+> (SAST)". That is the pattern to copy until Temporal ships: **one formatter,
+> one stated zone, never a bare `toLocaleString`**.
+
+### What to do today
+
+```javascript
+// Format for South African users, with the zone named.
+const formatter = new Intl.DateTimeFormat("en-ZA", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "Africa/Johannesburg",
+});
+
+console.log(formatter.format(new Date("2026-07-29T12:00:00Z")));
+// "29 July 2026 at 14:00"
+```
+
+Store instants in UTC as ISO 8601 strings. Format at the edge, with an explicit
+`timeZone`. Never do date arithmetic by adding milliseconds.
+
+**Exercise:** Write `nextWeekdaySlots(fromISO, count)` returning the next
+`count` weekday dates as `YYYY-MM-DD` strings, skipping Saturday and Sunday.
+Write it once with `Date` and once with Temporal under `--harmony-temporal`.
+Compare the two for length and for how obviously correct each one is.
+
+---
+
+## Capstone Project: A Tools CLI
+
+Mentisflow, the mental health product beside this repository, ships a suite it
+calls Tools: a daily check-in, a mood tracker, habits, and a sticky-note task
+board. You are going to build a command-line version of the two tools that
+carry no clinical data: **habits** and **daily tasks**.
+
+### Why those two, and not mood
+
+Mood entries and check-ins in a mental health product are **health
+information**, which South Africa's Protection of Personal Information Act
+treats as special personal information under section 26. It attracts extra
+duties and it does not belong in a teaching exercise, a fixture file, a test,
+or a repository. Habits and tasks in this capstone are deliberately generic:
+"Walk for twenty minutes", "File the notice". Nothing in your fixtures should
+be a real person's health, identity number, or contact details.
+
+This is the first design constraint of the project, and it is the kind you will
+meet constantly in real work: **the interesting question is often what not to
+store.**
 
 ### Requirements
 
-- Add a habit (name and frequency: daily or weekly).
-- Mark a habit as completed for today.
-- List all habits showing how many times each has been completed this week.
-- Remove a habit.
-- Save data to a `habits.json` file. Load it on startup.
-- Use modules to split the code into multiple files.
+**Habits.**
+
+- Add a habit with a name, a time of day (`morning`, `midday`, `evening`), and
+  a **cue**: the "when X" half of a plan, such as "after I make coffee".
+- Tick a habit as done for a given day.
+- Show consistency as **days done out of the last 28**, never as a streak.
+- Under five days of history, print "Just started" rather than a fraction.
+- Group the list by time of day, in the order a day runs. Do not print an empty
+  group.
+
+**Tasks.**
+
+- Add a task with a title, a list (`today`, `later`), and an optional due date.
+- Tick a task as done. Reopen a done task.
+- Roll over: any unfinished task whose scheduled date is today or earlier
+  appears under Today.
+- Show "n of m done today".
+
+**Both.**
+
+- Persist to `data/tools.json`. Load it on startup. Create it if missing.
+- Ship `fixtures/tools.seed.json` so a fresh checkout has something to look at.
+- Split the code across modules. No file over about 150 lines.
+- No third-party dependencies at all.
+
+### Why "consistency, not streaks"
+
+This requirement is copied from the product, and the reason is on the record in
+its `CLAUDE.md`: Lally and colleagues (2010) found that missing a single
+opportunity did not materially affect habit formation, so a counter that resets
+to zero tells the user something that is not true, and tells it to people who
+are already struggling. A habit missed yesterday and not yet done today gets
+one gentle nudge, never a red broken-streak graphic.
+
+You are being asked to build the humane version on purpose. Requirements come
+from somewhere. Ask where.
 
 ### Suggested structure
 
 ```
-habit-tracker/
-  src/
-    storage.js       // load and save habits.json
-    habits.js        // add, complete, list, remove logic
-    cli.js           // parse process.argv and call functions
-    main.js          // entry point
-  habits.json
+tools-cli/
   package.json
+  data/tools.json           (written at runtime, gitignored)
+  fixtures/tools.seed.json  (committed)
+  src/
+    main.js        entry point: parse argv, dispatch
+    storage.js     load and save data/tools.json
+    habits.js      add, tick, consistency, grouping
+    tasks.js       add, tick, reopen, rollover, counts
+    format.js      all the printing, including Intl
+    dates.js       today(), lastNDays(), isWeekend()
 ```
 
 ### Sample `package.json`
 
 ```json
 {
-  "name": "habit-tracker",
+  "name": "tools-cli",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/main.js",
+  "engines": { "node": ">=24" },
   "scripts": {
-    "start": "node src/main.js"
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js habits list",
+    "test": "node --test"
   }
 }
 ```
@@ -1312,47 +2142,141 @@ habit-tracker/
 ### Sample `storage.js`
 
 ```javascript
-import { promises as fs } from "fs";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const FILE = "habits.json";
+const FILE = fileURLToPath(new URL("../data/tools.json", import.meta.url));
 
-export async function loadHabits() {
+const EMPTY = { habits: [], ticks: [], tasks: [] };
+
+export async function load() {
   try {
-    const text = await fs.readFile(FILE, "utf-8");
-    return JSON.parse(text);
-  } catch {
-    return [];
+    return { ...EMPTY, ...JSON.parse(await readFile(FILE, "utf8")) };
+  } catch (error) {
+    if (error.code === "ENOENT") return structuredClone(EMPTY);
+    throw new Error(`Could not read ${FILE}`, { cause: error });
   }
 }
 
-export async function saveHabits(habits) {
-  await fs.writeFile(FILE, JSON.stringify(habits, null, 2));
+export async function save(state) {
+  await mkdir(dirname(FILE), { recursive: true });
+  await writeFile(FILE, JSON.stringify(state, null, 2) + "\n", "utf8");
 }
+```
+
+Note what this does **not** do: it does not catch every error and return
+`EMPTY`. A missing file is expected and handled. A permissions error or a
+corrupt file is not, so it is re-thrown with its cause attached. Losing the
+difference between "no data yet" and "your data is unreadable" is how people
+lose data.
+
+### Parsing arguments (2026)
+
+Use `node:util`'s `parseArgs`. No `commander`, no `yargs`.
+
+```javascript
+import { parseArgs } from "node:util";
+
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    cue: { type: "string" },
+    when: { type: "string", default: "morning" },
+    due: { type: "string" },
+    list: { type: "string", default: "today" },
+    json: { type: "boolean", default: false },
+  },
+});
+
+const [group, command, ...rest] = positionals;
 ```
 
 ### Sample CLI usage
 
 ```bash
-node src/main.js add "Drink water" daily
-node src/main.js add "Go for a run" weekly
-node src/main.js list
-node src/main.js complete "Drink water"
-node src/main.js remove "Drink water"
+node src/main.js habits add "Walk for twenty minutes" --when morning --cue "after I make coffee"
+node src/main.js habits tick "Walk for twenty minutes"
+node src/main.js habits list
+
+node src/main.js tasks add "File the notice" --list today --due 2026-09-10
+node src/main.js tasks tick "File the notice"
+node src/main.js tasks list
+node src/main.js tasks list --json
 ```
 
-When you finish, you have built something practical using arrow functions, destructuring, modules, async/await, promises, classes (optionally), Map or Set, optional chaining, spread, and template literals. That covers everything modern JavaScript developers use daily.
+### Expected output
+
+```
+Habits
+
+Morning
+  [x] Walk for twenty minutes      after I make coffee      Just started
+Evening
+  [ ] Read ten pages               after supper             19 of 28 days
+
+Tasks · today · 1 of 3 done
+
+  [x] File the notice              due 10 September 2026
+  [ ] Renew the licence            due 30 September 2026
+  [ ] Ring the printer
+```
+
+### Features you must use
+
+Tick these off as you go. Every one is in this course.
+
+- [ ] ES modules with the `node:` prefix on every built-in
+- [ ] `Object.groupBy` for grouping habits by time of day
+- [ ] `toSorted` and `with` instead of `sort` and index assignment
+- [ ] `at(-1)` for the most recent entry
+- [ ] `findLast` for the last tick of a habit
+- [ ] A `Set` and at least one set operation for done versus assigned
+- [ ] Iterator helpers with `take` for the "next up" line
+- [ ] `Promise.withResolvers` or `Promise.try` somewhere the shape earns it
+- [ ] Optional chaining and `??` for absent fields
+- [ ] `structuredClone` rather than a JSON round trip
+- [ ] `Intl.DateTimeFormat("en-ZA", ...)` for every date shown
+- [ ] `Error` with `cause` on every re-throw
+- [ ] An import attribute for the seed fixture
+- [ ] `node --test` covering `consistency()` and `rollover()`
+
+### Stretch goals
+
+1. Add `--json` to every list command so the output can be piped.
+2. Add a `tools export` command that writes a fixture the tests can read, and a
+   `tools import` that reads one back.
+3. Write the whole thing so that `data/tools.json` is never partially written:
+   write to a temporary file and rename. Explain in a comment why a rename is
+   atomic and a write is not.
+
+When you finish you will have used arrow functions, destructuring, modules,
+async/await, classes if you want them, `Map` and `Set`, optional chaining,
+spread, template literals, and every 2026 addition in this course, on a problem
+with a real shape.
 
 ---
 
 ## Where to Go Next
 
-Once you finish this course, you are ready for the TypeScript course in this same series. Every concept you learned here will continue to apply: TypeScript adds types on top of modern JavaScript without changing how the language works.
+Once you finish this course, you are ready for the TypeScript course in this
+same series. Every concept you learned here will continue to apply: TypeScript
+adds types on top of modern JavaScript without changing how the language works.
 
-After TypeScript, take the React with TypeScript course to learn modern frontend development.
+After TypeScript, take the React with TypeScript course to learn modern
+frontend development.
+
+**(2026)** After all three, work through
+[`../casey-workbook/workbook.md`](../casey-workbook/workbook.md). The courses
+teach the language. The workbook teaches what a professional does with it:
+trust boundaries, security standards, data protection engineering, operations,
+payments, and building alongside AI coding agents.
 
 ### Recommended reading
 
 - "Eloquent JavaScript" by Marijn Haverbeke (free online at eloquentjavascript.net)
+- The TC39 proposals list at github.com/tc39/proposals, for what is coming next
+- The Node.js API documentation at nodejs.org/api, which is the reference for every `node:` module in this course
 - The MDN JavaScript Guide at developer.mozilla.org
 - "You Do not Know JS Yet" by Kyle Simpson (free on GitHub)
 

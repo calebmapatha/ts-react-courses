@@ -1,8 +1,12 @@
 # Modern JavaScript Course: Exercise Solutions
 
-Working solutions for every exercise in the modern JavaScript course. Each solution includes runnable code and a short note on the approach.
+Working solutions for every exercise in the modern JavaScript course. Each
+solution includes runnable code and a short note on the approach.
 
-To run any solution, save it to a `.js` file in the project from Lesson 0 and execute it with `node your-file.js`.
+**(2026)** To run any solution, save it to a `.js` file in the project from
+Lesson 0 and execute it with `node your-file.js`. Every solution here was run
+on **Node 24.20.0** before publication. Solutions marked "needs Node 24" use
+`Promise.try`, `RegExp.escape` or `Error.isError`, which Node 22 does not have.
 
 ---
 
@@ -315,51 +319,91 @@ console.log(`Took ${elapsed}ms`); // Roughly 1000ms (the slowest)
 ## Lesson 13: Promise chain to async/await
 
 ```javascript
-async function loadUserPostCount(id) {
+import { readFile } from "node:fs/promises";
+
+async function loadPractitioners() {
+  const url = new URL("./fixtures/practitioners.json", import.meta.url);
+  return JSON.parse(await readFile(url, "utf8"));
+}
+
+async function countPsychologists() {
   try {
-    const user = await fetchUser(id);
-    const posts = await fetchPostsForUser(user.id);
-    console.log(`Found ${posts.length} posts`);
-  } catch (err) {
-    console.error(err);
+    const list = await loadPractitioners();
+    const count = list.filter((p) => p.profession === "psychologist").length;
+    console.log(`Found ${count} psychologists`);
+    return count;
+  } catch (error) {
+    console.error("Could not count psychologists:", error.message);
+    if (error.cause) console.error("  caused by:", error.cause.message);
+    return 0;
   }
 }
 
-loadUserPostCount(1);
+await countPsychologists(); // Found 2 psychologists
 ```
 
-**Note:** The error handling moved from `.catch` into a `try/catch` block. The flow is now linear and reads top to bottom, which is the main benefit of async/await over Promise chains.
+**Note:** Each `.then` becomes an `await` and the whole chain goes inside one
+`try`. That is the point of the rewrite: with a chain, an error in step two is
+caught by a `.catch` bolted onto the end and you cannot easily tell which step
+failed. With `await`, the failing line is in the stack trace.
+
+**(2026)** Note also what the `catch` does **not** do. It does not swallow the
+error. It logs the message and the `cause`, and it returns a value the caller
+can act on. An empty `catch {}` would have turned a missing fixture into a
+count of zero, which is a lie the caller cannot detect.
 
 ---
 
-## Lesson 14: getUserAndPosts
+## Lesson 14: cheapestByProfession
 
 ```javascript
-async function getUserAndPosts(userId) {
-  const userPromise = fetch(`https://jsonplaceholder.typicode.com/users/${userId}`);
-  const postsPromise = fetch(`https://jsonplaceholder.typicode.com/posts?userId=${userId}`);
+import practitioners from "./fixtures/practitioners.json" with { type: "json" };
 
-  const [userResponse, postsResponse] = await Promise.all([userPromise, postsPromise]);
+function cheapestByProfession(list) {
+  const grouped = Object.groupBy(list, (p) => p.profession);
 
-  if (!userResponse.ok || !postsResponse.ok) {
-    throw new Error("One or more requests failed");
-  }
-
-  const [user, posts] = await Promise.all([
-    userResponse.json(),
-    postsResponse.json(),
-  ]);
-
-  return { user, posts };
+  return Object.fromEntries(
+    Object.entries(grouped).map(([profession, people]) => [
+      profession,
+      people.toSorted((a, b) => a.feeCents - b.feeCents).at(0).name,
+    ]),
+  );
 }
 
-// Test
-const { user, posts } = await getUserAndPosts(1);
-console.log(`User: ${user.name}`);
-console.log(`Posts: ${posts.length}`);
+console.log(cheapestByProfession(practitioners));
+// { psychologist: "M. van Wyk", psychiatrist: "A. Petersen" }
 ```
 
-**Note:** Starting both fetch calls before awaiting either is what makes this parallel. If we wrote `const userResponse = await fetch(...)` first and then started the posts fetch, the posts request would not begin until after the user request finished.
+**Note:** `toSorted` rather than `sort`, because `sort` would reorder the array
+inside `grouped`, which is a view onto the imported fixture. A JSON import is
+shared across every module that imports it, so mutating it is a bug that
+appears somewhere else entirely.
+
+The same function over HTTP:
+
+```javascript
+async function getJSON(url) {
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+  }
+  return await response.json();
+}
+
+const overHttp = cheapestByProfession(
+  await getJSON("http://localhost:3100/practitioners"),
+);
+console.log(overHttp);
+```
+
+**Which would you rather a test depend on?** The first. The second needs a
+server running on port 3100, which means a test that fails tells you nothing
+about `cheapestByProfession`: it might be the function, the server, the port,
+or the network. Keep the network out of the tests for your own logic, and test
+the network separately, where a failure means what it says.
 
 ---
 
@@ -416,192 +460,679 @@ for (const n of fibonacci(100)) {
 
 ---
 
-## Capstone: Habit Tracker CLI
+## Lesson 17: safeSearch (2026, needs Node 24)
 
-A complete reference implementation. Place these files in a project initialized as in Lesson 0.
+```javascript
+function safeSearch(items, term) {
+  if (term === "") return items;
+  const pattern = new RegExp(RegExp.escape(term), "i");
+  return items.filter((item) => pattern.test(item.name));
+}
+
+const items = [
+  { name: "a.b" },
+  { name: "axb" },
+  { name: "Contract (draft)" },
+];
+
+console.log(safeSearch(items, "a.b"));  // [ { name: "a.b" } ]
+console.log(safeSearch(items, "("));    // [ { name: "Contract (draft)" } ]
+```
+
+**Note:** Without `RegExp.escape`, the term `"a.b"` becomes the pattern `a.b`,
+in which `.` matches any character, so `"axb"` matches too. The term `"("`
+becomes an unterminated group and `new RegExp` throws, which in a web handler
+is a 500 caused by somebody typing a bracket into a search box.
+
+**A simpler answer exists.** If you only need a case-insensitive substring
+match, do not build a regular expression at all:
+
+```javascript
+const safeSearch = (items, term) =>
+  items.filter((item) => item.name.toLowerCase().includes(term.toLowerCase()));
+```
+
+That is the better solution for this problem. `RegExp.escape` is for when you
+genuinely need a pattern and part of it comes from outside. The general rule,
+which the workbook develops under injection, is that **data must never become
+code**, and the safest way to obey it is usually to avoid the code path
+entirely.
+
+---
+
+## Lesson 18: nextWeekdaySlots (2026)
+
+**With `Date`:**
+
+```javascript
+function nextWeekdaySlots(fromISO, count) {
+  const slots = [];
+  const cursor = new Date(`${fromISO}T00:00:00Z`);
+
+  while (slots.length < count) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const weekday = cursor.getUTCDay(); // 0 Sunday, 6 Saturday
+    if (weekday !== 0 && weekday !== 6) {
+      slots.push(cursor.toISOString().slice(0, 10));
+    }
+  }
+  return slots;
+}
+
+console.log(nextWeekdaySlots("2026-09-04", 3));
+// [ "2026-09-07", "2026-09-08", "2026-09-09" ]
+```
+
+**With Temporal** (run with `node --harmony-temporal`):
+
+```javascript
+function nextWeekdaySlots(fromISO, count) {
+  const slots = [];
+  let cursor = Temporal.PlainDate.from(fromISO);
+
+  while (slots.length < count) {
+    cursor = cursor.add({ days: 1 });
+    if (cursor.dayOfWeek <= 5) {       // 1 Monday ... 7 Sunday
+      slots.push(cursor.toString());
+    }
+  }
+  return slots;
+}
+
+console.log(nextWeekdaySlots("2026-09-04", 3));
+// [ "2026-09-07", "2026-09-08", "2026-09-09" ]
+```
+
+**Note:** The Temporal version is two lines shorter, but length is not the
+argument. Look at what each one has to be careful about.
+
+The `Date` version must use the UTC accessors throughout. If you write
+`setDate`, `getDay` and `toISOString` in the same function, you are mixing
+local time with UTC, and the result is correct in Johannesburg and wrong in
+Auckland. It also mutates `cursor` in place, so the loop only works because
+nothing else holds a reference to it.
+
+The Temporal version has no zone to mix up, because a `PlainDate` has no zone.
+`add` returns a new date rather than mutating. And `dayOfWeek` counts from
+Monday as ISO 8601 does, so "weekday" is `<= 5` rather than two separate
+comparisons against zero and six.
+
+**(2026)** Temporal is still behind a flag in Node 24. Until it ships, the
+`Date` version is what you write, and the discipline is: **UTC accessors
+everywhere, format only at the edge, and one `Intl` formatter with an explicit
+`timeZone`.**
+
+---
+
+## Capstone: A Tools CLI
+
+A complete reference implementation, run and tested on Node 24.20.0. Twelve
+`node:test` cases pass; they are at the end of this section.
+
+Nothing here is a health record. The tools modelled are habits and daily tasks,
+which are the two parts of the product's Tools suite that carry no clinical
+data. Mood and check-in entries are health information under section 26 of the
+Protection of Personal Information Act, and they are deliberately absent from
+the fixtures, the store and the tests.
 
 **`package.json`**
 
 ```json
 {
-  "name": "habit-tracker",
+  "name": "tools-cli",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/main.js",
+  "engines": { "node": ">=24" },
   "scripts": {
-    "start": "node src/main.js"
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js habits list",
+    "test": "node --test"
   }
 }
 ```
+
+**`fixtures/tools.seed.json`**
+
+```json
+{
+  "habits": [
+    { "id": "h1", "name": "Walk for twenty minutes", "when": "morning", "cue": "after I make coffee", "createdAt": "2026-08-10" },
+    { "id": "h2", "name": "Read ten pages", "when": "evening", "cue": "after supper", "createdAt": "2026-07-01" }
+  ],
+  "ticks": [
+    { "habitId": "h1", "day": "2026-09-06" },
+    { "habitId": "h2", "day": "2026-09-05" },
+    { "habitId": "h2", "day": "2026-09-04" }
+  ],
+  "tasks": [
+    { "id": "t1", "title": "File the notice", "list": "today", "due": "2026-09-10", "doneOn": "2026-09-06" },
+    { "id": "t2", "title": "Renew the licence", "list": "today", "due": "2026-09-30", "doneOn": null },
+    { "id": "t3", "title": "Ring the printer", "list": "today", "due": null, "doneOn": null }
+  ]
+}
+```
+
+**`src/dates.js`**
+
+```javascript
+// Every date in this project is an ISO calendar day, "YYYY-MM-DD", in South
+// African Standard Time. There is no time-of-day anywhere, so there is no
+// timezone arithmetic to get wrong.
+
+const ZONE = "Africa/Johannesburg";
+
+const isoParts = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Today in Johannesburg, as "YYYY-MM-DD". */
+export function today(now = new Date()) {
+  return isoParts.format(now);
+}
+
+/** The `count` most recent days ending today, newest first. */
+export function lastNDays(count, from = today()) {
+  const days = [];
+  const base = new Date(`${from}T00:00:00Z`);
+  for (let i = 0; i < count; i++) {
+    const day = new Date(base);
+    day.setUTCDate(day.getUTCDate() - i);
+    days.push(day.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+const longDate = new Intl.DateTimeFormat("en-ZA", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+/** "2026-09-10" becomes "10 September 2026". */
+export function formatDay(iso) {
+  return longDate.format(new Date(`${iso}T00:00:00Z`));
+}
+```
+
+**Note:** One formatter, one stated zone, defined once. `en-CA` is used for the
+ISO shape because that locale formats as `YYYY-MM-DD`; `en-ZA` is used for
+anything a person reads. Never build a date string by hand out of
+`getFullYear()` and friends.
 
 **`src/storage.js`**
 
 ```javascript
-import { promises as fs } from "fs";
+import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import seed from "../fixtures/tools.seed.json" with { type: "json" };
 
-const FILE = "habits.json";
+const FILE = fileURLToPath(new URL("../data/tools.json", import.meta.url));
 
-export async function loadHabits() {
+const EMPTY = { habits: [], ticks: [], tasks: [] };
+
+/**
+ * Read the store. A missing file is the expected first run and seeds from the
+ * fixture. Anything else is re-thrown with its cause: losing the difference
+ * between "no data yet" and "your data is unreadable" is how people lose data.
+ */
+export async function load() {
   try {
-    const text = await fs.readFile(FILE, "utf-8");
-    return JSON.parse(text);
-  } catch {
-    return [];
+    return { ...EMPTY, ...JSON.parse(await readFile(FILE, "utf8")) };
+  } catch (error) {
+    if (error.code === "ENOENT") return structuredClone(seed);
+    throw new Error(`Could not read ${FILE}`, { cause: error });
   }
 }
 
-export async function saveHabits(habits) {
-  await fs.writeFile(FILE, JSON.stringify(habits, null, 2));
+/**
+ * Write the store atomically. A partial write leaves unparseable JSON on disk;
+ * a rename inside one filesystem is a single directory operation, so a reader
+ * sees either the old file or the new one and never half of either.
+ */
+export async function save(state) {
+  await mkdir(dirname(FILE), { recursive: true });
+  const temporary = `${FILE}.${process.pid}.tmp`;
+  await writeFile(temporary, JSON.stringify(state, null, 2) + "\n", "utf8");
+  await rename(temporary, FILE);
 }
 ```
+
+**Note on the atomic write:** `writeFile` can be interrupted, and an
+interrupted write leaves half a JSON document on disk, which the next `load`
+cannot parse. Writing to a temporary file and then renaming makes the swap a
+single directory operation, so a reader sees the old file or the new one and
+never half of either. This is stretch goal three, and it is three lines.
 
 **`src/habits.js`**
 
 ```javascript
-import { randomUUID } from "crypto";
-import { loadHabits, saveHabits } from "./storage.js";
+import { randomUUID } from "node:crypto";
+import { today, lastNDays } from "./dates.js";
 
-export async function addHabit(name, frequency = "daily") {
-  if (!["daily", "weekly"].includes(frequency)) {
-    throw new Error(`Invalid frequency: ${frequency}`);
+export const TIMES_OF_DAY = ["morning", "midday", "evening"];
+
+const MIN_HISTORY_DAYS = 5;
+const WINDOW_DAYS = 28;
+
+export function addHabit(state, { name, when = "morning", cue = "" }) {
+  if (!TIMES_OF_DAY.includes(when)) {
+    throw new Error(`Unknown time of day "${when}". Use one of: ${TIMES_OF_DAY.join(", ")}.`);
   }
-
-  const habits = await loadHabits();
-  const habit = {
-    id: randomUUID(),
-    name,
-    frequency,
-    completions: [],
-    createdAt: new Date().toISOString(),
-  };
-
-  habits.push(habit);
-  await saveHabits(habits);
-  return habit;
+  const habit = { id: randomUUID(), name, when, cue, createdAt: today() };
+  return { ...state, habits: [...state.habits, habit] };
 }
 
-export async function completeHabit(name) {
-  const habits = await loadHabits();
-  const habit = habits.find((h) => h.name === name);
-  if (!habit) return null;
-
-  habit.completions.push(new Date().toISOString());
-  await saveHabits(habits);
-  return habit;
+export function findHabit(state, name) {
+  const wanted = name.toLowerCase();
+  return state.habits.find((h) => h.name.toLowerCase() === wanted);
 }
 
-export async function listHabits() {
-  const habits = await loadHabits();
+/** Ticking is idempotent: one habit, one day, one tick. */
+export function tickHabit(state, name, day = today()) {
+  const habit = findHabit(state, name);
+  if (!habit) throw new Error(`No habit called "${name}".`);
+  const already = state.ticks.some((t) => t.habitId === habit.id && t.day === day);
+  if (already) return state;
+  return { ...state, ticks: [...state.ticks, { habitId: habit.id, day }] };
+}
 
-  // Count completions in the last 7 days
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+/**
+ * Consistency over a rolling 28 days, never a streak. Missing one day does not
+ * materially affect habit formation (Lally et al., 2010), so a counter that
+ * resets to zero tells the user something untrue, and tells it to somebody who
+ * is already struggling.
+ */
+export function consistency(state, habit, day = today()) {
+  const window = new Set(lastNDays(WINDOW_DAYS, day));
+  const daysDone = new Set(
+    state.ticks.filter((t) => t.habitId === habit.id).map((t) => t.day),
+  );
+  const hits = daysDone.intersection(window);
 
-  return habits.map((habit) => {
-    const recent = habit.completions.filter(
-      (timestamp) => new Date(timestamp).getTime() >= oneWeekAgo,
-    );
-    return {
-      ...habit,
-      completionsThisWeek: recent.length,
-    };
+  const age = lastNDays(WINDOW_DAYS, day).filter((d) => d >= habit.createdAt).length;
+  if (age < MIN_HISTORY_DAYS) {
+    return { started: false, hits: hits.size, of: WINDOW_DAYS, label: "Just started" };
+  }
+  return { started: true, hits: hits.size, of: WINDOW_DAYS, label: `${hits.size} of ${WINDOW_DAYS} days` };
+}
+
+export function isDoneOn(state, habit, day = today()) {
+  return state.ticks.some((t) => t.habitId === habit.id && t.day === day);
+}
+
+/**
+ * One gentle nudge when a habit was missed yesterday and is not done today.
+ * Never red, never a broken-streak graphic.
+ */
+export function needsNudge(state, habit, day = today()) {
+  const [current, previous] = lastNDays(2, day);
+  return !isDoneOn(state, habit, current) && !isDoneOn(state, habit, previous);
+}
+
+/** Grouped by time of day, in the order a day runs. Empty groups are dropped. */
+export function groupByTimeOfDay(habits) {
+  const grouped = Object.groupBy(habits, (h) => h.when);
+  return TIMES_OF_DAY
+    .map((when) => [when, grouped[when] ?? []])
+    .filter(([, list]) => list.length > 0);
+}
+
+/** The next habit not yet done today, in day order. Lazy: it stops at the first. */
+export function nextUp(state, day = today()) {
+  return groupByTimeOfDay(state.habits)
+    .values()
+    .flatMap(([, list]) => list)
+    .filter((habit) => !isDoneOn(state, habit, day))
+    .take(1)
+    .toArray()
+    .at(0);
+}
+```
+
+**Note on `consistency`:** the intersection of "days this habit was ticked" and
+"the last 28 days" is one call, `daysDone.intersection(window)`, because both
+are `Set`s. Written with arrays and `filter`, it is a nested loop.
+
+**Note on `nextUp`:** the chain uses iterator helpers and ends in `take(1)`, so
+it stops at the first habit that is not done. On a list of five habits that
+saves nothing measurable. It is written this way because it is the shape that
+keeps working when the list is long or the source is a stream, and because the
+alternative, `.flat().find(...)`, builds an intermediate array to throw away.
+
+**`src/tasks.js`**
+
+```javascript
+import { randomUUID } from "node:crypto";
+import { today } from "./dates.js";
+
+export const LISTS = ["today", "later"];
+
+export function addTask(state, { title, list = "today", due = null }) {
+  if (!LISTS.includes(list)) {
+    throw new Error(`Unknown list "${list}". Use one of: ${LISTS.join(", ")}.`);
+  }
+  const task = { id: randomUUID(), title, list, due, doneOn: null };
+  return { ...state, tasks: [...state.tasks, task] };
+}
+
+function replaceTask(state, index, next) {
+  return { ...state, tasks: state.tasks.with(index, next) };
+}
+
+export function tickTask(state, title, day = today()) {
+  const index = state.tasks.findIndex((t) => t.title.toLowerCase() === title.toLowerCase());
+  if (index === -1) throw new Error(`No task called "${title}".`);
+  return replaceTask(state, index, { ...state.tasks[index], doneOn: day });
+}
+
+export function reopenTask(state, title) {
+  const index = state.tasks.findLastIndex((t) => t.title.toLowerCase() === title.toLowerCase());
+  if (index === -1) throw new Error(`No task called "${title}".`);
+  return replaceTask(state, index, { ...state.tasks[index], doneOn: null });
+}
+
+/**
+ * Roll over: an unfinished task whose due date is today or earlier belongs
+ * under Today, whatever list it was parked in. It never falls silently into
+ * the backlog.
+ */
+export function rollover(tasks, day = today()) {
+  return tasks.map((task) => {
+    const overdue = task.doneOn === null && task.due !== null && task.due <= day;
+    return overdue ? { ...task, list: "today" } : task;
   });
 }
 
-export async function removeHabit(name) {
-  const habits = await loadHabits();
-  const filtered = habits.filter((h) => h.name !== name);
-  if (filtered.length === habits.length) return false;
-  await saveHabits(filtered);
-  return true;
+export function forList(state, list, day = today()) {
+  return rollover(state.tasks, day)
+    .filter((task) => task.list === list)
+    .toSorted((a, b) => (a.due ?? "9999-99-99").localeCompare(b.due ?? "9999-99-99"));
+}
+
+export function counts(tasks, day = today()) {
+  const done = tasks.filter((t) => t.doneOn === day).length;
+  return { done, of: tasks.length };
 }
 ```
 
-**`src/cli.js`**
+**Note:** every function returns a new state. `with` replaces one element,
+`toSorted` orders without mutating, and spread rebuilds the object. This is not
+ceremony: `rollover` is called on every render, and a version that mutated
+would gradually rewrite the stored `list` field of every overdue task, which is
+not what "show it under Today" means.
+
+**`src/format.js`**
 
 ```javascript
-import { addHabit, completeHabit, listHabits, removeHabit } from "./habits.js";
+import { formatDay } from "./dates.js";
+import { consistency, groupByTimeOfDay, isDoneOn, needsNudge } from "./habits.js";
+import { counts } from "./tasks.js";
 
-export async function runCommand(args) {
-  const [command, ...rest] = args;
+const box = (done) => (done ? "[x]" : "[ ]");
+const pad = (text, width) => text.padEnd(width, " ");
 
-  switch (command) {
-    case "add": {
-      const [name, frequency = "daily"] = rest;
-      if (!name) {
-        console.error("Usage: add <name> [daily|weekly]");
-        return;
+export function renderHabits(state, day) {
+  const lines = ["Habits", ""];
+  for (const [when, habits] of groupByTimeOfDay(state.habits)) {
+    lines.push(when.at(0).toUpperCase() + when.slice(1));
+    for (const habit of habits) {
+      const done = isDoneOn(state, habit, day);
+      lines.push(
+        `  ${box(done)} ${pad(habit.name, 30)} ${pad(habit.cue, 24)} ${consistency(state, habit, day).label}`.trimEnd(),
+      );
+      if (needsNudge(state, habit, day)) {
+        lines.push(`      Missed yesterday. Doing it today is the whole trick.`);
       }
-      const habit = await addHabit(name, frequency);
-      console.log(`Added ${habit.frequency} habit: ${habit.name}`);
-      break;
     }
-
-    case "complete": {
-      const [name] = rest;
-      if (!name) {
-        console.error("Usage: complete <name>");
-        return;
-      }
-      const result = await completeHabit(name);
-      console.log(result ? `Marked complete: ${name}` : `Habit not found: ${name}`);
-      break;
-    }
-
-    case "list": {
-      const habits = await listHabits();
-      if (habits.length === 0) {
-        console.log("No habits yet. Add one with: add <name> [daily|weekly]");
-        return;
-      }
-      habits.forEach(({ name, frequency, completionsThisWeek }) => {
-        console.log(`- ${name} (${frequency}): ${completionsThisWeek} this week`);
-      });
-      break;
-    }
-
-    case "remove": {
-      const [name] = rest;
-      if (!name) {
-        console.error("Usage: remove <name>");
-        return;
-      }
-      const ok = await removeHabit(name);
-      console.log(ok ? `Removed: ${name}` : `Habit not found: ${name}`);
-      break;
-    }
-
-    default:
-      console.log("Commands: add <name> [daily|weekly]");
-      console.log("          complete <name>");
-      console.log("          list");
-      console.log("          remove <name>");
   }
+  if (state.habits.length === 0) lines.push("  Nothing yet. Add one with: habits add \"name\"");
+  return lines.join("\n");
+}
+
+export function renderTasks(tasks, list, day) {
+  const { done, of } = counts(tasks, day);
+  const lines = [`Tasks · ${list} · ${done} of ${of} done`, ""];
+  for (const task of tasks) {
+    const due = task.due === null ? "" : `due ${formatDay(task.due)}`;
+    lines.push(`  ${box(task.doneOn !== null)} ${pad(task.title, 30)} ${due}`.trimEnd());
+  }
+  if (tasks.length === 0) lines.push("  Nothing on this list.");
+  return lines.join("\n");
 }
 ```
+
+**Note:** all printing lives here and nowhere else. Every module above returns
+data. That separation is what makes `--json` a four-line change rather than a
+rewrite, and it is why the tests never have to parse output.
 
 **`src/main.js`**
 
 ```javascript
-import { runCommand } from "./cli.js";
+import { parseArgs } from "node:util";
+import { load, save } from "./storage.js";
+import { today } from "./dates.js";
+import { addHabit, tickHabit, nextUp } from "./habits.js";
+import { addTask, tickTask, reopenTask, forList } from "./tasks.js";
+import { renderHabits, renderTasks } from "./format.js";
 
-const args = process.argv.slice(2);
+const USAGE = `Usage:
+  habits add <name> [--when morning|midday|evening] [--cue "after I ..."]
+  habits tick <name>
+  habits list
+  tasks  add <title> [--list today|later] [--due YYYY-MM-DD]
+  tasks  tick <title>
+  tasks  reopen <title>
+  tasks  list [--list today|later] [--json]`;
 
-try {
-  await runCommand(args);
-} catch (error) {
-  console.error("Error:", error.message);
-  process.exit(1);
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    cue: { type: "string", default: "" },
+    when: { type: "string", default: "morning" },
+    due: { type: "string" },
+    list: { type: "string", default: "today" },
+    json: { type: "boolean", default: false },
+  },
+});
+
+const [group, command, ...rest] = positionals;
+const subject = rest.join(" ");
+const day = today();
+
+const handlers = {
+  "habits add": (state) => addHabit(state, { name: subject, when: values.when, cue: values.cue }),
+  "habits tick": (state) => tickHabit(state, subject, day),
+  "tasks add": (state) => addTask(state, { title: subject, list: values.list, due: values.due ?? null }),
+  "tasks tick": (state) => tickTask(state, subject, day),
+  "tasks reopen": (state) => reopenTask(state, subject),
+};
+
+async function main() {
+  const key = `${group} ${command}`;
+  const state = await load();
+
+  if (key === "habits list") {
+    console.log(renderHabits(state, day));
+    const next = nextUp(state, day);
+    if (next) console.log(`\nNext up: ${next.name}`);
+    return 0;
+  }
+
+  if (key === "tasks list") {
+    const tasks = forList(state, values.list, day);
+    if (values.json) {
+      console.log(JSON.stringify(tasks, null, 2));
+      return 0;
+    }
+    console.log(renderTasks(tasks, values.list, day));
+    return 0;
+  }
+
+  const handler = handlers[key];
+  if (!handler) {
+    console.error(USAGE);
+    return 2;
+  }
+  if (subject === "") {
+    console.error(`"${key}" needs a name. \n\n${USAGE}`);
+    return 2;
+  }
+
+  await save(handler(state));
+  console.log(`Done: ${key} "${subject}"`);
+  return 0;
 }
+
+process.exitCode = await main().catch((error) => {
+  console.error(error.message);
+  if (error.cause) console.error("  caused by:", error.cause.message);
+  return 1;
+});
 ```
 
-**Sample usage:**
+**Note on `parseArgs`:** it is in `node:util` and it handles `--flag value`,
+`--flag=value`, booleans and positionals. For a CLI of this size you do not
+need `commander` or `yargs`. One fewer dependency is one fewer thing that can
+be compromised in a supply chain attack, which is a point the workbook makes at
+length.
+
+**Note on `process.exitCode`:** setting it rather than calling `process.exit()`
+lets pending output flush. `process.exit()` in the middle of a write truncates
+it, which produces the maddening bug where a script works when piped to a
+terminal and loses its last line when piped to a file.
+
+### The tests
+
+**`test/habits.test.js`**
+
+```javascript
+import test from "node:test";
+import assert from "node:assert/strict";
+import { consistency, groupByTimeOfDay, needsNudge } from "../src/habits.js";
+
+const habit = { id: "h1", name: "Walk", when: "morning", cue: "", createdAt: "2026-01-01" };
+
+function stateWithTicks(days) {
+  return { habits: [habit], ticks: days.map((day) => ({ habitId: "h1", day })), tasks: [] };
+}
+
+test("consistency counts days inside the 28-day window", () => {
+  const state = stateWithTicks(["2026-09-06", "2026-09-05", "2026-08-01"]);
+  const result = consistency(state, habit, "2026-09-06");
+  assert.equal(result.hits, 2, "2026-08-01 is outside the window");
+  assert.equal(result.label, "2 of 28 days");
+});
+
+test("a habit younger than five days says Just started", () => {
+  const fresh = { ...habit, createdAt: "2026-09-04" };
+  const state = { habits: [fresh], ticks: [{ habitId: "h1", day: "2026-09-06" }], tasks: [] };
+  assert.equal(consistency(state, fresh, "2026-09-06").label, "Just started");
+});
+
+test("consistency never resets to zero after one miss", () => {
+  const state = stateWithTicks(["2026-09-04", "2026-09-03", "2026-09-02"]);
+  assert.equal(consistency(state, habit, "2026-09-06").hits, 3);
+});
+
+test("the nudge fires only after two missed days", () => {
+  const yesterdayDone = stateWithTicks(["2026-09-05"]);
+  assert.equal(needsNudge(yesterdayDone, habit, "2026-09-06"), false);
+
+  const bothMissed = stateWithTicks(["2026-09-01"]);
+  assert.equal(needsNudge(bothMissed, habit, "2026-09-06"), true);
+});
+
+test("grouping drops empty times of day and keeps day order", () => {
+  const habits = [
+    { id: "a", name: "A", when: "evening", cue: "", createdAt: "2026-01-01" },
+    { id: "b", name: "B", when: "morning", cue: "", createdAt: "2026-01-01" },
+  ];
+  assert.deepEqual(groupByTimeOfDay(habits).map(([when]) => when), ["morning", "evening"]);
+});
+```
+
+**`test/tasks.test.js`**
+
+```javascript
+import test from "node:test";
+import assert from "node:assert/strict";
+import { rollover, counts, tickTask, reopenTask } from "../src/tasks.js";
+
+const tasks = [
+  { id: "t1", title: "Overdue", list: "later", due: "2026-09-01", doneOn: null },
+  { id: "t2", title: "Future", list: "later", due: "2026-12-01", doneOn: null },
+  { id: "t3", title: "Done and overdue", list: "later", due: "2026-09-01", doneOn: "2026-09-02" },
+];
+
+test("an unfinished overdue task rolls into today", () => {
+  const rolled = rollover(tasks, "2026-09-06");
+  assert.equal(rolled.find((t) => t.id === "t1").list, "today");
+});
+
+test("a future task stays where it is", () => {
+  assert.equal(rollover(tasks, "2026-09-06").find((t) => t.id === "t2").list, "later");
+});
+
+test("a finished task never rolls over", () => {
+  assert.equal(rollover(tasks, "2026-09-06").find((t) => t.id === "t3").list, "later");
+});
+
+test("rollover does not mutate its input", () => {
+  rollover(tasks, "2026-09-06");
+  assert.equal(tasks[0].list, "later");
+});
+
+test("counts reports what was finished today, not in total", () => {
+  assert.deepEqual(counts(tasks, "2026-09-02"), { done: 1, of: 3 });
+  assert.deepEqual(counts(tasks, "2026-09-06"), { done: 0, of: 3 });
+});
+
+test("ticking then reopening returns the original task", () => {
+  const state = { habits: [], ticks: [], tasks };
+  const ticked = tickTask(state, "Overdue", "2026-09-06");
+  assert.equal(ticked.tasks[0].doneOn, "2026-09-06");
+  assert.equal(reopenTask(ticked, "Overdue").tasks[0].doneOn, null);
+});
+
+test("an unknown title is an error, not a silent no-op", () => {
+  const state = { habits: [], ticks: [], tasks };
+  assert.throws(() => tickTask(state, "Nope"), /No task called "Nope"/);
+});
+```
+
+Run them:
 
 ```bash
-node src/main.js add "Drink water" daily
-node src/main.js add "Go for a run" weekly
-node src/main.js complete "Drink water"
-node src/main.js list
-node src/main.js remove "Drink water"
+node --test
 ```
 
-This solution uses every modern JavaScript feature covered in the course: arrow functions, destructuring, default parameters, spread, modules, async/await, optional chaining, template literals, array methods, and nullish coalescing. When you build the same project in TypeScript later, the structure stays the same and types fall into place naturally.
+```
+ℹ tests 12
+ℹ pass 12
+ℹ fail 0
+```
+
+**Note on what is tested:** the two functions with real logic, `consistency`
+and `rollover`, plus the error paths. Nothing tests `format.js`, because
+asserting on the exact spacing of output is a test that fails every time
+somebody adjusts a column and never fails when the logic is wrong. Test what
+can be wrong in an interesting way.
+
+Note especially the test named "consistency never resets to zero after one
+miss". That test is the requirement. If somebody later "fixes" `consistency`
+into a streak counter, that test goes red and the review conversation happens.
+A rule that matters should have a test with its name on it.
+
+---
+
+## Where the exercises came from
+
+The habit rules in this capstone are copied from a real product's rules file,
+including the citation for why streaks were rejected. When you meet a
+requirement that seems oddly specific, it usually is: somebody decided it, for
+a reason, on a date. Finding out which is part of the job.
