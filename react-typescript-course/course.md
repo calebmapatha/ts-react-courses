@@ -60,6 +60,29 @@ Both, eventually. Start with whichever matches what you are working on.
 write. Mentisflow is exactly this: React 19 on Vite 8, talking to Firebase,
 wrapped in a Capacitor shell for the app stores.
 
+> **Background (2026): what is a "native shell", and what is Capacitor?**
+>
+> An app from an app store does not have to be written in Swift or Kotlin. One
+> option is a **native shell**: a small native app whose whole job is to host a
+> **WebView**, which is a browser engine with no address bar, running your
+> ordinary web code. To the user it is an app; inside, it is your website.
+>
+> The shell also carries **plugins**, which give that web code access to things
+> a browser cannot reach: the camera, biometrics, push notifications, the
+> filesystem. **Capacitor** is the tool that builds such a shell for iOS and
+> Android from a web project.
+>
+> Mentisflow does exactly this, so the same React bundle serves the website and
+> runs inside the app. The catch is worth knowing: the plugin set is fixed when
+> the shell is built and submitted, so shipping new JavaScript over the air
+> cannot add native capability. Its own rules file calls the plugin set "the
+> frozen native plugin set" and treats it as an invariant.
+>
+> The alternative is a framework such as **Expo**, which renders real native
+> views rather than a web page. Casey Journals uses that. Neither is the right
+> answer in general; a WebView is cheaper and shares one codebase, native
+> views feel better and cost more.
+
 ```bash
 npm create vite@latest my-app -- --template react-ts
 cd my-app
@@ -108,6 +131,14 @@ Rollup. For course purposes nothing changes; builds are faster.
 > have its types removed, and JSX, which must become function calls. A build
 > tool transforms your source into plain JavaScript, bundles many files into
 > few, and runs a development server with hot reloading.
+>
+> Three words in that sentence: a **bundler** resolves your imports and
+> produces a few files a browser can fetch efficiently, instead of hundreds.
+> The result is called **the bundle**, and everything in it is readable by
+> anyone who opens developer tools, which is why no secret may ever be in it.
+> **Hot reloading** means the dev server swaps a changed module into the
+> running page without a full refresh, so you keep whatever state you were
+> looking at.
 
 ### A note on TypeScript versions (2026)
 
@@ -145,6 +176,10 @@ my-app/
 > those calls are inserted automatically, which is what `"jsx": "react-jsx"` in
 > `tsconfig.json` selects, and it is why you no longer need
 > `import React from "react"` at the top of every file.
+
+**(2026)** Any term this course uses without stopping to define, `bundler`,
+`hydration`, `webhook`, `middleware`, `RLS`, is defined once in
+[`../GLOSSARY.md`](../GLOSSARY.md).
 
 Confirm in `tsconfig.json` that `"strict": true` and `"jsx"` is set
 (`"react-jsx"` for Vite, `"preserve"` for Next.js, which does its own
@@ -1927,6 +1962,18 @@ export function GET() {
 
 Use a Route Handler when the caller is **not** a React tree: a webhook from a
 payment provider, a health check, an RSS or podcast feed, an OpenGraph image.
+
+> **Background (2026): what is a webhook?**
+>
+> An HTTP request sent **to you** when something happens somewhere else: a
+> payment succeeded, a build finished, a subscription lapsed. You do not ask
+> for it; it arrives. That is the whole idea, and it is the opposite of the
+> requests you have written so far.
+>
+> Two consequences follow immediately. Anyone on the internet can post to that
+> URL, so the request must be **signed** and the signature verified before you
+> believe a word of it. And providers retry on any failure, so handling the
+> same delivery twice must not grant anything twice. The workbook covers both.
 Use a Server Action when the caller is your own form. Both are public; both
 validate.
 
@@ -1962,6 +2009,17 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 A single file at the project root runs before every matching request. Use it
 for the small set of things that must happen before routing: security headers,
 a redirect, a cheap authentication check.
+
+> **Background (2026): "middleware" means what exactly?**
+>
+> Code that sits in the middle: it runs after the request arrives and before
+> your page or handler sees it, on every request that matches a pattern. It can
+> add headers, redirect, or refuse.
+>
+> The name is used across the industry for the same shape, so you will meet it
+> in Express, in Django, and in a proxy configuration. The rule is the same
+> everywhere: keep it small and cheap, because it runs on **every** request. A
+> database call in middleware is a database call on every request.
 
 ```ts
 // middleware.ts

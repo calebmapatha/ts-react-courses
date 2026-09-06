@@ -15,6 +15,14 @@ worked through an earlier version of this course, those markers are the diff.
 Every sample in this course was run on Node 24.20.0 before publication. The
 version table lives in `STACK.md` at the root of this repository.
 
+**Every code block runs as written**, so you can paste any one of them into a
+file and execute it. The only exceptions are labelled in the code itself, and
+there are three kinds: a block that needs a sibling file (the modules lesson
+says which), a block that needs a server running in another terminal (it says
+so), and the exercise prompts, which are the question rather than the answer.
+If a block has no such comment and it does not run, that is a bug worth
+reporting.
+
 ---
 
 ## Lesson 0: Setup and Background
@@ -25,6 +33,31 @@ JavaScript is a programming language originally designed to run inside web
 browsers. It is now used everywhere: in browsers (frontend), on servers
 (Node.js), in desktop apps (Electron), on mobile (React Native), and inside
 native shells (Capacitor).
+
+> **Background: what are all those things at the end?**
+>
+> One language, many **runtimes**. A runtime is the program that executes your
+> code, and each gives you a different set of surroundings.
+>
+> - **Browser.** The original. Your code can reach the page and the network.
+> - **Node.js.** JavaScript outside a browser, with files, processes and
+>   servers instead of a page. This course runs here.
+> - **Electron.** A browser and Node bundled into a desktop application. VS
+>   Code and Slack are built this way.
+> - **React Native.** Your JavaScript drives real native views on a phone,
+>   rather than a web page.
+> - **Native shell (Capacitor).** A small native app that hosts a **WebView**,
+>   a browser engine with no address bar, running your ordinary web code, plus
+>   plugins for things a browser cannot reach such as the camera or
+>   biometrics. To the user it is an app from the app store; inside, it is your
+>   website.
+>
+> The language in this course is identical in all five. What changes is what is
+> available around it, which is why `document` exists in a browser and
+> `readFile` does not.
+
+**(2026)** Any term these courses use without stopping to define is defined once
+in [`../GLOSSARY.md`](../GLOSSARY.md).
 
 > **Background: What does "ES2026" mean?**
 >
@@ -186,6 +219,211 @@ If you see `Hello, JavaScript.`, you are ready.
 
 ---
 
+## Lesson 0a: The Four Building Blocks (2026)
+
+This course says it assumes you know variables, loops, functions and
+conditionals from some other language. This lesson is the ten-minute version of
+that assumption, so nobody has to go and find it elsewhere. If you already
+write code in any language, skim it for the JavaScript spelling and move on.
+
+### Variables: a name for a value
+
+```javascript
+const rate = 0.15;     // a name bound to a value
+let total = 0;         // the same, but you intend to change it
+total = total + 100;   // changed
+```
+
+`const` and `let` are covered properly in Lesson 1. For now: **a variable is a
+name you give a value so you can refer to it later.**
+
+### Conditionals: doing one thing or another
+
+```javascript
+const age = 20;
+
+if (age >= 18) {
+  console.log("Adult");
+} else if (age >= 13) {
+  console.log("Teenager");
+} else {
+  console.log("Child");
+}
+```
+
+The thing in the brackets is a **condition**: an expression that comes out true
+or false. Comparison operators produce one:
+
+```javascript
+a === b   // equal, and the same type. Use this one.
+a !== b   // not equal
+a > b     a >= b     a < b     a <= b
+```
+
+> **Background: why `===` and not `==`?**
+>
+> `==` converts the two sides to a common type before comparing, and its rules
+> are surprising: `0 == ""` is true, `null == undefined` is true, and
+> `"1" == 1` is true. `===` compares without converting, so it means what you
+> expect. Use `===` and `!==` everywhere. The only common exception is
+> `value == null`, which is a deliberate idiom meaning "null or undefined".
+
+Combine conditions with `&&` (and), `||` (or), `!` (not):
+
+```javascript
+const age = 20, hasLicence = true, isAdmin = false, isOwner = true, isBanned = false;
+
+if (age >= 18 && hasLicence) console.log("may drive");   // both must be true
+if (isAdmin || isOwner)      console.log("may edit");    // either will do
+if (!isBanned)               console.log("may post");    // not banned
+```
+
+A short form for picking between two values, called the **ternary**:
+
+```javascript
+const age = 20;
+
+const label = age >= 18 ? "Adult" : "Minor";
+//            condition  ? if true : if false
+
+console.log(label);   // "Adult"
+```
+
+> **Background: what is "truthy"?**
+>
+> JavaScript accepts any value where a condition is expected, not only `true`
+> and `false`. Six values count as false: `false`, `0`, `""` (the empty
+> string), `null`, `undefined`, and `NaN`. Everything else counts as true,
+> including `"0"`, `[]` and `{}`.
+>
+> This trips people constantly. `if (count)` is false when `count` is zero,
+> which is usually not what you meant, because zero is a real count. Lesson 9
+> introduces `??`, which exists precisely to handle that.
+
+### Loops: doing something repeatedly
+
+```javascript
+// for...of: each value in a list. Use this by default.
+for (const name of ["Alex", "Maria", "Jordan"]) {
+  console.log(name);
+}
+
+// while: keep going until a condition stops being true
+let countdown = 3;
+while (countdown > 0) {
+  console.log(countdown);
+  countdown = countdown - 1;
+}
+
+// The classic C-style for loop. You will read it; you will rarely write it.
+for (let i = 0; i < 3; i++) {
+  console.log(i);   // 0, 1, 2
+}
+```
+
+`break` leaves the loop early. `continue` skips to the next turn.
+
+```javascript
+for (const n of [1, 2, 3, 4, 5]) {
+  if (n === 2) continue;   // skip 2
+  if (n === 4) break;      // stop entirely at 4
+  console.log(n);          // 1, 3
+}
+```
+
+> **Background: why so few loops in modern JavaScript?**
+>
+> Because most loops are really one of a handful of shapes: transform every
+> item, keep the items that match, or reduce a list to one value. Lesson 7
+> gives each of those a name (`map`, `filter`, `reduce`), and a named operation
+> is easier to read than a loop whose purpose you have to reconstruct.
+>
+> Write loops when you genuinely need one: when you must stop early, when the
+> work is asynchronous and must happen in order, or when there is no list.
+
+### Functions: a named piece of behaviour
+
+```javascript
+// A declaration.
+function add(a, b) {
+  return a + b;
+}
+
+// The same thing as a value assigned to a name, in the arrow form.
+const addAgain = (a, b) => a + b;
+
+console.log(add(2, 3));   // 5
+```
+
+`a` and `b` are **parameters**: names for the values the function is given.
+The `2` and `3` at the call site are **arguments**: the actual values.
+`return` hands a value back to the caller. A function with no `return` gives
+back `undefined`.
+
+Arrow functions get a lesson of their own (Lesson 3) because they differ from
+`function` in one important way beyond looking shorter.
+
+> **Background: what does "calling" a function mean?**
+>
+> Writing `add` refers to the function itself, as a value you could store or
+> pass somewhere. Writing `add(2, 3)` **calls** it: runs the body with those
+> arguments and evaluates to whatever it returns.
+>
+> The distinction matters more than it looks. `setTimeout(save, 1000)` passes
+> the function so the timer can call it in a second. `setTimeout(save(), 1000)`
+> calls it **now** and passes the result, which is almost never what you
+> wanted. This is one of the most common early bugs.
+
+### Objects and arrays, in one breath
+
+Two ways of holding several values, used constantly from here on.
+
+```javascript
+// An array: an ordered list, reached by position, counting from zero.
+const names = ["Alex", "Maria"];
+console.log(names[0]);        // "Alex"
+console.log(names.length);    // 2
+
+// An object: named fields, reached by name.
+const person = { name: "Alex", age: 30 };
+console.log(person.name);     // "Alex"
+console.log(person["name"]);  // the same, when the name is in a variable
+```
+
+Objects nest, and so do arrays:
+
+```javascript
+const booking = {
+  patient: { name: "Alex" },
+  slots: ["09:00", "10:00"],
+};
+
+console.log(booking.patient.name);  // "Alex"
+console.log(booking.slots[1]);      // "10:00"
+```
+
+### Printing things while you learn
+
+```javascript
+const people = [{ name: "Alex", age: 30 }, { name: "Maria", age: 25 }];
+const booking = { patient: { name: "Alex" }, slots: ["09:00", "10:00"] };
+
+console.log("how many:", people.length);
+console.table(people);                      // a readable grid, for arrays of objects
+console.dir(booking, { depth: null });      // the whole nested structure
+```
+
+`console.log` is not cheating and it is not only for beginners. Printing the
+value at the point you stopped understanding is the fastest debugging tool
+there is, in any language.
+
+**Exercise:** Write `describe(person)` taking an object like
+`{ name: "Alex", age: 20 }` and returning `"Alex is an adult"` or
+`"Alex is a minor"`. Then write `describeAll(people)` that loops over an array
+of them and prints each. Use `const`, a ternary, and `for...of`.
+
+---
+
 ## Lesson 1: let, const, and Block Scope
 
 Modern JavaScript has three ways to declare variables: `var`, `let`, and `const`. You should almost never use `var`.
@@ -242,6 +480,18 @@ console.log(list); // [1, 2, 3, 4]
 
 Template literals use backticks instead of quotes and let you embed expressions:
 
+> **Background: what is a "literal", and why a third kind of quote?**
+>
+> A literal is a value written directly in the source: `42`, `"hello"`,
+> `[1, 2]`. JavaScript has three ways to write a string literal: single quotes,
+> double quotes, and backticks. The first two are interchangeable and inert.
+> Backticks make a **template literal**, which does two things the others
+> cannot: it may run across several lines, and `${...}` inside it is evaluated
+> and its result inserted.
+>
+> That insertion is called **interpolation**. The alternative is `+` between
+> the pieces, which is harder to read and easy to get wrong by one space.
+
 ```javascript
 const name = "Maria";
 const age = 30;
@@ -258,6 +508,8 @@ console.log(greeting);
 Multi-line strings without escape characters:
 
 ```javascript
+const name = "Maria";
+
 const message = `
 Dear ${name},
 
@@ -266,6 +518,8 @@ Thank you for signing up.
 Best regards,
 The Team
 `;
+
+console.log(message);
 ```
 
 You can put any expression inside `${...}`:
@@ -414,6 +668,26 @@ const customConfig = { ...baseConfig, retries: 5, debug: true };
 
 ## Lesson 5: Destructuring
 
+> **Background: what is destructuring, in one sentence?**
+>
+> **Pulling values out of an object or array into their own variables, in one
+> step, using a pattern that mirrors the shape of the thing.**
+>
+> ```javascript
+> const point = { x: 1, y: 2 };
+>
+> const x = point.x;        // without
+> const y = point.y;
+>
+> const { x, y } = point;   // with
+> ```
+>
+> The left-hand side is not an object being created. It is a **pattern** being
+> matched against the value on the right. That is why the same syntax works for
+> arrays (`const [first, second] = list`), for function parameters, and nested
+> several levels deep. Once you read `{ }` on the left as "take these out of
+> that", the rest of this lesson is one idea applied in five places.
+
 Destructuring extracts values from arrays or objects into named variables.
 
 ### Array destructuring
@@ -516,6 +790,18 @@ const users = [
 ---
 
 ## Lesson 6: Object Enhancements
+
+> **Background: why does an object literal have special syntax at all?**
+>
+> Because three things happen so often that writing them out became noise:
+> naming a property the same as the variable holding it, attaching a function
+> to an object, and using a name held in a variable as the key.
+>
+> Each shorthand in this lesson compiles to exactly what you would have
+> written; none of them adds behaviour. They exist so the shape of the object
+> is visible at a glance rather than buried in repetition. That is the whole
+> theme, and it is worth noticing because the same instinct produced the array
+> methods in Lesson 7.
 
 ### Property shorthand
 
@@ -837,6 +1123,12 @@ console.log(byList.nothing);        // undefined
 When you need keys that are not strings, use `Map.groupBy`:
 
 ```javascript
+const tasks = [
+  { title: "File the notice", list: "today" },
+  { title: "Draft the letter", list: "today" },
+  { title: "Renew the licence", list: "later" },
+];
+
 const done = Map.groupBy(tasks, (task) => task.list === "today");
 console.log(done.get(true).length);  // 2
 console.log(done.get(false).length); // 1
@@ -864,6 +1156,7 @@ console.log(done.get(false).length); // 1
 **Exercise:** Write a function `pick(obj, keys)` that returns a new object containing only the specified keys.
 
 ```javascript
+// The exercise: make this call work.
 pick({ a: 1, b: 2, c: 3 }, ["a", "c"]); // { a: 1, c: 3 }
 ```
 
@@ -941,6 +1234,37 @@ const users = [
 
 Classes give you a clean syntax for creating objects with shared methods.
 
+> **Background: what is a class, an instance, and `this`?**
+>
+> A **class** is a template. An **instance** is one thing made from it with
+> `new`. `new Person("Alex", 30)` creates an empty object, runs the
+> `constructor` with that object as `this`, and hands it back.
+>
+> `this` is the instance the method was called on. So `alex.greet()` runs
+> `greet` with `this` being `alex`, which is how one method serves every
+> instance: the code is shared, the data is not.
+>
+> A **method** is a function stored on the class. A **static** method belongs
+> to the class rather than to any instance, which is why it is called as
+> `Person.fromString(...)` and not `alex.fromString(...)`. Use one for a
+> factory, or a helper that does not need an instance.
+
+> **Background: do I need classes in JavaScript?**
+>
+> Less than you would in Java or C#. A plain object and a few functions do most
+> of what a class does, with less to learn and nothing to bind.
+>
+> Reach for a class when you have **state plus behaviour that belong together
+> and there will be several of them**: a queue, a cache, a parser, a
+> connection. Reach for a plain object when it is only data. Most application
+> code is the second, which is why the rest of this course uses far more
+> objects than classes.
+>
+> Note also that a class is not a separate kind of thing underneath.
+> JavaScript's inheritance works by one object delegating to another, and
+> `class` is a tidier way of writing that. You do not need the underlying
+> mechanism to use classes, but it explains why `this` behaves as it does.
+
 ```javascript
 class Person {
   constructor(name, age) {
@@ -969,6 +1293,7 @@ console.log(maria.greet()); // "Hi, I am Maria"
 ### Inheritance with `extends`
 
 ```javascript
+// Continues the previous example: Person must be in scope.
 class Employee extends Person {
   constructor(name, age, role) {
     super(name, age); // Call the parent constructor
@@ -1056,7 +1381,7 @@ export function multiply(a, b) {
 ```
 
 ```javascript
-// main.js
+// main.js  (save the math.js block above as math.js, beside this file)
 import { PI, add, multiply } from "./math.js";
 
 console.log(add(1, 2));     // 3
@@ -1076,7 +1401,7 @@ export default function log(message) {
 ```
 
 ```javascript
-// main.js
+// main.js  (save the logger.js block above as logger.js, beside this file)
 import log from "./logger.js"; // No braces for default imports
 
 log("Hello");
@@ -1092,13 +1417,14 @@ export function isAdult(user) { /* ... */ }
 ```
 
 ```javascript
-// main.js
+// main.js  (save the user.js block above as user.js, beside this file)
 import User, { MAX_AGE, isAdult } from "./user.js";
 ```
 
 ### Namespace import
 
 ```javascript
+// Needs the math.js block above, saved beside this file.
 import * as math from "./math.js";
 
 console.log(math.add(1, 2));
@@ -1108,7 +1434,7 @@ console.log(math.PI);
 ### Re-exports (barrel files)
 
 ```javascript
-// index.js
+// index.js  (needs math.js, user.js and logger.js beside it)
 export * from "./math.js";
 export * from "./user.js";
 export { default as log } from "./logger.js";
@@ -1337,6 +1663,35 @@ and `Array.fromAsync` when you are draining a stream or paging an API in order.
 
 `async` and `await` are syntactic sugar over Promises. They let you write asynchronous code that reads like synchronous code.
 
+> **Background: what does "asynchronous" mean, and why does JavaScript need it?**
+>
+> JavaScript runs your code on **one thread**. There is no second worker to
+> pick up the slack, so anything that waits, a file read, a network request, a
+> timer, would freeze everything else if it blocked: in a browser the page
+> stops responding to clicks, and on a server nothing else gets served.
+>
+> So the slow things do not block. They are started, your code carries on, and
+> when the result is ready the runtime comes back to the rest of your function.
+> That is what **asynchronous** means here: not "in parallel", but "not waiting
+> in line".
+>
+> A **Promise** is the object representing a result that has not arrived yet.
+> `await` says "pause this function here until that Promise settles, and let
+> everything else run meanwhile". `async` marks a function as one that is
+> allowed to pause, and makes it return a Promise itself.
+
+> **Background: if `await` pauses, what resumes it?**
+>
+> The **event loop**. Your code runs to a stopping point, then the runtime
+> checks a queue of things that have become ready, a file that finished
+> loading, a timer that expired, a response that arrived, and resumes whatever
+> was waiting on each.
+>
+> Two consequences worth carrying with you. Between an `await` and the line
+> after it, **other code has run**, so state you read before may have changed.
+> And a slow synchronous loop still blocks everything, because it never gives
+> the event loop a turn. `await` helps with waiting, not with work.
+
 **(2026)** The examples in this lesson read from disk rather than from a
 network, so that every one of them runs on your machine with nothing installed
 and nobody else's server involved. Lesson 14 explains why that is the default
@@ -1366,6 +1721,19 @@ async function loadPractitioners() {
 // Calling it returns a Promise
 loadPractitioners().then((list) => console.log(list.length)); // 3
 ```
+
+> **Background: `.then` and `await` are the same thing, written twice.**
+>
+> `loadPractitioners()` returns a Promise either way. `.then(fn)` says "run
+> `fn` when it settles". `await` says "pause here until it settles, then carry
+> on with the value".
+>
+> Use `await` in your own code: it reads top to bottom and the failing line
+> appears in the stack trace. You still need to recognise `.then`, because
+> library documentation is full of it.
+>
+> What you must not do is mix them on one call. `await x.then(...)` runs, and
+> is a sign that somebody was unsure which of the two they were using.
 
 ### try/catch with async/await
 
@@ -1449,6 +1817,7 @@ library, where every consumer then pays your latency at import time.
 **Exercise:** Convert this Promise chain to use async/await with proper error handling:
 
 ```javascript
+// The exercise: rewrite this chain with async/await.
 loadPractitioners()
   .then((list) => list.filter((p) => p.profession === "psychologist"))
   .then((psychologists) => psychologists.length)
@@ -1601,6 +1970,7 @@ server.listen(3100, () => console.log("Fixture server on http://localhost:3100")
 Run it with `node --watch server.js` in one terminal and call it from another:
 
 ```javascript
+// Needs getJSON from above, and server.js running in another terminal.
 const practitioners = await getJSON("http://localhost:3100/practitioners");
 console.log(practitioners.at(0).name); // "T. Nkosi"
 ```
@@ -1813,6 +2183,11 @@ The full set: `map`, `filter`, `take`, `drop`, `flatMap`, `reduce`, `toArray`,
 `forEach`, `some`, `every`, `find`.
 
 ```javascript
+function* naturals() {
+  let n = 1;
+  while (true) yield n++;
+}
+
 const evens = naturals().filter((n) => n % 2 === 0);
 console.log(evens.take(3).toArray()); // [2, 4, 6]
 

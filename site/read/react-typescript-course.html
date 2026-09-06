@@ -80,6 +80,26 @@ updates the screen. React abstracts away most direct DOM manipulation.</p>
 <p><strong>Vite</strong>, for a single-page application that talks to a backend you did not
 write. Mentisflow is exactly this: React 19 on Vite 8, talking to Firebase,
 wrapped in a Capacitor shell for the app stores.</p>
+<blockquote>
+<p><strong>Background (2026): what is a &quot;native shell&quot;, and what is Capacitor?</strong></p>
+<p>An app from an app store does not have to be written in Swift or Kotlin. One
+option is a <strong>native shell</strong>: a small native app whose whole job is to host a
+<strong>WebView</strong>, which is a browser engine with no address bar, running your
+ordinary web code. To the user it is an app; inside, it is your website.</p>
+<p>The shell also carries <strong>plugins</strong>, which give that web code access to things
+a browser cannot reach: the camera, biometrics, push notifications, the
+filesystem. <strong>Capacitor</strong> is the tool that builds such a shell for iOS and
+Android from a web project.</p>
+<p>Mentisflow does exactly this, so the same React bundle serves the website and
+runs inside the app. The catch is worth knowing: the plugin set is fixed when
+the shell is built and submitted, so shipping new JavaScript over the air
+cannot add native capability. Its own rules file calls the plugin set &quot;the
+frozen native plugin set&quot; and treats it as an invariant.</p>
+<p>The alternative is a framework such as <strong>Expo</strong>, which renders real native
+views rather than a web page. Casey Journals uses that. Neither is the right
+answer in general; a WebView is cheaper and shares one codebase, native
+views feel better and cost more.</p>
+</blockquote>
 <pre><code class="language-bash">npm create vite@latest my-app -- --template react-ts
 cd my-app
 npm install
@@ -118,6 +138,13 @@ Rollup. For course purposes nothing changes; builds are faster.</p>
 have its types removed, and JSX, which must become function calls. A build
 tool transforms your source into plain JavaScript, bundles many files into
 few, and runs a development server with hot reloading.</p>
+<p>Three words in that sentence: a <strong>bundler</strong> resolves your imports and
+produces a few files a browser can fetch efficiently, instead of hundreds.
+The result is called <strong>the bundle</strong>, and everything in it is readable by
+anyone who opens developer tools, which is why no secret may ever be in it.
+<strong>Hot reloading</strong> means the dev server swaps a changed module into the
+running page without a full refresh, so you keep whatever state you were
+looking at.</p>
 </blockquote>
 <h3>A note on TypeScript versions (2026)</h3>
 <p>The TypeScript course in this series teaches <strong>TypeScript 7</strong>. This course
@@ -150,6 +177,9 @@ those calls are inserted automatically, which is what <code>&quot;jsx&quot;: &qu
 <code>tsconfig.json</code> selects, and it is why you no longer need
 <code>import React from &quot;react&quot;</code> at the top of every file.</p>
 </blockquote>
+<p><strong>(2026)</strong> Any term this course uses without stopping to define, <code>bundler</code>,
+<code>hydration</code>, <code>webhook</code>, <code>middleware</code>, <code>RLS</code>, is defined once in
+<a href="glossary.html"><code>../GLOSSARY.md</code></a>.</p>
 <p>Confirm in <code>tsconfig.json</code> that <code>&quot;strict&quot;: true</code> and <code>&quot;jsx&quot;</code> is set
 (<code>&quot;react-jsx&quot;</code> for Vite, <code>&quot;preserve&quot;</code> for Next.js, which does its own
 transform).</p>
@@ -1673,9 +1703,20 @@ export function GET() {
 }
 </code></pre>
 <p>Use a Route Handler when the caller is <strong>not</strong> a React tree: a webhook from a
-payment provider, a health check, an RSS or podcast feed, an OpenGraph image.
+payment provider, a health check, an RSS or podcast feed, an OpenGraph image.</p>
+<blockquote>
+<p><strong>Background (2026): what is a webhook?</strong></p>
+<p>An HTTP request sent <strong>to you</strong> when something happens somewhere else: a
+payment succeeded, a build finished, a subscription lapsed. You do not ask
+for it; it arrives. That is the whole idea, and it is the opposite of the
+requests you have written so far.</p>
+<p>Two consequences follow immediately. Anyone on the internet can post to that
+URL, so the request must be <strong>signed</strong> and the signature verified before you
+believe a word of it. And providers retry on any failure, so handling the
+same delivery twice must not grant anything twice. The workbook covers both.
 Use a Server Action when the caller is your own form. Both are public; both
 validate.</p>
+</blockquote>
 <h3>Environment variables</h3>
 <pre><code class="language-ts">// Server only. Available in Server Components, actions, route handlers.
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -1702,6 +1743,16 @@ consider the <code>server-only</code> package, which makes the mistake a build e
 <p>A single file at the project root runs before every matching request. Use it
 for the small set of things that must happen before routing: security headers,
 a redirect, a cheap authentication check.</p>
+<blockquote>
+<p><strong>Background (2026): &quot;middleware&quot; means what exactly?</strong></p>
+<p>Code that sits in the middle: it runs after the request arrives and before
+your page or handler sees it, on every request that matches a pattern. It can
+add headers, redirect, or refuse.</p>
+<p>The name is used across the industry for the same shape, so you will meet it
+in Express, in Django, and in a proxy configuration. The rule is the same
+everywhere: keep it small and cheap, because it runs on <strong>every</strong> request. A
+database call in middleware is a database call on every request.</p>
+</blockquote>
 <pre><code class="language-ts">// middleware.ts
 import { NextResponse, type NextRequest } from &quot;next/server&quot;;
 

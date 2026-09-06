@@ -41,7 +41,9 @@ including everything added between ES2023 and ES2025.
 - [Course content](./javascript-course/course.md)
 - [Exercise solutions](./javascript-course/solutions.md)
 
-**What you will learn:** `let`, `const` and block scope; arrow functions,
+**What you will learn:** **(2026)** a ten-minute primer on variables, loops,
+functions and conditionals for anyone arriving from another language; `let`,
+`const` and block scope; arrow functions,
 template literals, destructuring; default, rest and spread; array and object
 methods including **(2026)** `at`, `findLast`, `toSorted`, `with` and
 `Object.groupBy`; optional chaining and nullish coalescing; classes; modules
@@ -179,8 +181,11 @@ and the traps, rather than a single correct answer.
 
 ## Prerequisites
 
-- Basic programming knowledge: variables, loops, functions, conditionals, in
-  any language
+- Some programming experience in any language. **(2026)** You no longer need
+  to arrive knowing variables, loops, functions and conditionals: JavaScript
+  Lesson 0a covers all four in about ten minutes, in JavaScript's spelling,
+  including the traps (`===` versus `==`, truthiness, calling a function
+  versus passing it).
 - **Node.js 24** or newer (`node --version`)
 - A code editor with TypeScript support
 - `git` and `curl`
@@ -200,6 +205,8 @@ ts-react-courses/
 ├── STACK.md                        (2026) the verified stack of the three
 │                                   products, the version baseline, and what
 │                                   could not be verified
+├── GLOSSARY.md                     (2026) every term the courses use in
+│                                   passing, defined once
 ├── LICENSE
 ├── javascript-course/
 │   ├── course.md

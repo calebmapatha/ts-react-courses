@@ -14,6 +14,7 @@ const PAGES = [
   { src: "../react-typescript-course/solutions.md",     out: "read/react-typescript-course-solutions.html", title: "React with TypeScript: answers" },
   { src: "../casey-workbook/workbook.md",               out: "read/workbook.html",                       title: "The Casey Workbook",             track: "workbook", solutions: "workbook-solutions.html" },
   { src: "../casey-workbook/solutions.md",              out: "read/workbook-solutions.html",             title: "The Casey Workbook: answers", solutions: "workbook.html" },
+  { src: "../GLOSSARY.md",                              out: "read/glossary.html",                       title: "Glossary" },
   { src: "../STACK.md",                                 out: "read/stack.html",                          title: "STACK" },
   { src: "../README.md",                                out: "read/readme.html",                         title: "README" }
 ];
@@ -39,7 +40,9 @@ const LINKS = {
   "./site/README.md":                              GH + "/site/README.md",
   "./casey-workbook/workbook.pdf":                 GH + "/casey-workbook/workbook.pdf",
   "./casey-workbook/solutions.pdf":                GH + "/casey-workbook/solutions.pdf",
-  "./LICENSE":                                     GH + "/LICENSE"
+  "./LICENSE":                                     GH + "/LICENSE",
+  "../GLOSSARY.md":                                "glossary.html",
+  "./GLOSSARY.md":                                 "glossary.html"
 };
 
 marked.setOptions({ gfm: true, mangle: false, headerIds: true });

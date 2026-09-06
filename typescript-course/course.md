@@ -16,6 +16,9 @@ Every sample was type-checked with `tsc --noEmit` against the `tsconfig.json`
 this course documents, and every runnable sample was executed on Node 24.20.0.
 The version table lives in `STACK.md` at the root of this repository.
 
+Any term this course uses without stopping to define is defined once in
+[`../GLOSSARY.md`](../GLOSSARY.md).
+
 Some samples are **meant** to fail, because the error is the lesson. Those
 carry a comment naming the error, like `// error TS1294`. Everything else
 type-checks clean.
