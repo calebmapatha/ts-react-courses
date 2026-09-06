@@ -27,6 +27,13 @@ worked through an earlier version of this course, those markers are the diff.</p
 <p><strong>Baseline (2026):</strong> Node.js 24 (Active LTS), ES modules only, no build step.
 Every sample in this course was run on Node 24.20.0 before publication. The
 version table lives in <code>STACK.md</code> at the root of this repository.</p>
+<p><strong>Every code block runs as written</strong>, so you can paste any one of them into a
+file and execute it. The only exceptions are labelled in the code itself, and
+there are three kinds: a block that needs a sibling file (the modules lesson
+says which), a block that needs a server running in another terminal (it says
+so), and the exercise prompts, which are the question rather than the answer.
+If a block has no such comment and it does not run, that is a bug worth
+reporting.</p>
 <hr>
 <h2>Lesson 0: Setup and Background</h2>
 <h3>What is JavaScript?</h3>
@@ -900,7 +907,13 @@ console.log(byList.nothing);        // undefined
 <p><code>Object.groupBy</code> returns a null-prototype object, so keys such as
 <code>&quot;constructor&quot;</code> or <code>&quot;toString&quot;</code> are safe. Keys are always coerced to strings.</p>
 <p>When you need keys that are not strings, use <code>Map.groupBy</code>:</p>
-<pre><code class="language-javascript">const done = Map.groupBy(tasks, (task) =&gt; task.list === &quot;today&quot;);
+<pre><code class="language-javascript">const tasks = [
+  { title: &quot;File the notice&quot;, list: &quot;today&quot; },
+  { title: &quot;Draft the letter&quot;, list: &quot;today&quot; },
+  { title: &quot;Renew the licence&quot;, list: &quot;later&quot; },
+];
+
+const done = Map.groupBy(tasks, (task) =&gt; task.list === &quot;today&quot;);
 console.log(done.get(true).length);  // 2
 console.log(done.get(false).length); // 1
 </code></pre>
@@ -921,7 +934,8 @@ read code six months later, &quot;what&quot; is the one you want. That is the wh
 argument for every method on this page.</p>
 </blockquote>
 <p><strong>Exercise:</strong> Write a function <code>pick(obj, keys)</code> that returns a new object containing only the specified keys.</p>
-<pre><code class="language-javascript">pick({ a: 1, b: 2, c: 3 }, [&quot;a&quot;, &quot;c&quot;]); // { a: 1, c: 3 }
+<pre><code class="language-javascript">// The exercise: make this call work.
+pick({ a: 1, b: 2, c: 3 }, [&quot;a&quot;, &quot;c&quot;]); // { a: 1, c: 3 }
 </code></pre>
 <hr>
 <h2>Lesson 9: Optional Chaining and Nullish Coalescing</h2>
@@ -1029,7 +1043,8 @@ const maria = Person.fromString(&quot;Maria,25&quot;);
 console.log(maria.greet()); // &quot;Hi, I am Maria&quot;
 </code></pre>
 <h3>Inheritance with <code>extends</code></h3>
-<pre><code class="language-javascript">class Employee extends Person {
+<pre><code class="language-javascript">// Continues the previous example: Person must be in scope.
+class Employee extends Person {
   constructor(name, age, role) {
     super(name, age); // Call the parent constructor
     this.role = role;
@@ -1101,7 +1116,7 @@ export function multiply(a, b) {
   return a * b;
 }
 </code></pre>
-<pre><code class="language-javascript">// main.js
+<pre><code class="language-javascript">// main.js  (save the math.js block above as math.js, beside this file)
 import { PI, add, multiply } from &quot;./math.js&quot;;
 
 console.log(add(1, 2));     // 3
@@ -1115,7 +1130,7 @@ export default function log(message) {
   console.log(`[${new Date().toISOString()}] ${message}`);
 }
 </code></pre>
-<pre><code class="language-javascript">// main.js
+<pre><code class="language-javascript">// main.js  (save the logger.js block above as logger.js, beside this file)
 import log from &quot;./logger.js&quot;; // No braces for default imports
 
 log(&quot;Hello&quot;);
@@ -1126,17 +1141,18 @@ export default class User { /* ... */ }
 export const MAX_AGE = 150;
 export function isAdult(user) { /* ... */ }
 </code></pre>
-<pre><code class="language-javascript">// main.js
+<pre><code class="language-javascript">// main.js  (save the user.js block above as user.js, beside this file)
 import User, { MAX_AGE, isAdult } from &quot;./user.js&quot;;
 </code></pre>
 <h3>Namespace import</h3>
-<pre><code class="language-javascript">import * as math from &quot;./math.js&quot;;
+<pre><code class="language-javascript">// Needs the math.js block above, saved beside this file.
+import * as math from &quot;./math.js&quot;;
 
 console.log(math.add(1, 2));
 console.log(math.PI);
 </code></pre>
 <h3>Re-exports (barrel files)</h3>
-<pre><code class="language-javascript">// index.js
+<pre><code class="language-javascript">// index.js  (needs math.js, user.js and logger.js beside it)
 export * from &quot;./math.js&quot;;
 export * from &quot;./user.js&quot;;
 export { default as log } from &quot;./logger.js&quot;;
@@ -1442,7 +1458,8 @@ console.log(practitioners.at(0).name); // &quot;T. Nkosi&quot;
 for a script and for reading configuration at startup. It is a poor idea in a
 library, where every consumer then pays your latency at import time.</p>
 <p><strong>Exercise:</strong> Convert this Promise chain to use async/await with proper error handling:</p>
-<pre><code class="language-javascript">loadPractitioners()
+<pre><code class="language-javascript">// The exercise: rewrite this chain with async/await.
+loadPractitioners()
   .then((list) =&gt; list.filter((p) =&gt; p.profession === &quot;psychologist&quot;))
   .then((psychologists) =&gt; psychologists.length)
   .then((count) =&gt; console.log(`Found ${count} psychologists`))
@@ -1563,7 +1580,8 @@ const server = createServer((request, response) =&gt; {
 server.listen(3100, () =&gt; console.log(&quot;Fixture server on http://localhost:3100&quot;));
 </code></pre>
 <p>Run it with <code>node --watch server.js</code> in one terminal and call it from another:</p>
-<pre><code class="language-javascript">const practitioners = await getJSON(&quot;http://localhost:3100/practitioners&quot;);
+<pre><code class="language-javascript">// Needs getJSON from above, and server.js running in another terminal.
+const practitioners = await getJSON(&quot;http://localhost:3100/practitioners&quot;);
 console.log(practitioners.at(0).name); // &quot;T. Nkosi&quot;
 </code></pre>
 <h3>Handling errors honestly</h3>
@@ -1736,7 +1754,12 @@ console.log(firstFiveSquares); // [1, 4, 9, 16, 25]
 </code></pre>
 <p>The full set: <code>map</code>, <code>filter</code>, <code>take</code>, <code>drop</code>, <code>flatMap</code>, <code>reduce</code>, <code>toArray</code>,
 <code>forEach</code>, <code>some</code>, <code>every</code>, <code>find</code>.</p>
-<pre><code class="language-javascript">const evens = naturals().filter((n) =&gt; n % 2 === 0);
+<pre><code class="language-javascript">function* naturals() {
+  let n = 1;
+  while (true) yield n++;
+}
+
+const evens = naturals().filter((n) =&gt; n % 2 === 0);
 console.log(evens.take(3).toArray()); // [2, 4, 6]
 
 console.log(naturals().drop(10).take(2).toArray()); // [11, 12]

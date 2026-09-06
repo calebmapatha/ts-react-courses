@@ -15,6 +15,14 @@ worked through an earlier version of this course, those markers are the diff.
 Every sample in this course was run on Node 24.20.0 before publication. The
 version table lives in `STACK.md` at the root of this repository.
 
+**Every code block runs as written**, so you can paste any one of them into a
+file and execute it. The only exceptions are labelled in the code itself, and
+there are three kinds: a block that needs a sibling file (the modules lesson
+says which), a block that needs a server running in another terminal (it says
+so), and the exercise prompts, which are the question rather than the answer.
+If a block has no such comment and it does not run, that is a bug worth
+reporting.
+
 ---
 
 ## Lesson 0: Setup and Background
@@ -1115,6 +1123,12 @@ console.log(byList.nothing);        // undefined
 When you need keys that are not strings, use `Map.groupBy`:
 
 ```javascript
+const tasks = [
+  { title: "File the notice", list: "today" },
+  { title: "Draft the letter", list: "today" },
+  { title: "Renew the licence", list: "later" },
+];
+
 const done = Map.groupBy(tasks, (task) => task.list === "today");
 console.log(done.get(true).length);  // 2
 console.log(done.get(false).length); // 1
@@ -1142,6 +1156,7 @@ console.log(done.get(false).length); // 1
 **Exercise:** Write a function `pick(obj, keys)` that returns a new object containing only the specified keys.
 
 ```javascript
+// The exercise: make this call work.
 pick({ a: 1, b: 2, c: 3 }, ["a", "c"]); // { a: 1, c: 3 }
 ```
 
@@ -1278,6 +1293,7 @@ console.log(maria.greet()); // "Hi, I am Maria"
 ### Inheritance with `extends`
 
 ```javascript
+// Continues the previous example: Person must be in scope.
 class Employee extends Person {
   constructor(name, age, role) {
     super(name, age); // Call the parent constructor
@@ -1365,7 +1381,7 @@ export function multiply(a, b) {
 ```
 
 ```javascript
-// main.js
+// main.js  (save the math.js block above as math.js, beside this file)
 import { PI, add, multiply } from "./math.js";
 
 console.log(add(1, 2));     // 3
@@ -1385,7 +1401,7 @@ export default function log(message) {
 ```
 
 ```javascript
-// main.js
+// main.js  (save the logger.js block above as logger.js, beside this file)
 import log from "./logger.js"; // No braces for default imports
 
 log("Hello");
@@ -1401,13 +1417,14 @@ export function isAdult(user) { /* ... */ }
 ```
 
 ```javascript
-// main.js
+// main.js  (save the user.js block above as user.js, beside this file)
 import User, { MAX_AGE, isAdult } from "./user.js";
 ```
 
 ### Namespace import
 
 ```javascript
+// Needs the math.js block above, saved beside this file.
 import * as math from "./math.js";
 
 console.log(math.add(1, 2));
@@ -1417,7 +1434,7 @@ console.log(math.PI);
 ### Re-exports (barrel files)
 
 ```javascript
-// index.js
+// index.js  (needs math.js, user.js and logger.js beside it)
 export * from "./math.js";
 export * from "./user.js";
 export { default as log } from "./logger.js";
@@ -1800,6 +1817,7 @@ library, where every consumer then pays your latency at import time.
 **Exercise:** Convert this Promise chain to use async/await with proper error handling:
 
 ```javascript
+// The exercise: rewrite this chain with async/await.
 loadPractitioners()
   .then((list) => list.filter((p) => p.profession === "psychologist"))
   .then((psychologists) => psychologists.length)
@@ -1952,6 +1970,7 @@ server.listen(3100, () => console.log("Fixture server on http://localhost:3100")
 Run it with `node --watch server.js` in one terminal and call it from another:
 
 ```javascript
+// Needs getJSON from above, and server.js running in another terminal.
 const practitioners = await getJSON("http://localhost:3100/practitioners");
 console.log(practitioners.at(0).name); // "T. Nkosi"
 ```
@@ -2164,6 +2183,11 @@ The full set: `map`, `filter`, `take`, `drop`, `flatMap`, `reduce`, `toArray`,
 `forEach`, `some`, `every`, `find`.
 
 ```javascript
+function* naturals() {
+  let n = 1;
+  while (true) yield n++;
+}
+
 const evens = naturals().filter((n) => n % 2 === 0);
 console.log(evens.take(3).toArray()); // [2, 4, 6]
 
