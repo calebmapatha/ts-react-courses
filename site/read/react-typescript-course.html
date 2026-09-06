@@ -1,0 +1,1961 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React with TypeScript · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>React with TypeScript: A Practical Course</h1>
+<p>Revised for 2026. A follow-on course for developers who completed the
+TypeScript fundamentals course. By the end you will be able to build, type,
+test, and ship a real React application, on either of the two stacks the Casey
+products actually run. Total time: roughly 18 to 24 hours with exercises.</p>
+<p>This course assumes you have completed the TypeScript course in this series and
+are comfortable with modern JavaScript. It does not assume prior React
+experience, but a passing familiarity helps.</p>
+<p>Material added or changed in the 2026 revision is marked <strong>(2026)</strong>.</p>
+<p><strong>Baseline (2026):</strong> React 19.2, TypeScript 5.9 (see the note in Lesson 0 on
+why this course pins 5.9 and not 7), and one of two toolchains:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Stack</th>
+<th>Which product runs it</th>
+<th>Where it appears here</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Next.js</strong></td>
+<td>Next.js 16.3, App Router, Server Components</td>
+<td>Casey Journals (<code>apps/web/package.json</code>)</td>
+<td>Lesson 16, and the capstone</td>
+</tr>
+<tr>
+<td><strong>Vite</strong></td>
+<td>Vite 8, React Router 7, Vitest 4</td>
+<td>Mentisflow (<code>mentisflow/package.json</code>)</td>
+<td>Lessons 0 to 15, and Lesson 12</td>
+</tr>
+</tbody></table>
+<p>Both paths are here because both are real. Lessons 1 to 15 are the same on
+either: components, hooks, forms, patterns and tests do not change. Lesson 16
+is the Next.js path. Lesson 12 is the Vite path&#39;s routing. Read both; build the
+capstone on Next.js.</p>
+<p>The full version table is in <code>STACK.md</code> at the root of this repository.</p>
+<hr>
+<h2>Lesson 0: Setup</h2>
+<h3>What is React?</h3>
+<p>React is a JavaScript library, created by Meta, for building user interfaces.
+You describe what your interface should look like for a given state, and React
+works out how to update the page when the state changes. It is the most widely
+used UI library in the industry.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;library&quot; versus a &quot;framework&quot;?</strong></p>
+<p>A library is a collection of code you call into when you need it. A framework
+calls into your code: it owns the application&#39;s structure and you fill in the
+parts. React is technically a library because it focuses on rendering. Next.js
+is a framework built on React that provides routing, server rendering and
+project structure.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is the DOM?</strong></p>
+<p>DOM stands for Document Object Model. It is the in-memory structure the
+browser uses to represent the page. When you write HTML, the browser parses it
+into a DOM tree. JavaScript can read and modify that tree, and the browser
+updates the screen. React abstracts away most direct DOM manipulation.</p>
+</blockquote>
+<h3>Which path should I set up? (2026)</h3>
+<p>Both, eventually. Start with whichever matches what you are working on.</p>
+<p><strong>Vite</strong>, for a single-page application that talks to a backend you did not
+write. Mentisflow is exactly this: React 19 on Vite 8, talking to Firebase,
+wrapped in a Capacitor shell for the app stores.</p>
+<pre><code class="language-bash">npm create vite@latest my-app -- --template react-ts
+cd my-app
+npm install
+npm run dev          # http://localhost:5173
+</code></pre>
+<p><strong>Next.js</strong>, for anything that needs server rendering: a public site that lives
+on search and share previews, a paywall that must be enforced before the HTML
+is written, or security headers. Casey Journals is exactly this.</p>
+<pre><code class="language-bash">npx create-next-app@latest my-app --typescript --app --no-src-dir
+cd my-app
+npm run dev          # http://localhost:3000
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): How do I choose, rather than guess?</strong></p>
+<p>Ask one question: <strong>does anything have to be decided before the HTML is
+written?</strong></p>
+<p>If a paywall must withhold text, if a page must be indexable, if a
+Content-Security-Policy header must be set, if an OpenGraph image must be
+generated, then something must run on a server for each request and Next.js
+gives you that as a first-class thing.</p>
+<p>If the app is behind a login, renders nothing a crawler cares about, and
+talks to a backend that already enforces its own rules, a Vite single-page
+app is simpler and there is no server to operate. Casey Journals wrote its
+reasoning down: its predecessor was a Vite app that &quot;needed an edge function
+just to render OG images and could not set security headers&quot;.</p>
+</blockquote>
+<h3>What is Vite?</h3>
+<p>Vite is a build tool: a fast development server, a production bundler, and
+TypeScript support with no configuration. It replaced Create React App as the
+default React starter.</p>
+<p><strong>(2026)</strong> Vite 8 bundles with <strong>Rolldown</strong>, a Rust bundler, in place of
+Rollup. For course purposes nothing changes; builds are faster.</p>
+<blockquote>
+<p><strong>Background: Why does React need a build tool at all?</strong></p>
+<p>React code uses two things browsers do not understand: TypeScript, which must
+have its types removed, and JSX, which must become function calls. A build
+tool transforms your source into plain JavaScript, bundles many files into
+few, and runs a development server with hot reloading.</p>
+</blockquote>
+<h3>A note on TypeScript versions (2026)</h3>
+<p>The TypeScript course in this series teaches <strong>TypeScript 7</strong>. This course
+pins <strong>5.9</strong>, because that is what Casey Journals pins (<code>packages/tsconfig</code>,
+every <code>package.json</code>) and because the React ecosystem&#39;s type definitions and
+editor plugins were still catching up to 7 at the time of writing.</p>
+<p>Nothing in this course depends on the difference. The language is the same; 7
+is a faster checker with stricter defaults. When your React project moves to 7,
+the things that will bite are the ones Lesson 0 of the TypeScript course lists:
+<code>types</code> defaulting to <code>[]</code>, and <code>strict</code> being on whether you asked or not.</p>
+<h3>Files and extensions</h3>
+<pre><code>my-app/
+  app/            (Next.js) routes, layouts, server actions
+  src/            (Vite) components and entry point
+  tsconfig.json
+  next.config.ts  or  vite.config.ts
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the difference between <code>.ts</code> and <code>.tsx</code>?</strong></p>
+<p><code>.tsx</code> is required for any file containing JSX. The compiler needs the
+extension to know whether to parse the angle brackets as markup or as type
+parameters. Files with no JSX use <code>.ts</code>.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is JSX?</strong></p>
+<p>JSX is a syntax extension that lets you write markup-like code inside
+JavaScript: <code>const greeting = &lt;h1&gt;Hello&lt;/h1&gt;</code>. It is not HTML. The build tool
+converts it into function calls that produce React elements. Since React 17
+those calls are inserted automatically, which is what <code>&quot;jsx&quot;: &quot;react-jsx&quot;</code> in
+<code>tsconfig.json</code> selects, and it is why you no longer need
+<code>import React from &quot;react&quot;</code> at the top of every file.</p>
+</blockquote>
+<p>Confirm in <code>tsconfig.json</code> that <code>&quot;strict&quot;: true</code> and <code>&quot;jsx&quot;</code> is set
+(<code>&quot;react-jsx&quot;</code> for Vite, <code>&quot;preserve&quot;</code> for Next.js, which does its own
+transform).</p>
+<p><strong>(2026)</strong> Add <code>&quot;noUncheckedIndexedAccess&quot;: true</code> as well. Casey Journals sets
+it in <code>packages/tsconfig/base.json</code>, and it catches the single most common
+React crash: reading <code>items[0].name</code> on a list that turned out to be empty.</p>
+<hr>
+<h2>Lesson 1: Typing Function Components</h2>
+<p>A React component is just a function that returns JSX. Type it like any other function.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;component&quot;?</strong></p>
+<p>A component is a reusable piece of UI. In React, a component is a function that takes some inputs (props) and returns a description of what to render. Components can be combined: a <code>Page</code> component might use <code>Header</code>, <code>Sidebar</code>, and <code>Footer</code> components. This composition is the core of how React apps are built.</p>
+</blockquote>
+<pre><code class="language-tsx">function Greeting() {
+  return &lt;h1&gt;Hello, world&lt;/h1&gt;;
+}
+
+export default Greeting;
+</code></pre>
+<p>When a component takes props, define their shape:</p>
+<blockquote>
+<p><strong>Background: What are &quot;props&quot;?</strong></p>
+<p>Props (short for &quot;properties&quot;) are the inputs to a component, similar to function arguments. They are passed in JSX like HTML attributes: <code>&lt;Greeting name=&quot;Sam&quot; /&gt;</code>. Inside the component, props are received as a single object parameter. Props let you reuse the same component with different data.</p>
+</blockquote>
+<pre><code class="language-tsx">interface GreetingProps {
+  name: string;
+  age?: number; // optional
+}
+
+function Greeting({ name, age }: GreetingProps) {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Hello, {name}&lt;/h1&gt;
+      {age !== undefined &amp;&amp; &lt;p&gt;You are {age} years old&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}
+
+// Usage
+&lt;Greeting name=&quot;Sam&quot; /&gt;
+&lt;Greeting name=&quot;Sam&quot; age={30} /&gt;
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>{age !== undefined &amp;&amp; &lt;p&gt;...&lt;/p&gt;}</code> do?</strong></p>
+<p>This is &quot;conditional rendering&quot;. JSX inside curly braces is evaluated as a JavaScript expression. The <code>&amp;&amp;</code> operator returns the right side only if the left side is truthy, otherwise it returns the left side. React ignores <code>false</code>, <code>null</code>, and <code>undefined</code>, so this pattern shows the paragraph only when <code>age</code> is provided.</p>
+</blockquote>
+<p>Avoid <code>React.FC</code> (or <code>React.FunctionComponent</code>). It used to be the standard, but modern guidance is to type props directly. It causes minor issues with generics and <code>children</code>.</p>
+<p><strong>Exercise:</strong> Build a <code>Card</code> component that takes a <code>title</code>, optional <code>subtitle</code>, and a numeric <code>priority</code> (1, 2, or 3 only). Render different border colors based on priority.</p>
+<hr>
+<h2>Lesson 2: The Children Prop</h2>
+<p>The <code>children</code> prop holds whatever is nested inside your component. Type it with <code>React.ReactNode</code>:</p>
+<blockquote>
+<p><strong>Background: What is <code>children</code>?</strong></p>
+<p>When a component is used with content between its opening and closing tags, that content is automatically passed to the component as a special prop called <code>children</code>. This lets components wrap arbitrary content. A <code>Card</code> component, for instance, can render its <code>children</code> inside a styled container without knowing in advance what the content will be.</p>
+</blockquote>
+<pre><code class="language-tsx">import { ReactNode } from &quot;react&quot;;
+
+interface CardProps {
+  title: string;
+  children: ReactNode;
+}
+
+function Card({ title, children }: CardProps) {
+  return (
+    &lt;div className=&quot;card&quot;&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      &lt;div&gt;{children}&lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Usage
+&lt;Card title=&quot;Welcome&quot;&gt;
+  &lt;p&gt;This is the body&lt;/p&gt;
+  &lt;button&gt;Click me&lt;/button&gt;
+&lt;/Card&gt;
+</code></pre>
+<p><code>ReactNode</code> accepts strings, numbers, JSX elements, arrays, null, undefined, and booleans. It is the most permissive child type and almost always what you want.</p>
+<p><strong>Exercise:</strong> Build a <code>Modal</code> component that takes a <code>title</code>, <code>isOpen</code> boolean, <code>onClose</code> callback, and <code>children</code>. Hide it when not open.</p>
+<hr>
+<h2>Lesson 3: useState</h2>
+<p><code>useState</code> infers the type from the initial value. When inference is enough, do not annotate:</p>
+<blockquote>
+<p><strong>Background: What is &quot;state&quot;?</strong></p>
+<p>State is the data that a component holds and that can change over time. When state changes, React re-renders the component to reflect the new state on screen. Examples include the current value of a text input, whether a modal is open, or a counter value. State is local to the component that owns it (unlike props, which are passed down).</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is a &quot;hook&quot;?</strong></p>
+<p>A hook is a special function that lets a component use React features. All hook names start with <code>use</code> (like <code>useState</code>, <code>useEffect</code>, <code>useRef</code>). Hooks must be called at the top level of a component, never inside loops, conditions, or nested functions. This rule lets React track which hook is which between renders.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useState } from &quot;react&quot;;
+
+function Counter() {
+  const [count, setCount] = useState(0); // inferred as number
+
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Count: {count}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: Why does <code>useState</code> return an array?</strong></p>
+<p><code>useState</code> returns a tuple: the current value and a setter function. Destructuring gives them names of your choice (<code>count</code> and <code>setCount</code> here). When you call the setter, React re-renders the component with the new value. The values are independent across components, so each <code>Counter</code> has its own count.</p>
+</blockquote>
+<p>When the initial value cannot describe all possible states, annotate explicitly:</p>
+<pre><code class="language-tsx">const [user, setUser] = useState&lt;User | null&gt;(null);
+const [items, setItems] = useState&lt;string[]&gt;([]);
+const [status, setStatus] = useState&lt;&quot;idle&quot; | &quot;loading&quot; | &quot;error&quot; | &quot;success&quot;&gt;(&quot;idle&quot;);
+</code></pre>
+<p>For object state, prefer multiple <code>useState</code> calls or <code>useReducer</code> for complex updates.</p>
+<p><strong>Exercise:</strong> Build a counter with three buttons: increment, decrement, and reset. Add a state field that tracks the highest value reached during the session.</p>
+<hr>
+<h2>Lesson 4: Event Handlers</h2>
+<p>React event types are namespaced. The most common ones:</p>
+<blockquote>
+<p><strong>Background: What is a &quot;synthetic event&quot;?</strong></p>
+<p>When you attach an event handler in React (like <code>onClick</code>), you receive a &quot;synthetic event&quot; object instead of the browser&#39;s native event. Synthetic events provide the same data but normalize differences across browsers. They are what TypeScript types like <code>React.MouseEvent&lt;HTMLButtonElement&gt;</code> describe.</p>
+</blockquote>
+<pre><code class="language-tsx">function Form() {
+  const [value, setValue] = useState(&quot;&quot;);
+
+  // Input change
+  const handleChange = (event: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
+    setValue(event.target.value);
+  };
+
+  // Form submit
+  const handleSubmit = (event: React.FormEvent&lt;HTMLFormElement&gt;) =&gt; {
+    event.preventDefault();
+    console.log(&quot;Submitted:&quot;, value);
+  };
+
+  // Button click
+  const handleClick = (event: React.MouseEvent&lt;HTMLButtonElement&gt;) =&gt; {
+    console.log(&quot;Clicked at&quot;, event.clientX, event.clientY);
+  };
+
+  // Keyboard
+  const handleKey = (event: React.KeyboardEvent&lt;HTMLInputElement&gt;) =&gt; {
+    if (event.key === &quot;Enter&quot;) console.log(&quot;Enter pressed&quot;);
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input value={value} onChange={handleChange} onKeyDown={handleKey} /&gt;
+      &lt;button onClick={handleClick}&gt;Submit&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<p>Inline handlers usually have their types inferred:</p>
+<pre><code class="language-tsx">&lt;input onChange={(e) =&gt; setValue(e.target.value)} /&gt;
+// e is correctly typed as React.ChangeEvent&lt;HTMLInputElement&gt;
+</code></pre>
+<p>The pattern <code>React.SomethingEvent&lt;HTMLElementType&gt;</code> covers most needs. Match the element to the event source.</p>
+<p><strong>Exercise:</strong> Build a search box that calls a <code>onSearch(query: string)</code> callback when the user presses Enter. Add a clear button with a click handler.</p>
+<hr>
+<h2>Lesson 5: useEffect and useRef</h2>
+<p><code>useEffect</code> does not need type annotations; the function signature is fixed.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;side effect&quot;?</strong></p>
+<p>A side effect is anything a component does besides returning JSX. Examples: fetching data, setting up a timer, subscribing to a WebSocket, updating the document title. React&#39;s render function should be pure (only return JSX based on inputs), so side effects go in <code>useEffect</code>. The effect runs after React has updated the DOM.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is the &quot;dependency array&quot;?</strong></p>
+<p>The second argument to <code>useEffect</code> is an array of values the effect depends on. After every render, React compares the array to the previous render&#39;s array. If anything changed, React runs the effect again. An empty array <code>[]</code> means &quot;run only once after the first render&quot;. Omitting the array means &quot;run after every render&quot;, which is rarely what you want.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useEffect, useState } from &quot;react&quot;;
+
+function Clock() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() =&gt; {
+    const id = setInterval(() =&gt; setNow(new Date()), 1000);
+    return () =&gt; clearInterval(id); // cleanup
+  }, []);
+
+  return &lt;p&gt;{now.toLocaleTimeString()}&lt;/p&gt;;
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What does the &quot;cleanup function&quot; do?</strong></p>
+<p>When a <code>useEffect</code> callback returns a function, React calls that function before running the effect again, and once more when the component is removed from the page (unmounted). Cleanup is essential for canceling timers, removing event listeners, and aborting network requests. Forgetting cleanup causes memory leaks and bugs.</p>
+</blockquote>
+<p><code>useRef</code> has two main forms:</p>
+<blockquote>
+<p><strong>Background: What is a &quot;ref&quot;?</strong></p>
+<p>A ref is a container that holds a mutable value across renders without triggering re-renders when it changes. The most common use is getting a direct handle on a DOM element (so you can call <code>.focus()</code> or measure its size). Refs can also store any value you want to keep between renders without causing updates: timer ids, previous values, or instance variables.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useRef, useEffect } from &quot;react&quot;;
+
+function FocusInput() {
+  // For DOM elements: provide the element type, initialize with null
+  const inputRef = useRef&lt;HTMLInputElement&gt;(null);
+
+  useEffect(() =&gt; {
+    inputRef.current?.focus();
+  }, []);
+
+  return &lt;input ref={inputRef} /&gt;;
+}
+
+function Timer() {
+  // For mutable values: type the value, no JSX involved
+  const intervalRef = useRef&lt;number | null&gt;(null);
+
+  const start = () =&gt; {
+    intervalRef.current = window.setInterval(() =&gt; console.log(&quot;tick&quot;), 1000);
+  };
+
+  const stop = () =&gt; {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  return (
+    &lt;&gt;
+      &lt;button onClick={start}&gt;Start&lt;/button&gt;
+      &lt;button onClick={stop}&gt;Stop&lt;/button&gt;
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p>The <code>?.</code> (optional chaining) is essential because <code>current</code> may be <code>null</code> before the element mounts.</p>
+<blockquote>
+<p><strong>Background: What does &quot;mounting&quot; mean?</strong></p>
+<p>When React first inserts a component into the DOM, the component is &quot;mounted&quot;. When it is removed, it is &quot;unmounted&quot;. Some operations (like reading a DOM element) only work after the component is mounted, which is why <code>useEffect</code> runs after mounting rather than during render.</p>
+</blockquote>
+<h3><code>ref</code> is an ordinary prop (2026)</h3>
+<p>In React 18 and earlier, a function component could not receive a <code>ref</code>. You
+had to wrap it in <code>forwardRef</code>:</p>
+<pre><code class="language-tsx">// React 18. You will meet this in every codebase written before 2025.
+import { forwardRef } from &quot;react&quot;;
+
+type Props = { label: string };
+
+const TextField = forwardRef&lt;HTMLInputElement, Props&gt;(function TextField(
+  { label },
+  ref,
+) {
+  return (
+    &lt;label&gt;
+      {label}
+      &lt;input ref={ref} /&gt;
+    &lt;/label&gt;
+  );
+});
+</code></pre>
+<p><strong>In React 19, <code>ref</code> is just a prop.</strong></p>
+<pre><code class="language-tsx">type Props = {
+  label: string;
+  ref?: React.Ref&lt;HTMLInputElement&gt;;
+};
+
+function TextField({ label, ref }: Props) {
+  return (
+    &lt;label&gt;
+      {label}
+      &lt;input ref={ref} /&gt;
+    &lt;/label&gt;
+  );
+}
+</code></pre>
+<p>No wrapper, no second parameter, no generic argument in the wrong order, and
+the component keeps its own name in React DevTools without the
+<code>function TextField</code> trick above.</p>
+<blockquote>
+<p><strong>Background (2026): Should I rewrite every <code>forwardRef</code> in my codebase?</strong></p>
+<p>No. <code>forwardRef</code> still works and is not going anywhere soon. Write new
+components the new way, and convert an old one when you are already editing
+it. Ecosystem-wide flag days are how projects lose weeks.</p>
+</blockquote>
+<h3>Ref cleanup functions (2026)</h3>
+<p>A ref callback may now return a cleanup function, exactly like an effect.</p>
+<pre><code class="language-tsx">function Measured() {
+  return (
+    &lt;div
+      ref={(node) =&gt; {
+        if (node === null) return;
+        const observer = new ResizeObserver(([entry]) =&gt; {
+          if (entry !== undefined) console.log(entry.contentRect.width);
+        });
+        observer.observe(node);
+        return () =&gt; observer.disconnect();
+      }}
+    /&gt;
+  );
+}
+</code></pre>
+<p>Before this, React called your ref callback with <code>null</code> on unmount and you
+had to handle both cases in one function. <strong>Note the consequence:</strong> because a
+returned function is now treated as cleanup, a ref callback with an implicit
+arrow-function body that happens to return something is an error. Write
+<code>ref={(node) =&gt; { thing.current = node; }}</code> with braces, not
+<code>ref={(node) =&gt; (thing.current = node)}</code>.</p>
+<h3>useEffectEvent (2026)</h3>
+<p>An effect that reads a value but should not re-run when it changes is the
+oldest problem with the dependency array. The old workarounds were a ref, or a
+lint-rule suppression, and both were wrong in different ways.</p>
+<pre><code class="language-tsx">import { useEffect, useEffectEvent } from &quot;react&quot;;
+
+function ChatRoom({ roomId, theme }: { roomId: string; theme: string }) {
+  // onConnected always sees the LATEST theme, but is not a dependency.
+  const onConnected = useEffectEvent(() =&gt; {
+    showNotification(&quot;Connected&quot;, theme);
+  });
+
+  useEffect(() =&gt; {
+    const connection = createConnection(roomId);
+    connection.on(&quot;connected&quot;, () =&gt; onConnected());
+    connection.connect();
+    return () =&gt; connection.disconnect();
+  }, [roomId]); // theme is deliberately absent, and the linter agrees
+
+  return &lt;h1&gt;Welcome to {roomId}&lt;/h1&gt;;
+}
+</code></pre>
+<p>Without it, either <code>theme</code> is a dependency and changing the theme reconnects
+the chat, or you suppress the lint rule and <code>theme</code> goes stale.</p>
+<blockquote>
+<p><strong>Background (2026): Is this stable?</strong></p>
+<p>Yes. <code>useEffectEvent</code> landed as a plain export in the React 19.2 line and is
+typed in <code>@types/react</code> (<code>export function useEffectEvent&lt;T extends Function&gt;(callback: T): T;</code>,
+marked <code>@version 19.2.0</code>). Verified against <code>react@19.2.8</code> and
+<code>@types/react@19.2.18</code>. If you have read older material telling you to import
+<code>experimental_useEffectEvent</code>, that advice has expired.</p>
+<p>One rule comes with it: <strong>an effect event may only be called from inside an
+effect.</strong> Calling one from an event handler or passing it to a child defeats
+the point, because its whole nature is that it is not reactive.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Build a <code>useDocumentTitle(title: string)</code> effect that updates the browser tab title and restores the previous title on unmount.</p>
+<hr>
+<h2>Lesson 6: useReducer</h2>
+<p>Use <code>useReducer</code> when state has multiple related fields or complex transitions. Combine it with discriminated unions for full type safety.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;reducer&quot;?</strong></p>
+<p>A reducer is a function <code>(state, action) =&gt; newState</code>. It takes the current state and a description of what happened (the action), and returns the new state. Reducers must be pure: given the same inputs, always return the same output, with no side effects. This pattern centralizes all state changes in one place, which makes complex updates easier to reason about. The pattern comes from the Redux library and made it into React itself as <code>useReducer</code>.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useReducer } from &quot;react&quot;;
+
+interface CartItem {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
+interface CartState {
+  items: CartItem[];
+  total: number;
+}
+
+type CartAction =
+  | { type: &quot;add&quot;; item: CartItem }
+  | { type: &quot;remove&quot;; id: string }
+  | { type: &quot;updateQuantity&quot;; id: string; quantity: number }
+  | { type: &quot;clear&quot; };
+
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case &quot;add&quot;:
+      return {
+        ...state,
+        items: [...state.items, action.item],
+        total: state.total + action.item.quantity,
+      };
+    case &quot;remove&quot;:
+      return {
+        ...state,
+        items: state.items.filter((i) =&gt; i.id !== action.id),
+      };
+    case &quot;updateQuantity&quot;:
+      return {
+        ...state,
+        items: state.items.map((i) =&gt;
+          i.id === action.id ? { ...i, quantity: action.quantity } : i,
+        ),
+      };
+    case &quot;clear&quot;:
+      return { items: [], total: 0 };
+  }
+}
+
+function Cart() {
+  const [state, dispatch] = useReducer(cartReducer, { items: [], total: 0 });
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Total items: {state.total}&lt;/p&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: &quot;clear&quot; })}&gt;Clear&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>The <code>switch</code> with discriminated actions gives you exhaustive type checking. If you add a new action variant, TypeScript will complain about every reducer that does not handle it.</p>
+<p><strong>Exercise:</strong> Build a <code>useReducer</code>-based todo list with actions for <code>add</code>, <code>toggle</code>, <code>remove</code>, and <code>editText</code>.</p>
+<hr>
+<h2>Lesson 7: Context API</h2>
+<p>Context lets you share state without passing props through every level. Type it carefully.</p>
+<blockquote>
+<p><strong>Background: What problem does &quot;context&quot; solve?</strong></p>
+<p>When data is needed by many components at different depths in the component tree, passing it as props through every level becomes tedious. This is called &quot;prop drilling&quot;. Context lets you provide a value at one point in the tree and read it from anywhere below, without manually passing it through. Common uses: the current user, the theme, the language.</p>
+</blockquote>
+<pre><code class="language-tsx">import { createContext, useContext, useState, ReactNode } from &quot;react&quot;;
+
+interface User {
+  id: string;
+  name: string;
+}
+
+interface AuthContextValue {
+  user: User | null;
+  login: (user: User) =&gt; void;
+  logout: () =&gt; void;
+}
+
+const AuthContext = createContext&lt;AuthContextValue | undefined&gt;(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState&lt;User | null&gt;(null);
+
+  const login = (user: User) =&gt; setUser(user);
+  const logout = () =&gt; setUser(null);
+
+  return (
+    &lt;AuthContext.Provider value={{ user, login, logout }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+// Custom hook makes consumption type-safe and ergonomic
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error(&quot;useAuth must be used within an AuthProvider&quot;);
+  }
+  return context;
+}
+</code></pre>
+<p>The <code>undefined</code> default and runtime check force consumers to be inside the provider. Without this guard, every consumer would have to handle a possibly-missing context.</p>
+<h3><code>&lt;Context&gt;</code> as a provider, and <code>use()</code> (2026)</h3>
+<p>Two changes.</p>
+<p><strong>A context is its own provider.</strong> <code>&lt;AuthContext.Provider&gt;</code> still works and is
+deprecated.</p>
+<pre><code class="language-tsx">// React 19
+return &lt;AuthContext value={{ user, login, logout }}&gt;{children}&lt;/AuthContext&gt;;
+</code></pre>
+<p><strong><code>use()</code> reads a context, and it may be called conditionally.</strong></p>
+<pre><code class="language-tsx">import { use } from &quot;react&quot;;
+
+function Greeting({ signedIn }: { signedIn: boolean }) {
+  if (!signedIn) return &lt;p&gt;Please sign in.&lt;/p&gt;;
+
+  // Legal. `useContext` here would break the rules of hooks.
+  const { user } = use(AuthContext);
+  return &lt;p&gt;Hello, {user?.name ?? &quot;friend&quot;}.&lt;/p&gt;;
+}
+</code></pre>
+<p><code>use()</code> is not a hook in the usual sense: it may sit inside an <code>if</code>, inside a
+loop, or after an early return. It may not be called inside a <code>try</code> block, and
+it may not be called from an event handler or an effect.</p>
+<p><strong><code>use()</code> also unwraps a promise.</strong></p>
+<pre><code class="language-tsx">import { Suspense, use } from &quot;react&quot;;
+
+function Articles({ articlesPromise }: { articlesPromise: Promise&lt;Article[]&gt; }) {
+  const articles = use(articlesPromise); // suspends until it resolves
+  return &lt;ul&gt;{articles.map((a) =&gt; &lt;li key={a.slug}&gt;{a.title}&lt;/li&gt;)}&lt;/ul&gt;;
+}
+
+function Page({ articlesPromise }: { articlesPromise: Promise&lt;Article[]&gt; }) {
+  return (
+    &lt;Suspense fallback={&lt;p&gt;Loading&lt;/p&gt;}&gt;
+      &lt;Articles articlesPromise={articlesPromise} /&gt;
+    &lt;/Suspense&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Where does the promise come from?</strong></p>
+<p>Not from inside the component. Creating a promise during render creates a new
+one on every render, and the component suspends forever. The promise is
+created by a <strong>parent that does not re-render often</strong>, by a framework, or by a
+cache. In Next.js the natural source is a Server Component passing an
+unawaited promise down to a Client Component, which is how you stream: the
+server sends the shell immediately and the data when it arrives.</p>
+<p>For ordinary client-side fetching, keep using TanStack Query (Lesson 11).
+<code>use()</code> is a primitive, not a replacement for a cache.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Build a <code>ThemeContext</code> with <code>theme</code> (&quot;light&quot; or &quot;dark&quot;) and <code>toggleTheme</code>. Use it in a component that switches CSS classes.</p>
+<hr>
+<h2>Lesson 8: Custom Hooks</h2>
+<p>Custom hooks are functions starting with <code>use</code> that call other hooks. Type them like any function.</p>
+<blockquote>
+<p><strong>Background: Why write custom hooks?</strong></p>
+<p>Custom hooks let you extract reusable logic that uses React features. If two components need to read from local storage and stay in sync, you can put that logic in a <code>useLocalStorage</code> hook and call it from both. The naming convention (starting with <code>use</code>) is enforced by linters and tells React this function follows the hook rules.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useState, useEffect } from &quot;react&quot;;
+
+function useLocalStorage&lt;T&gt;(key: string, initialValue: T): [T, (value: T) =&gt; void] {
+  const [value, setValue] = useState&lt;T&gt;(() =&gt; {
+    const stored = localStorage.getItem(key);
+    if (stored === null) return initialValue;
+    try {
+      return JSON.parse(stored) as T;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() =&gt; {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
+// Usage
+const [name, setName] = useLocalStorage&lt;string&gt;(&quot;username&quot;, &quot;&quot;);
+const [todos, setTodos] = useLocalStorage&lt;Todo[]&gt;(&quot;todos&quot;, []);
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the function form of <code>useState</code>?</strong></p>
+<p>When you pass a function to <code>useState</code> (instead of a value), React only calls it on the first render. This is useful for expensive initialization, like reading from local storage. Without the function form, <code>localStorage.getItem</code> would be called on every render, even though the result is only needed once.</p>
+</blockquote>
+<p>A pattern: return a tuple for hooks that mimic <code>useState</code>, return an object for hooks with multiple unrelated values.</p>
+<pre><code class="language-tsx">function useFetch&lt;T&gt;(url: string) {
+  const [data, setData] = useState&lt;T | null&gt;(null);
+  const [error, setError] = useState&lt;Error | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    let cancelled = false;
+    setLoading(true);
+    fetch(url)
+      .then((r) =&gt; r.json())
+      .then((json: T) =&gt; {
+        if (!cancelled) setData(json);
+      })
+      .catch((e: Error) =&gt; {
+        if (!cancelled) setError(e);
+      })
+      .finally(() =&gt; {
+        if (!cancelled) setLoading(false);
+      });
+    return () =&gt; {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return { data, error, loading };
+}
+</code></pre>
+<p>Note: in real apps, use TanStack Query (Lesson 11) instead of writing fetch hooks by hand.</p>
+<p><strong>Exercise:</strong> Write a <code>useDebounce&lt;T&gt;(value: T, delay: number): T</code> hook that returns a debounced version of the value.</p>
+<blockquote>
+<p><strong>Background: What does &quot;debounce&quot; mean?</strong></p>
+<p>Debouncing means waiting until a value stops changing before reacting. If a user is typing in a search box, you do not want to fire a request on every keystroke. A debounce hook returns the latest value only after the user has paused typing for some delay (say, 500ms). It is a common pattern for search inputs and resize handlers.</p>
+</blockquote>
+<hr>
+<h2>Lesson 9: Generic Components</h2>
+<p>Components can be generic, just like functions. The classic example is a list:</p>
+<pre><code class="language-tsx">interface ListProps&lt;T&gt; {
+  items: T[];
+  renderItem: (item: T) =&gt; ReactNode;
+  keyOf: (item: T) =&gt; string | number;
+}
+
+function List&lt;T&gt;({ items, renderItem, keyOf }: ListProps&lt;T&gt;) {
+  return (
+    &lt;ul&gt;
+      {items.map((item) =&gt; (
+        &lt;li key={keyOf(item)}&gt;{renderItem(item)}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+
+// Usage with full type safety
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [
+  { id: 1, name: &quot;Alice&quot;, email: &quot;a@x.com&quot; },
+  { id: 2, name: &quot;Bob&quot;, email: &quot;b@x.com&quot; },
+];
+
+&lt;List
+  items={users}
+  keyOf={(u) =&gt; u.id}
+  renderItem={(u) =&gt; &lt;span&gt;{u.name}&lt;/span&gt;} // u is correctly inferred as User
+/&gt;
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the <code>key</code> prop?</strong></p>
+<p>When you render a list of elements, React uses the <code>key</code> prop to identify each item across renders. This lets React tell which items were added, removed, or reordered, which makes updates fast and preserves component state correctly. Keys must be unique among siblings. A common mistake is using the array index, which fails when items are reordered. Use a stable id from your data instead.</p>
+</blockquote>
+<p>This is the React equivalent of a typed container. You write it once, use it with any data.</p>
+<p><strong>Exercise:</strong> Build a <code>Select&lt;T&gt;</code> component that takes options, a value, an onChange, and a <code>getLabel</code> function. Make it work for both string options and object options.</p>
+<hr>
+<h2>Lesson 10: Forms with react-hook-form and Zod</h2>
+<p>Hand-rolling forms with <code>useState</code> does not scale. The industry-standard combination is <code>react-hook-form</code> for state and <code>zod</code> for validation.</p>
+<blockquote>
+<p><strong>Background: Why not just use <code>useState</code> for forms?</strong></p>
+<p>A simple form with one or two inputs works fine with <code>useState</code>. But as forms grow (multiple fields, validation, async submission, error states, dirty tracking, reset), the boilerplate becomes overwhelming. Form libraries handle all of this and also avoid re-rendering the entire form on every keystroke, which improves performance.</p>
+</blockquote>
+<pre><code class="language-bash">npm install react-hook-form zod @hookform/resolvers
+</code></pre>
+<blockquote>
+<p><strong>Background: What is <code>@hookform/resolvers</code>?</strong></p>
+<p>React Hook Form supports any validation library through &quot;resolvers&quot;. <code>@hookform/resolvers/zod</code> is the adapter that connects Zod schemas to React Hook Form. You write your validation in Zod, plug it into the form, and errors appear automatically.</p>
+</blockquote>
+<pre><code class="language-tsx">import { useForm } from &quot;react-hook-form&quot;;
+import { zodResolver } from &quot;@hookform/resolvers/zod&quot;;
+import { z } from &quot;zod&quot;;
+
+const SignupSchema = z.object({
+  email: z.string().email(&quot;Invalid email&quot;),
+  password: z.string().min(8, &quot;At least 8 characters&quot;),
+  age: z.number().min(18, &quot;Must be 18 or older&quot;),
+});
+
+type SignupForm = z.infer&lt;typeof SignupSchema&gt;;
+
+function SignupForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm&lt;SignupForm&gt;({
+    resolver: zodResolver(SignupSchema),
+  });
+
+  const onSubmit = async (data: SignupForm) =&gt; {
+    console.log(&quot;Valid data:&quot;, data);
+    await new Promise((r) =&gt; setTimeout(r, 1000));
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;div&gt;
+        &lt;input {...register(&quot;email&quot;)} placeholder=&quot;Email&quot; /&gt;
+        {errors.email &amp;&amp; &lt;span&gt;{errors.email.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      &lt;div&gt;
+        &lt;input type=&quot;password&quot; {...register(&quot;password&quot;)} placeholder=&quot;Password&quot; /&gt;
+        {errors.password &amp;&amp; &lt;span&gt;{errors.password.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      &lt;div&gt;
+        &lt;input type=&quot;number&quot; {...register(&quot;age&quot;, { valueAsNumber: true })} placeholder=&quot;Age&quot; /&gt;
+        {errors.age &amp;&amp; &lt;span&gt;{errors.age.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      &lt;button type=&quot;submit&quot; disabled={isSubmitting}&gt;
+        {isSubmitting ? &quot;Submitting...&quot; : &quot;Sign up&quot;}
+      &lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>register</code> do?</strong></p>
+<p><code>register(&quot;fieldName&quot;)</code> returns the props that connect an input to the form library: an <code>onChange</code> handler, an <code>onBlur</code> handler, a <code>ref</code>, and a <code>name</code>. Spreading these onto an input wires it up automatically. The library tracks the value, validates it, and reports errors without you writing per-field state code.</p>
+</blockquote>
+<p>The schema is the single source of truth. Both the form types and the runtime validation come from it. This is the most important pattern in modern React.</p>
+<p><strong>Exercise:</strong> Build a &quot;create event&quot; form with title, date, location, and a &quot;max attendees&quot; number. Validate each field with Zod.</p>
+<hr>
+<h2>Lesson 11: Data Fetching with TanStack Query</h2>
+<p>TanStack Query (formerly React Query) handles server state: caching, refetching, loading states, error handling, and pagination. It is what you should use for any nontrivial data fetching.</p>
+<blockquote>
+<p><strong>Background: Why is server state different from regular state?</strong></p>
+<p>Server state is data that lives on a server, not in your app. It can change without your app knowing (someone else updated it), it needs to be cached so you do not refetch it constantly, it must handle loading and error states, and it might be stale and need refetching. TanStack Query solves all of these problems. Trying to do this with <code>useState</code> and <code>useEffect</code> leads to a lot of buggy boilerplate.</p>
+</blockquote>
+<pre><code class="language-bash">npm install @tanstack/react-query
+</code></pre>
+<pre><code class="language-tsx">// main.tsx
+import { QueryClient, QueryClientProvider } from &quot;@tanstack/react-query&quot;;
+
+const queryClient = new QueryClient();
+
+function Root() {
+  return (
+    &lt;QueryClientProvider client={queryClient}&gt;
+      &lt;App /&gt;
+    &lt;/QueryClientProvider&gt;
+  );
+}
+</code></pre>
+<p><strong>(2026)</strong> Two things changed in version 5, and both matter on the first line
+you write.</p>
+<pre><code class="language-tsx">// lib/practitioners.ts
+import { queryOptions } from &quot;@tanstack/react-query&quot;;
+import { z } from &quot;zod&quot;;
+
+const Practitioner = z.object({
+  id: z.string(),
+  name: z.string(),
+  profession: z.enum([&quot;psychologist&quot;, &quot;psychiatrist&quot;]),
+  feeCents: z.int(),
+});
+const PractitionerList = z.array(Practitioner);
+export type Practitioner = z.infer&lt;typeof Practitioner&gt;;
+
+async function fetchPractitioners(): Promise&lt;Practitioner[]&gt; {
+  const response = await fetch(&quot;/api/practitioners&quot;, {
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return PractitionerList.parse(await response.json());
+}
+
+// ONE definition of this query. Key and function travel together, typed.
+export const practitionersQuery = () =&gt;
+  queryOptions({
+    queryKey: [&quot;practitioners&quot;] as const,
+    queryFn: fetchPractitioners,
+    staleTime: 60_000,
+  });
+</code></pre>
+<pre><code class="language-tsx">// PractitionerList.tsx
+import { useQuery } from &quot;@tanstack/react-query&quot;;
+import { practitionersQuery } from &quot;./lib/practitioners&quot;;
+
+function PractitionerList() {
+  const { data, isPending, isError, error } = useQuery(practitionersQuery());
+
+  if (isPending) return &lt;p&gt;Loading&lt;/p&gt;;
+  if (isError) return &lt;p&gt;Could not load practitioners: {error.message}&lt;/p&gt;;
+
+  return (
+    &lt;ul&gt;
+      {data.map((practitioner) =&gt; (
+        &lt;li key={practitioner.id}&gt;{practitioner.name}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What is <code>queryOptions</code> for?</strong></p>
+<p>It ties a key to its function and its result type in one exported value. Every
+caller then gets the same key and the same type: <code>useQuery</code>, a prefetch, an
+<code>invalidateQueries</code>, a <code>setQueryData</code>. Before it, the key was a bare array
+repeated at each call site, and a typo produced a second cache entry rather
+than an error.</p>
+<pre><code class="language-tsx">queryClient.invalidateQueries({ queryKey: practitionersQuery().queryKey });
+queryClient.setQueryData(practitionersQuery().queryKey, next); // `next` is typed
+</code></pre>
+</blockquote>
+<blockquote>
+<p><strong>Background (2026): <code>isPending</code>, not <code>isLoading</code>.</strong></p>
+<p>In version 5, <code>isPending</code> means &quot;there is no data yet&quot;. <code>isLoading</code> now means
+&quot;pending <strong>and</strong> fetching&quot;, which is a narrower thing and not what most code
+wanted. Note also that after the <code>isPending</code> and <code>isError</code> guards, <code>data</code> is
+narrowed to <code>Practitioner[]</code> rather than <code>Practitioner[] | undefined</code>, so the
+<code>data?.map</code> of the old code becomes <code>data.map</code>. Getting that narrowing is the
+practical reason to check <code>isPending</code> first.</p>
+<p>Two other renames from version 4: <code>cacheTime</code> is <code>gcTime</code>, and the positional
+signature (<code>useQuery(key, fn)</code>) is gone. There is one signature and it takes
+an object.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is the <code>queryKey</code>?</strong></p>
+<p>The query key is an array that uniquely identifies a query in the cache. Two components using <code>[&quot;users&quot;]</code> share the same cached data and stay in sync. Including parameters in the key (<code>[&quot;user&quot;, userId]</code>) makes each set of parameters its own cache entry. When the key changes, TanStack Query refetches.</p>
+</blockquote>
+<p>Mutations for writes:</p>
+<pre><code class="language-tsx">import { useMutation, useQueryClient } from &quot;@tanstack/react-query&quot;;
+
+function CreateUser() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (newUser: { name: string; email: string }) =&gt; {
+      const response = await fetch(&quot;/api/users&quot;, {
+        method: &quot;POST&quot;,
+        headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+        body: JSON.stringify(newUser),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json() as Promise&lt;unknown&gt;;
+    },
+    onSuccess: () =&gt; {
+      queryClient.invalidateQueries({ queryKey: practitionersQuery().queryKey });
+    },
+  });
+
+  return (
+    &lt;button
+      onClick={() =&gt; mutation.mutate({ name: &quot;New&quot;, email: &quot;n@x.com&quot; })}
+      disabled={mutation.isPending}
+    &gt;
+      Create user
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What does &quot;invalidate&quot; mean?</strong></p>
+<p>Invalidating a query marks its cached data as stale and triggers a refetch. After creating a user, you invalidate the user list so it refetches and shows the new entry. This keeps the UI in sync with the server without manually managing state.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Build a paginated list of posts using <code>useQuery</code> with a <code>page</code> parameter. Add a &quot;next page&quot; and &quot;previous page&quot; button.</p>
+<hr>
+<h2>Lesson 12: Routing with React Router</h2>
+<blockquote>
+<p><strong>Background: What is &quot;routing&quot; in a single-page app?</strong></p>
+<p>A traditional website has many HTML pages and the server returns a different one for each URL. A single-page app (SPA) loads once and uses JavaScript to swap content based on the URL. Routing libraries listen for URL changes, pick the matching component, and render it without a full page reload. This is what makes SPAs feel fast.</p>
+</blockquote>
+<p><strong>(2026)</strong> This is the <strong>Vite path</strong>. If you are building on Next.js, routing
+is the file system and Lesson 16 covers it; skip to there and come back when
+you meet a single-page app.</p>
+<pre><code class="language-bash">npm install react-router
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): <code>react-router</code> or <code>react-router-dom</code>?</strong></p>
+<p>From version 7, everything is exported from <strong><code>react-router</code></strong>.
+<code>react-router-dom</code> still exists and re-exports the same things, so nothing
+breaks, but new code should import from <code>react-router</code>.</p>
+<p>Mentisflow is on <code>react-router-dom@^7.14.1</code> and imports from
+<code>react-router-dom</code> throughout, which is correct for that codebase: a
+repository-wide import rewrite is churn with no user-visible effect. Follow
+the project you are in. Know which is which.</p>
+<p>Version 8 is the current release; version 7 is what the product pins. The
+API in this lesson is the same on both.</p>
+</blockquote>
+<pre><code class="language-tsx">import { BrowserRouter, Routes, Route, Link, useParams } from &quot;react-router&quot;;
+
+function App() {
+  return (
+    &lt;BrowserRouter&gt;
+      &lt;nav&gt;
+        &lt;Link to=&quot;/&quot;&gt;Home&lt;/Link&gt;
+        &lt;Link to=&quot;/users&quot;&gt;Users&lt;/Link&gt;
+      &lt;/nav&gt;
+      &lt;Routes&gt;
+        &lt;Route path=&quot;/&quot; element={&lt;Home /&gt;} /&gt;
+        &lt;Route path=&quot;/users&quot; element={&lt;UserList /&gt;} /&gt;
+        &lt;Route path=&quot;/users/:id&quot; element={&lt;UserDetail /&gt;} /&gt;
+        &lt;Route path=&quot;*&quot; element={&lt;NotFound /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}
+
+function UserDetail() {
+  const { id } = useParams&lt;{ id: string }&gt;();
+  // id is string | undefined
+  if (!id) return &lt;p&gt;No user id&lt;/p&gt;;
+  return &lt;p&gt;User {id}&lt;/p&gt;;
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>:id</code> mean in a route path?</strong></p>
+<p>Path segments starting with a colon are dynamic parameters. The route <code>/users/:id</code> matches <code>/users/1</code>, <code>/users/42</code>, and so on, and makes the value available via <code>useParams()</code>. This is how you build pages that work for many records using a single component.</p>
+</blockquote>
+<p><code>useParams</code> returns <code>Record&lt;string, string | undefined&gt;</code> by default. Annotate
+with the params your route expects.</p>
+<p><strong>(2026)</strong> Two things worth knowing beyond the basics.</p>
+<p><strong>Lazy routes and code splitting.</strong> A route that is rarely visited should not be
+in the first bundle:</p>
+<pre><code class="language-tsx">import { lazy, Suspense } from &quot;react&quot;;
+
+const Admin = lazy(() =&gt; import(&quot;./pages/Admin&quot;));
+
+&lt;Route
+  path=&quot;/admin&quot;
+  element={
+    &lt;Suspense fallback={&lt;p&gt;Loading&lt;/p&gt;}&gt;
+      &lt;Admin /&gt;
+    &lt;/Suspense&gt;
+  }
+/&gt;;
+</code></pre>
+<p><strong>A route is not a permission.</strong> Hiding <code>/admin</code> from the menu and omitting the
+route hides the door. It does not lock it: the JavaScript that would render the
+page is in the bundle, and anybody can call the API the page calls. Every route
+guard you write is a convenience for honest users. The rule the workbook states
+at length: <strong>the server decides, the client displays.</strong></p>
+<p><strong>Exercise:</strong> Build a small app with three routes: a home page, a list of products, and a product detail page that reads the id from the URL.</p>
+<hr>
+<h2>Lesson 13: Component Patterns</h2>
+<h3>Compound components</h3>
+<p>A parent that exposes a set of related child components. Useful for building flexible UI primitives.</p>
+<blockquote>
+<p><strong>Background: What is the value of compound components?</strong></p>
+<p>Without compound components, configurable UI elements often grow into giant prop lists (&quot;<code>tabs={[{label, content, disabled, ...}]}</code>&quot;). Compound components flip this: instead of describing the UI in props, the consumer composes it with JSX. This gives more flexibility (you can put extra elements between tabs, conditionally render them, and so on) while keeping internal state shared.</p>
+</blockquote>
+<pre><code class="language-tsx">import { createContext, useContext, useState, ReactNode } from &quot;react&quot;;
+
+interface TabsContextValue {
+  active: string;
+  setActive: (id: string) =&gt; void;
+}
+
+const TabsContext = createContext&lt;TabsContextValue | null&gt;(null);
+
+function Tabs({ children, defaultTab }: { children: ReactNode; defaultTab: string }) {
+  const [active, setActive] = useState(defaultTab);
+  return (
+    &lt;TabsContext.Provider value={{ active, setActive }}&gt;
+      &lt;div className=&quot;tabs&quot;&gt;{children}&lt;/div&gt;
+    &lt;/TabsContext.Provider&gt;
+  );
+}
+
+function TabList({ children }: { children: ReactNode }) {
+  return &lt;div role=&quot;tablist&quot;&gt;{children}&lt;/div&gt;;
+}
+
+function Tab({ id, children }: { id: string; children: ReactNode }) {
+  const ctx = useContext(TabsContext);
+  if (!ctx) throw new Error(&quot;Tab must be inside Tabs&quot;);
+  return (
+    &lt;button
+      role=&quot;tab&quot;
+      aria-selected={ctx.active === id}
+      onClick={() =&gt; ctx.setActive(id)}
+    &gt;
+      {children}
+    &lt;/button&gt;
+  );
+}
+
+function TabPanel({ id, children }: { id: string; children: ReactNode }) {
+  const ctx = useContext(TabsContext);
+  if (!ctx) throw new Error(&quot;TabPanel must be inside Tabs&quot;);
+  if (ctx.active !== id) return null;
+  return &lt;div role=&quot;tabpanel&quot;&gt;{children}&lt;/div&gt;;
+}
+
+// Attach as static properties
+Tabs.List = TabList;
+Tabs.Tab = Tab;
+Tabs.Panel = TabPanel;
+
+// Usage
+&lt;Tabs defaultTab=&quot;profile&quot;&gt;
+  &lt;Tabs.List&gt;
+    &lt;Tabs.Tab id=&quot;profile&quot;&gt;Profile&lt;/Tabs.Tab&gt;
+    &lt;Tabs.Tab id=&quot;settings&quot;&gt;Settings&lt;/Tabs.Tab&gt;
+  &lt;/Tabs.List&gt;
+  &lt;Tabs.Panel id=&quot;profile&quot;&gt;Profile content&lt;/Tabs.Panel&gt;
+  &lt;Tabs.Panel id=&quot;settings&quot;&gt;Settings content&lt;/Tabs.Panel&gt;
+&lt;/Tabs&gt;
+</code></pre>
+<h3>Polymorphic components (the <code>as</code> prop)</h3>
+<p>A component that can render as different elements while keeping correct prop types. This is advanced and rarely needed, but UI libraries use it heavily.</p>
+<pre><code class="language-tsx">import { ElementType, ComponentPropsWithoutRef } from &quot;react&quot;;
+
+type ButtonProps&lt;E extends ElementType&gt; = {
+  as?: E;
+  children: ReactNode;
+} &amp; Omit&lt;ComponentPropsWithoutRef&lt;E&gt;, &quot;as&quot; | &quot;children&quot;&gt;;
+
+function Button&lt;E extends ElementType = &quot;button&quot;&gt;({
+  as,
+  children,
+  ...rest
+}: ButtonProps&lt;E&gt;) {
+  const Component = as || &quot;button&quot;;
+  return &lt;Component {...rest}&gt;{children}&lt;/Component&gt;;
+}
+
+&lt;Button&gt;Click&lt;/Button&gt;
+&lt;Button as=&quot;a&quot; href=&quot;/about&quot;&gt;About&lt;/Button&gt; // href is correctly typed
+</code></pre>
+<p><strong>Exercise:</strong> Build a compound <code>Accordion</code> with <code>Accordion</code>, <code>Accordion.Item</code>, <code>Accordion.Header</code>, and <code>Accordion.Body</code>. Only one item should be open at a time.</p>
+<hr>
+<h2>Lesson 14: Testing with Vitest and React Testing Library</h2>
+<blockquote>
+<p><strong>Background: What are Vitest and React Testing Library?</strong></p>
+<p>Vitest is a test runner: it finds your test files, runs them, and reports the results. React Testing Library is a set of utilities for rendering components in a fake DOM and querying them like a user would (by visible text, role, or label). Together they let you write tests that exercise your components from the outside, the same way a user would.</p>
+</blockquote>
+<pre><code class="language-bash">npm install -D vitest @testing-library/react @testing-library/user-event jsdom
+</code></pre>
+<p><strong>(2026)</strong> <code>@testing-library/jest-dom</code> is optional now and is left out here. Its
+matchers (<code>toBeInTheDocument</code>, <code>toBeDisabled</code>) read nicely but they are a second
+assertion vocabulary to learn, and every one of them has a plain equivalent.
+Add it if your team already uses it.</p>
+<blockquote>
+<p><strong>Background: What is <code>jsdom</code>?</strong></p>
+<p><code>jsdom</code> is a JavaScript implementation of the DOM that runs in Node.js. Tests need it because they run outside a real browser. With <code>jsdom</code>, your tests can render components, query elements, and simulate clicks just like in a browser.</p>
+</blockquote>
+<p><strong>(2026)</strong> Configure Vitest in its own file, importing <code>defineConfig</code> from
+<strong><code>vitest/config</code></strong>, not from <code>vite</code>:</p>
+<pre><code class="language-ts">// vitest.config.mts
+import react from &quot;@vitejs/plugin-react&quot;;
+import { defineConfig } from &quot;vitest/config&quot;;
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    include: [&quot;test/**/*.test.{ts,tsx}&quot;],
+    environment: &quot;jsdom&quot;,
+    setupFiles: [&quot;./test/setup.ts&quot;],
+  },
+});
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why <code>vitest/config</code> and not <code>vite</code>?</strong></p>
+<p><code>defineConfig</code> from <code>vite</code> does not know about the <code>test</code> key, so the
+<code>/// &lt;reference types=&quot;vitest&quot; /&gt;</code> comment above the old sample existed to
+paper over that. Importing from <code>vitest/config</code> types the <code>test</code> key
+properly and the reference comment goes away. Casey Journals does exactly
+this in <code>apps/web/vitest.config.mts</code>.</p>
+<p>Note also that <code>globals</code> is <strong>not</strong> set. Import <code>describe</code>, <code>test</code> and
+<code>expect</code> explicitly. Implicit globals are convenient and they hide which
+runner a file needs, which is exactly the confusion that made Jest and Vitest
+files indistinguishable in mixed codebases.</p>
+</blockquote>
+<p>Create <code>test/setup.ts</code>:</p>
+<pre><code class="language-ts">import { afterEach } from &quot;vitest&quot;;
+import { cleanup } from &quot;@testing-library/react&quot;;
+
+// Testing Library unmounts automatically only when a global `afterEach` exists,
+// which means `globals: true`. With globals off, do it by hand. Leftover
+// components from a previous test are the cause of most &quot;found multiple
+// elements&quot; failures.
+afterEach(cleanup);
+</code></pre>
+<p>Write a test:</p>
+<pre><code class="language-tsx">// Counter.tsx
+import { useState } from &quot;react&quot;;
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  return &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Count: {count}&lt;/button&gt;;
+}
+</code></pre>
+<pre><code class="language-tsx">// test/counter.test.tsx
+import { expect, test } from &quot;vitest&quot;;
+import { render, screen } from &quot;@testing-library/react&quot;;
+import userEvent from &quot;@testing-library/user-event&quot;;
+import { Counter } from &quot;../Counter&quot;;
+
+test(&quot;increments when clicked&quot;, async () =&gt; {
+  const user = userEvent.setup();
+  render(&lt;Counter /&gt;);
+
+  await user.click(screen.getByRole(&quot;button&quot;, { name: &quot;Count: 0&quot; }));
+
+  expect(screen.getByRole(&quot;button&quot;).textContent).toBe(&quot;Count: 1&quot;);
+});
+</code></pre>
+<p>Run them:</p>
+<pre><code class="language-bash">npx vitest run     # once, for CI
+npx vitest         # watch mode, for working
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): <code>userEvent.setup()</code>, and why the name is an exact string.</strong></p>
+<p><code>userEvent.setup()</code> per test is the documented form: it installs its own
+clipboard and pointer state, and it fails loudly rather than sharing state
+between tests.</p>
+<p>The accessible name is asserted exactly, <code>&quot;Count: 0&quot;</code>, rather than with a
+case-insensitive regular expression. A regular expression will match a button
+you did not mean, and the failure message is worse. Reach for one only when
+the text genuinely varies.</p>
+</blockquote>
+<h3>Testing an optimistic update (2026)</h3>
+<p>An optimistic value is visible only <strong>while the action is in flight</strong>. A test
+that awaits the action sees the value after React has already discarded it.</p>
+<pre><code class="language-tsx">test(&quot;the label updates optimistically, while the action is still in flight&quot;, async () =&gt; {
+  // Hold the action open so the transition cannot finish.
+  const { promise, resolve } = Promise.withResolvers&lt;{ bookmarked: boolean }&gt;();
+  toggleBookmark.mockReturnValue(promise);
+
+  const user = userEvent.setup();
+  render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={false} /&gt;);
+
+  void user.click(screen.getByRole(&quot;button&quot;)); // not awaited, deliberately
+
+  await waitFor(() =&gt; {
+    expect(screen.getByRole(&quot;button&quot;).textContent).toBe(&quot;Bookmarked&quot;);
+  });
+
+  resolve({ bookmarked: true });
+});
+</code></pre>
+<p>If you await the click instead, the button reads <code>&quot;Bookmark&quot;</code> again, because
+the prop never changed and React dropped the optimistic state. <strong>That is not a
+failing test; that is the rollback working.</strong> It is worth a test of its own.</p>
+<p>Test by behavior, not implementation. Query elements the way users do (by role, label, or text), not by class name or test id where avoidable.</p>
+<p><strong>Exercise:</strong> Write tests for the signup form from Lesson 10. Test that invalid input shows errors and valid input submits successfully.</p>
+<hr>
+<h2>Lesson 15: Project Structure</h2>
+<p>For a real app, organize by feature, not by file type. Bad:</p>
+<pre><code>src/
+  components/
+  hooks/
+  utils/
+  types/
+</code></pre>
+<p>Good:</p>
+<pre><code>src/
+  features/
+    auth/
+      components/
+      hooks/
+      api.ts
+      types.ts
+      schemas.ts
+    posts/
+      components/
+      hooks/
+      api.ts
+      types.ts
+  shared/
+    components/   // Button, Card, Modal
+    hooks/        // useDebounce, useLocalStorage
+    lib/          // utility functions
+  App.tsx
+  main.tsx
+</code></pre>
+<p>Each feature folder owns everything for that feature. Shared code lives at the top level. This scales from a small app to a hundred-thousand-line codebase without restructuring.</p>
+<hr>
+<h2>Lesson 16: React 19 Actions (2026)</h2>
+<p>React 19 gives forms and mutations first-class support. Three hooks, and a
+convention: a function passed to <code>&lt;form action&gt;</code> is an <strong>Action</strong>, and React
+manages its pending state, its errors and the transition around it.</p>
+<h3><code>useActionState</code></h3>
+<pre><code class="language-tsx">import { useActionState } from &quot;react&quot;;
+
+type State =
+  | { status: &quot;idle&quot; }
+  | { status: &quot;ok&quot;; email: string }
+  | { status: &quot;error&quot;; errors: Record&lt;string, string&gt; };
+
+const IDLE: State = { status: &quot;idle&quot; };
+
+async function subscribe(_previous: State, formData: FormData): Promise&lt;State&gt; {
+  const email = String(formData.get(&quot;email&quot;) ?? &quot;&quot;);
+  if (!email.includes(&quot;@&quot;)) {
+    return { status: &quot;error&quot;, errors: { email: &quot;Enter an email address.&quot; } };
+  }
+  await sendToServer(email);
+  return { status: &quot;ok&quot;, email };
+}
+
+function SubscribeForm() {
+  const [state, formAction, pending] = useActionState(subscribe, IDLE);
+
+  if (state.status === &quot;ok&quot;) {
+    return &lt;p role=&quot;status&quot;&gt;Check {state.email} for a confirmation link.&lt;/p&gt;;
+  }
+
+  return (
+    &lt;form action={formAction}&gt;
+      &lt;label&gt;
+        Email address
+        &lt;input name=&quot;email&quot; type=&quot;email&quot; required /&gt;
+      &lt;/label&gt;
+      {state.status === &quot;error&quot; ? &lt;p className=&quot;error&quot;&gt;{state.errors[&quot;email&quot;]}&lt;/p&gt; : null}
+      &lt;button type=&quot;submit&quot; disabled={pending}&gt;
+        {pending ? &quot;Subscribing&quot; : &quot;Subscribe&quot;}
+      &lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<p>Note what is <strong>absent</strong>: no <code>useState</code> for the loading flag, no <code>useState</code> for
+the error, no <code>onSubmit</code> handler, no <code>event.preventDefault()</code>. React tracks the
+pending state and holds the returned value.</p>
+<p>Note also that the form works before the JavaScript loads. A <code>&lt;form action&gt;</code>
+with real <code>name</code> attributes posts as a form, which is what makes this a
+progressive enhancement rather than a rewrite of one.</p>
+<blockquote>
+<p><strong>Background (2026): Why does the action take the previous state?</strong></p>
+<p>The signature is <code>(previousState, formData) =&gt; newState</code>, which is a reducer.
+That gives you the &quot;attempt three of three&quot; case for free, and it is why the
+state can be a discriminated union rather than a bag of booleans.</p>
+</blockquote>
+<h3><code>useFormStatus</code></h3>
+<p><code>useActionState</code> gives the pending flag to the component that owns the form.
+When a <strong>child</strong> needs it, such as a shared submit button, <code>useFormStatus</code>
+reads it from the enclosing form.</p>
+<pre><code class="language-tsx">import { useFormStatus } from &quot;react-dom&quot;;
+
+// Note: it reads the form ABOVE it, so it must be a child of that form.
+// Calling it in the same component as the &lt;form&gt; returns pending: false.
+function SubmitButton({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus();
+  return &lt;button type=&quot;submit&quot; disabled={pending}&gt;{pending ? &quot;Working&quot; : children}&lt;/button&gt;;
+}
+</code></pre>
+<p>It is imported from <strong><code>react-dom</code></strong>, not <code>react</code>.</p>
+<h3><code>useOptimistic</code></h3>
+<p>Show the result you expect while the request is in flight, and let React undo
+it if the request does not deliver.</p>
+<pre><code class="language-tsx">&quot;use client&quot;;
+
+import { useOptimistic, useTransition } from &quot;react&quot;;
+
+export function BookmarkButton({
+  slug,
+  title,
+  bookmarked,
+}: {
+  slug: string;
+  title: string;
+  bookmarked: boolean;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [shown, setShown] = useOptimistic(bookmarked);
+
+  return (
+    &lt;button
+      type=&quot;button&quot;
+      aria-pressed={shown}
+      aria-label={shown ? `Remove ${title} from your bookmarks` : `Bookmark ${title}`}
+      disabled={pending}
+      onClick={() =&gt; {
+        startTransition(async () =&gt; {
+          setShown(!shown);
+          await toggleBookmark(slug);
+        });
+      }}
+    &gt;
+      {shown ? &quot;Bookmarked&quot; : &quot;Bookmark&quot;}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Where is the rollback code?</strong></p>
+<p>There is none, and that is the feature. <code>useOptimistic</code> returns a value that
+<strong>follows the prop</strong>, except while a transition is running, when it returns
+what you set. When the transition ends, the optimistic value is discarded and
+the prop wins again.</p>
+<p>So if the action succeeded and the server sent back new data, the prop is
+already the new value and nothing flickers. If the action failed, the prop
+never changed, and the button snaps back on its own. The pattern this
+replaces was: copy state, apply the change, keep the old copy, restore it in
+a <code>catch</code>. That code is where optimistic updates went wrong.</p>
+<p>The corollary catches people in tests: <strong>the optimistic value only exists
+during the transition.</strong> See Lesson 14 on how to test it.</p>
+</blockquote>
+<p><code>setShown</code> must be called <strong>inside</strong> the transition. Called outside, React
+throws: an optimistic update with no action to be optimistic about is a plain
+<code>useState</code> that will never be reconciled.</p>
+<h3><code>useSyncExternalStore</code></h3>
+<p>For subscribing to something outside React: a browser API, a store from another
+library, a WebSocket.</p>
+<pre><code class="language-tsx">import { useSyncExternalStore } from &quot;react&quot;;
+
+function subscribe(callback: () =&gt; void): () =&gt; void {
+  const query = window.matchMedia(&quot;(prefers-reduced-motion: reduce)&quot;);
+  query.addEventListener(&quot;change&quot;, callback);
+  return () =&gt; query.removeEventListener(&quot;change&quot;, callback);
+}
+
+function getSnapshot(): boolean {
+  return window.matchMedia(&quot;(prefers-reduced-motion: reduce)&quot;).matches;
+}
+
+// Server rendering has no window. The third argument is what the server says.
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+export function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why not <code>useState</code> and <code>useEffect</code>?</strong></p>
+<p>Because of tearing. With concurrent rendering, React may render part of a
+tree, pause, and finish later. If an external value changes in between, an
+effect-based subscription can leave two components in the same render showing
+different values. <code>useSyncExternalStore</code> tells React the value is external so
+it can read it consistently.</p>
+<p>The third argument matters for anything server-rendered. Without it, a value
+read from <code>window</code> produces one thing on the server and another in the
+browser, and you get a hydration mismatch. Mentisflow&#39;s reduced-motion,
+theme, and safe-area readings are all this shape.</p>
+</blockquote>
+<h3><code>&lt;Activity&gt;</code> (2026)</h3>
+<p>Keep a subtree alive but hidden, without unmounting it.</p>
+<pre><code class="language-tsx">import { Activity } from &quot;react&quot;;
+
+function Tabs({ current }: { current: &quot;list&quot; | &quot;map&quot; }) {
+  return (
+    &lt;&gt;
+      &lt;Activity mode={current === &quot;list&quot; ? &quot;visible&quot; : &quot;hidden&quot;}&gt;
+        &lt;ArticleList /&gt;
+      &lt;/Activity&gt;
+      &lt;Activity mode={current === &quot;map&quot; ? &quot;visible&quot; : &quot;hidden&quot;}&gt;
+        &lt;PractitionerMap /&gt;
+      &lt;/Activity&gt;
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p>A hidden <code>Activity</code> keeps its state (scroll position, form input, a loaded map)
+and its effects are torn down, so timers and subscriptions do not run. Switching
+back restores it. Conditional rendering throws the state away; <code>display: none</code>
+keeps the effects running.</p>
+<p><code>mode</code> takes <code>&quot;visible&quot;</code> or <code>&quot;hidden&quot;</code> and defaults to <code>&quot;visible&quot;</code>. An optional
+<code>name</code> shows the boundary in React DevTools.</p>
+<p>Verified against <code>react@19.2.8</code> and <code>@types/react@19.2.18</code>, where <code>Activity</code> is
+a plain export marked <code>@version 19.2.0</code>. Older material calls it
+<code>unstable_Activity</code>; that spelling is gone.</p>
+<h3>The React Compiler (2026)</h3>
+<p>The React Compiler is a build-time optimiser that inserts memoisation for you.
+Where you would have written <code>useMemo</code>, <code>useCallback</code> and <code>memo</code> by hand, it
+works out what depends on what and caches accordingly.</p>
+<pre><code class="language-bash">npm install -D babel-plugin-react-compiler
+</code></pre>
+<pre><code class="language-ts">// vite.config.ts
+plugins: [react({ babel: { plugins: [[&quot;babel-plugin-react-compiler&quot;, {}]] } })],
+</code></pre>
+<pre><code class="language-ts">// next.config.ts
+const nextConfig: NextConfig = { reactCompiler: true };
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Should I turn it on, and do I stop writing <code>useMemo</code>?</strong></p>
+<p>Turn it on for a new project and measure. It is a separate package on its own
+release cadence, not part of React itself, so check its current status before
+adopting it in something that must not break.</p>
+<p>You do stop writing <code>useMemo</code> and <code>useCallback</code> for <strong>performance</strong>. You do
+not stop writing them where the identity of a value is part of the contract:
+a dependency array of an effect, a key into a cache, a value handed to a
+non-React library.</p>
+<p>The compiler only works on code that follows the rules of hooks and does not
+mutate props or state. Run the ESLint plugin first: what it flags is what the
+compiler will refuse to optimise, and each of those is a real bug in waiting.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Rewrite the signup form from Lesson 10 with <code>useActionState</code>,
+validating with a Zod schema on submit and returning one message per field.
+Then add a <code>&lt;SubmitButton&gt;</code> child using <code>useFormStatus</code>, and compare the two
+versions for how many pieces of state you had to declare yourself.</p>
+<hr>
+<h2>Lesson 17: Next.js and the App Router (2026)</h2>
+<p>Everything so far runs in a browser. This lesson is about the half that does
+not.</p>
+<p>Casey Journals runs Next.js 16.3 with the App Router (<code>apps/web/package.json</code>,
+<code>apps/web/next.config.ts</code>). This lesson covers what you need to build the
+capstone on it.</p>
+<h3>The mental model</h3>
+<p><strong>Every component in <code>app/</code> is a Server Component unless it says otherwise.</strong></p>
+<p>A Server Component runs on the server, once, and never in the browser. It can
+read a database, read a cookie, read a secret. It sends <strong>rendered output</strong>, not
+code, so nothing it imports is in the browser bundle.</p>
+<p>A Client Component is what you have been writing all along. It runs in the
+browser, it can hold state, and it can attach event handlers.</p>
+<pre><code class="language-tsx">// app/page.tsx: a Server Component. No directive needed.
+import { listArticles } from &quot;@/lib/content&quot;;
+
+export default async function HomePage() {
+  const articles = listArticles();   // runs on the server
+  return &lt;ul&gt;{articles.map((a) =&gt; &lt;li key={a.slug}&gt;{a.title}&lt;/li&gt;)}&lt;/ul&gt;;
+}
+</code></pre>
+<pre><code class="language-tsx">// components/counter.tsx: a Client Component.
+&quot;use client&quot;;
+
+import { useState } from &quot;react&quot;;
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  return &lt;button onClick={() =&gt; setCount(count + 1)}&gt;{count}&lt;/button&gt;;
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What does <code>&quot;use client&quot;</code> actually mean?</strong></p>
+<p>It is not &quot;this component is interactive&quot;. It is <strong>a boundary</strong>. The file
+carrying the directive, and everything it imports, is compiled into the
+browser bundle.</p>
+<p>Two consequences people get wrong:</p>
+<ol>
+<li>You do not put <code>&quot;use client&quot;</code> on every file. Put it at the <strong>top of the
+interactive leaf</strong>, as far down the tree as you can. Everything above it
+stays on the server.</li>
+<li>A Server Component may <strong>render</strong> a Client Component, but not the reverse
+through an import. It can pass one through as <code>children</code>, which is the
+standard way to put server-rendered content inside a client-side layout.</li>
+</ol>
+</blockquote>
+<h3>What you may pass across the boundary</h3>
+<p>Props from a Server Component to a Client Component are <strong>serialised</strong>. So they
+may be: strings, numbers, booleans, <code>null</code>, <code>undefined</code>, plain objects, arrays,
+<code>Date</code>, <code>Map</code>, <code>Set</code>, promises, and Server Action references.</p>
+<p>They may <strong>not</strong> be: functions (other than Server Actions), class instances,
+<code>Symbol</code>s, or anything with methods.</p>
+<pre><code class="language-tsx">// This throws at build time.
+&lt;ClientThing onSave={() =&gt; db.save()} /&gt;
+
+// This works: a Server Action is a reference the client may call.
+&lt;ClientThing onSave={saveAction} /&gt;
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why the restriction?</strong></p>
+<p>Because the props are put into the HTML and read back in the browser. A
+function cannot survive that trip. The rule is a good one to internalise
+beyond React: <strong>anything that crosses a process boundary must be data.</strong></p>
+</blockquote>
+<h3>Routing is the file system</h3>
+<pre><code>app/
+  layout.tsx              wraps everything below
+  page.tsx                /
+  subscribe/page.tsx      /subscribe
+  articles/
+    [slug]/page.tsx       /articles/anything
+  api/health/route.ts     GET /api/health
+  not-found.tsx           the 404
+  loading.tsx             the Suspense fallback for this segment
+  error.tsx               the error boundary for this segment (&quot;use client&quot;)
+</code></pre>
+<p><strong>(2026)</strong> Dynamic params are a <strong>promise</strong>, and so are <code>searchParams</code> and
+<code>cookies()</code> and <code>headers()</code>. Await them.</p>
+<pre><code class="language-tsx">export default async function ArticlePage({
+  params,
+}: {
+  params: Promise&lt;{ slug: string }&gt;;
+}) {
+  const { slug } = await params;
+  const article = findArticle(slug);
+  if (article === undefined) notFound();
+  return &lt;h1&gt;{article.title}&lt;/h1&gt;;
+}
+</code></pre>
+<p>Turn on <code>typedRoutes</code> in <code>next.config.ts</code> and <code>&lt;Link href=&quot;/artcles/x&quot;&gt;</code> becomes
+a type error rather than a 404 somebody finds in production.</p>
+<h3>Rendering and caching</h3>
+<p>This is the part people find hardest, so here is the whole model in one table.</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>When</th>
+<th>How you get it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Static</strong></td>
+<td>Rendered at build, served from the edge</td>
+<td>The default, when nothing dynamic is read</td>
+</tr>
+<tr>
+<td><strong>Dynamic</strong></td>
+<td>Rendered per request</td>
+<td>Automatic once you read <code>cookies()</code>, <code>headers()</code>, or <code>searchParams</code></td>
+</tr>
+<tr>
+<td><strong>Revalidated</strong></td>
+<td>Static, rebuilt on a timer</td>
+<td><code>export const revalidate = 3600</code></td>
+</tr>
+<tr>
+<td><strong>On-demand</strong></td>
+<td>Static, rebuilt when you say so</td>
+<td><code>revalidatePath()</code> / <code>revalidateTag()</code> in an action</td>
+</tr>
+<tr>
+<td><strong>Streamed</strong></td>
+<td>Shell first, slow parts as they arrive</td>
+<td><code>&lt;Suspense&gt;</code> around the slow part</td>
+</tr>
+</tbody></table>
+<pre><code class="language-tsx">export const revalidate = 3600;          // rebuild at most hourly
+export const dynamic = &quot;force-dynamic&quot;;  // never cache; use sparingly
+</code></pre>
+<p>The <code>next build</code> output tells you which each route got: <code>○</code> for static, <code>ƒ</code> for
+dynamic. Read it. A route you expected to be static appearing as dynamic means
+something in it read a request-scoped value.</p>
+<blockquote>
+<p><strong>Background (2026): Why does reading a cookie change everything?</strong></p>
+<p>Because a page whose output depends on the request cannot be rendered once and
+shared. This is not Next.js being fussy; it is the only correct answer. The
+capstone&#39;s article page reads the reader&#39;s tier from a cookie, so it is
+dynamic, and the build output says <code>ƒ /articles/[slug]</code>. That is the paywall
+working: a cached page would be served to the wrong reader.</p>
+</blockquote>
+<h3>Server Actions</h3>
+<pre><code class="language-tsx">// app/actions.ts
+&quot;use server&quot;;
+
+export async function subscribe(previous: State, formData: FormData): Promise&lt;State&gt; {
+  const parsed = SubscribeInput.safeParse({
+    email: formData.get(&quot;email&quot;),
+    tier: formData.get(&quot;tier&quot;),
+  });
+  if (!parsed.success) {
+    return { status: &quot;error&quot;, errors: fieldErrors(parsed.error) };
+  }
+  await recordSubscription(parsed.data);
+  revalidatePath(&quot;/&quot;);
+  return { status: &quot;ok&quot;, email: parsed.data.email };
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): The single most important thing in this lesson.</strong></p>
+<p><strong>A Server Action is a public HTTP endpoint.</strong> Next.js gives it a URL and
+anybody on the internet can post to it, with any body, in any order, at any
+rate. That it is only called from your form is a fact about your UI, not
+about the endpoint.</p>
+<p>So every action does all of this, every time, itself:</p>
+<ol>
+<li><strong>Validate its own input.</strong> The form&#39;s <code>required</code> attribute and its Zod
+schema on the client are for the user&#39;s benefit.</li>
+<li><strong>Read its own session.</strong> Never take the user id from an argument.</li>
+<li><strong>Check its own authorisation.</strong> &quot;Only admins see this button&quot; is not a
+check.</li>
+<li><strong>Be safe to call twice.</strong> Networks retry.</li>
+</ol>
+<p>Casey Legal Tools writes this down as a fixed order of checks in
+<code>docs/security/SECURITY.md</code> section 4, and its <code>CLAUDE.md</code> says &quot;Order of
+checks is fixed. Do not rearrange.&quot; That is what the rule looks like once a
+team has been bitten by it.</p>
+</blockquote>
+<h3>Route Handlers</h3>
+<pre><code class="language-ts">// app/api/health/route.ts
+import { NextResponse } from &quot;next/server&quot;;
+
+export function GET() {
+  return NextResponse.json({ status: &quot;ok&quot; }, { headers: { &quot;Cache-Control&quot;: &quot;no-store&quot; } });
+}
+</code></pre>
+<p>Use a Route Handler when the caller is <strong>not</strong> a React tree: a webhook from a
+payment provider, a health check, an RSS or podcast feed, an OpenGraph image.
+Use a Server Action when the caller is your own form. Both are public; both
+validate.</p>
+<h3>Environment variables</h3>
+<pre><code class="language-ts">// Server only. Available in Server Components, actions, route handlers.
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Public. INLINED INTO THE BROWSER BUNDLE AT BUILD TIME.
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): The prefix is the whole rule.</strong></p>
+<p>Only variables named <code>NEXT_PUBLIC_*</code> reach the browser, and they reach it as
+<strong>literal text substituted into the bundle</strong>. There is no runtime lookup and
+no way to change one without rebuilding.</p>
+<p>Therefore: <strong>nothing secret ever carries the prefix.</strong> Both Casey repositories
+state this as a ground rule in <code>CLAUDE.md</code> and both <code>.env.example</code> files
+repeat it on the line above the secret. Vite has the identical rule with a
+different prefix, <code>VITE_*</code>, which is why Mentisflow&#39;s Firebase configuration
+is public and its PayFast passphrase is in the Cloud Functions environment
+instead.</p>
+<p>A related trap: a secret read in a file that is imported by a Client
+Component is a secret in the bundle. Keep server-only modules server-only, and
+consider the <code>server-only</code> package, which makes the mistake a build error.</p>
+</blockquote>
+<h3>Middleware, or the proxy</h3>
+<p>A single file at the project root runs before every matching request. Use it
+for the small set of things that must happen before routing: security headers,
+a redirect, a cheap authentication check.</p>
+<pre><code class="language-ts">// middleware.ts
+import { NextResponse, type NextRequest } from &quot;next/server&quot;;
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+  response.headers.set(&quot;X-Content-Type-Options&quot;, &quot;nosniff&quot;);
+  response.headers.set(&quot;Referrer-Policy&quot;, &quot;strict-origin-when-cross-origin&quot;);
+  return response;
+}
+
+export const config = {
+  matcher: [&quot;/((?!_next/static|_next/image|favicon.ico).*)&quot;],
+};
+</code></pre>
+<p>Keep it small and keep it cheap. It runs on every request, so a database call
+here is a database call on every request. Casey Journals uses it for headers and
+for refusing known AI crawlers (<code>packages/core/src/crawlers.ts</code>, decision 0014);
+the entitlement decision is not there, it is in the page, next to the data.</p>
+<h3>Deployment</h3>
+<pre><code class="language-bash">npm run build     # next build
+npm run start     # next start, the production server
+</code></pre>
+<p>Vercel is the reference host and both Casey products use it. What matters more
+than the host is what the build output tells you: which routes are static,
+which are dynamic, and how large the client bundle is. Read it on every build.</p>
+<p><strong>Exercise:</strong> Create a Next.js app with three routes: <code>/</code> listing three items
+from a module, <code>/items/[id]</code> showing one, and <code>/api/items</code> returning the list as
+JSON. Add a <code>not-found.tsx</code>. Then read the <code>next build</code> output and explain, in
+one sentence each, why every route got the rendering mode it got. Now add
+<code>cookies()</code> to the list page and read the output again.</p>
+<hr>
+<h2>Capstone Project: Casey Journal, a Tiered Publication (2026)</h2>
+<p>Casey Journals is a legal publishing platform: writing, podcasts and video by
+lawyers, for readers who need to stay current with the law. Its paywall
+decision is on the record and it is unusually strict
+(<code>docs/decisions/0013-paywall-enforcement.md</code>):</p>
+<blockquote>
+<p>The server never sends unentitled content; preview only for anonymous
+readers; per-account server-side meter; crawlers verified by DNS;
+<code>noarchive</code>; three active sessions per account. <strong>Never add a client-side
+gate.</strong></p>
+</blockquote>
+<p>You are going to build a small version of that, on Next.js 16 with the App
+Router, and prove with <code>curl</code> that it holds.</p>
+<h3>What you build</h3>
+<ol>
+<li><strong>A list page</strong> at <code>/</code> showing every article with its tier and publication
+date, and the reader&#39;s current plan.</li>
+<li><strong>An article page</strong> at <code>/articles/[slug]</code> that renders the whole article to
+an entitled reader and <strong>one preview paragraph plus a locked panel</strong> to
+everybody else.</li>
+<li><strong>A subscribe form</strong> at <code>/subscribe</code>, built with <code>useActionState</code> and a
+Server Action, validated with Zod on the server, one error message per
+field, and a <code>useFormStatus</code> submit button.</li>
+<li><strong>Optimistic bookmarks</strong> on the list page: <code>useOptimistic</code> plus a Server
+Action, with no rollback code.</li>
+<li><strong>A route handler</strong> at <code>/api/health</code>.</li>
+<li><strong>Tests</strong> with Vitest 4 and Testing Library, covering the paywall, the
+validation, and the optimistic button.</li>
+</ol>
+<h3>The rule this capstone is really about</h3>
+<p><strong>The withheld paragraphs must never enter the response.</strong></p>
+<p>Not hidden with CSS. Not rendered and covered by an overlay. Not sent in a
+<code>__NEXT_DATA__</code> payload for a component to filter. <strong>Absent.</strong></p>
+<p>There is one function that decides, it runs on the server, and it is the only
+path from an article to a response body:</p>
+<pre><code class="language-ts">export function viewArticle(article: Article, held: Tier): ArticleView {
+  if (entitled(held, article.tier)) {
+    return { kind: &quot;full&quot;, article, body: article.body };
+  }
+  const { body, ...withoutBody } = article;
+  return {
+    kind: &quot;preview&quot;,
+    article: withoutBody,           // note: the body is not on this object
+    body: body.slice(0, 1),
+    requiredTier: article.tier,
+  };
+}
+</code></pre>
+<p>The <code>article</code> in the preview branch has had <code>body</code> destructured <strong>off</strong> it. If
+somebody later renders <code>{view.article.title}</code> and a colleague adds
+<code>{view.article.body}</code>, it does not compile. That is the type system carrying a
+security rule, which is the best place to put one.</p>
+<h3>Proving it</h3>
+<p>This is the acceptance test, and it is not a unit test. Build, start, and ask
+the server:</p>
+<pre><code class="language-bash">npm run build
+npm run start &amp;
+
+URL=http://localhost:3000/articles/conditions-precedent-that-survive
+
+# A reader with no session
+curl -s &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+# 0
+
+# A practitioner
+curl -s -H &quot;Cookie: cj_tier=practitioner&quot; &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+# 2
+
+# A forged tier
+curl -s -H &quot;Cookie: cj_tier=superuser&quot; &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+# 0
+</code></pre>
+<p>Note <code>grep -o ... | wc -l</code> rather than <code>grep -c</code>. A rendered Next.js page is
+effectively one long line, so <code>grep -c</code> counts <strong>lines containing</strong> the text
+and would report 1 where the text appears twice. Counting occurrences is the
+question you meant to ask, and getting this wrong is the sort of measurement
+error that makes a security check say what you hoped rather than what is true.</p>
+<p>Those three numbers are the deliverable. A test that renders a component in
+jsdom cannot produce them, because the question is not &quot;what does the component
+show&quot; but &quot;what did the server send&quot;.</p>
+<blockquote>
+<p><strong>Background (2026): About the cookie.</strong></p>
+<p>The reference solution reads the reader&#39;s tier from a cookie, because the
+capstone has no database. <strong>A value the browser can edit must never decide
+entitlement in production.</strong> In a real system that is a session lookup, and
+in Casey Journals it is a server-side check per account with a request meter
+behind it. The comment saying so stays in the reference code, so nobody
+copies the shortcut into something real. Note that the third <code>curl</code> above
+tests exactly this: an unknown value falls back to the lowest tier rather
+than to an error or, worse, to trust.</p>
+</blockquote>
+<h3>Structure</h3>
+<pre><code>casey-journal/
+  app/
+    layout.tsx
+    page.tsx                     the list, a Server Component
+    globals.css
+    actions.ts                   &quot;use server&quot;
+    subscribe/page.tsx
+    articles/[slug]/page.tsx
+    api/health/route.ts
+  components/
+    bookmark-button.tsx          &quot;use client&quot;, useOptimistic
+    subscribe-form.tsx           &quot;use client&quot;, useActionState
+  lib/
+    content.ts                   articles, tiers, viewArticle
+    reader.ts                    session reads (cookies)
+    subscribe.ts                 the Zod schema
+    format.ts                    Intl for dates and money
+  test/
+    setup.ts
+    paywall.test.ts
+    subscribe.test.ts
+    bookmark-button.test.tsx
+  next.config.ts
+  tsconfig.json
+  vitest.config.mts
+</code></pre>
+<h3>Rules for the build</h3>
+<ul>
+<li><strong>No content, real or invented.</strong> Article bodies are paragraphs that say
+<code>PLACEHOLDER</code>. Author names are <code>Placeholder Author</code>. Do not write legal
+copy, and do not paste any: legal wording is owner-approved in the real
+product and it is not yours to improvise.</li>
+<li><strong>Prices are placeholders too</strong>, and marked as such on the page. Casey
+Journals&#39; launch prices are a dated owner decision and a course is not
+where they get republished.</li>
+<li><strong>Money is integer cents</strong>, formatted with
+<code>Intl.NumberFormat(&quot;en-ZA&quot;, { style: &quot;currency&quot;, currency: &quot;ZAR&quot; })</code>.</li>
+<li><strong>Dates are ISO strings</strong>, formatted with
+<code>Intl.DateTimeFormat(&quot;en-ZA&quot;, { timeZone: &quot;Africa/Johannesburg&quot; })</code>.</li>
+<li><strong><code>&quot;use client&quot;</code> goes on the two leaf components and nowhere else.</strong> If you
+find yourself adding it to a page, work out what is really interactive and
+push the boundary down.</li>
+<li><strong>The subscribe action validates its own input</strong>, even though the form
+already did.</li>
+</ul>
+<h3>Features you must use</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Server Components as the default, <code>&quot;use client&quot;</code> only on leaves</li>
+<li><input disabled="" type="checkbox"> An <code>async</code> page component reading <code>await params</code></li>
+<li><input disabled="" type="checkbox"> <code>generateStaticParams</code> and <code>generateMetadata</code></li>
+<li><input disabled="" type="checkbox"> A Server Action for the form and another for the bookmark</li>
+<li><input disabled="" type="checkbox"> <code>useActionState</code> with a discriminated union state</li>
+<li><input disabled="" type="checkbox"> <code>useFormStatus</code> in a child of the form</li>
+<li><input disabled="" type="checkbox"> <code>useOptimistic</code> inside <code>startTransition</code>, with no rollback code</li>
+<li><input disabled="" type="checkbox"> A Route Handler returning JSON with <code>Cache-Control: no-store</code></li>
+<li><input disabled="" type="checkbox"> Zod 4 with <code>{ error: ... }</code> messages, one per field</li>
+<li><input disabled="" type="checkbox"> <code>as const satisfies</code> on the tier ranking</li>
+<li><input disabled="" type="checkbox"> <code>aria-pressed</code> and a meaningful <code>aria-label</code> on the toggle</li>
+<li><input disabled="" type="checkbox"> Vitest 4 configured from <code>vitest/config</code>, with an explicit <code>cleanup</code></li>
+<li><input disabled="" type="checkbox"> The three <code>curl</code> numbers above, in your commit message</li>
+</ul>
+<h3>Stretch goals</h3>
+<ol>
+<li><strong>A read meter.</strong> Allow three full articles a month to a signed-out reader,
+counted <strong>on the server</strong> per session. Then explain in a comment why a
+counter in <code>localStorage</code> would be worthless.</li>
+<li><strong><code>middleware.ts</code></strong> setting <code>X-Content-Type-Options</code>, <code>Referrer-Policy</code> and
+a Content-Security-Policy, and refusing a list of crawler user agents. Then
+read the workbook on why a user-agent check is a courtesy and DNS
+verification is a control.</li>
+<li><strong>Streaming.</strong> Wrap the list in <code>&lt;Suspense&gt;</code> and pass an unawaited promise
+from the Server Component into a Client Component that calls <code>use()</code>. Watch
+the shell arrive before the data.</li>
+<li><strong>A podcast feed</strong> at <code>/api/feed.xml</code> as a Route Handler, with correct
+<code>Content-Type</code> and a <code>revalidate</code>.</li>
+</ol>
+<h3>Building it on Vite instead</h3>
+<p>If your project is a single-page app, the capstone still works and the paywall
+does not. Say so out loud rather than pretending otherwise: with no server of
+your own, the entitlement decision belongs to the API, and the React app can
+only ask for what it is allowed and render what comes back.</p>
+<p>That is exactly how Mentisflow works. Its Firestore Security Rules are 1043
+lines and they are the boundary; the React app renders what the rules let it
+read. If you build the Vite version, build it against a small API that enforces
+the tier, and treat the client as a display.</p>
+<hr>
+<h2>Where to Go Next</h2>
+<p><strong>(2026)</strong> The next thing is
+<a href="workbook.html"><code>../casey-workbook/workbook.md</code></a>. This course
+taught you to build the screen. The workbook is about everything that decides
+whether the screen may show what it shows: trust boundaries, security
+standards, data protection engineering, operations, payments, and working with
+AI coding agents.</p>
+<p>After that, pick a depth direction:</p>
+<ol>
+<li><strong>The other path.</strong> If you built the capstone on Next.js, build something
+small on Vite with React Router, or the reverse. Knowing where the seam is
+between them is worth more than depth in either.</li>
+<li><strong>React Native with Expo.</strong> Casey Journals&#39; mobile app is Expo Router with
+NativeWind, sharing <code>packages/core</code> with the web app. The components differ;
+the hooks do not.</li>
+<li><strong>State management.</strong> Zustand or Jotai, if you have genuinely global client
+state. Most applications do not: server state belongs to TanStack Query or
+to the server, and the rest is usually local.</li>
+<li><strong>Animation.</strong> Framer Motion, which is what Mentisflow uses, including a
+shared <code>layoutId</code> element that glides between navigation tabs. Respect
+<code>prefers-reduced-motion</code> from the first line, through
+<code>useSyncExternalStore</code> as in Lesson 16.</li>
+<li><strong>Component libraries.</strong> Radix UI primitives and shadcn/ui, to see how the
+compound and polymorphic patterns of Lesson 13 look at full size.</li>
+</ol>
+<p><strong>Recommended reading:</strong></p>
+<ul>
+<li>The official React docs at react.dev, which are the reference for every hook
+in Lesson 16</li>
+<li>The Next.js App Router documentation, particularly the caching and rendering
+pages, which are the part everyone gets wrong</li>
+<li>The official TanStack Query docs, especially the version 5 migration guide</li>
+<li>&quot;Patterns.dev&quot; by Lydia Hallie</li>
+<li>The Web Content Accessibility Guidelines, which is the only item on this list
+that is not optional</li>
+</ul>
+<p>Good luck.</p>
+
+<label class="done"><input type="checkbox" id="done"> Mark <b>&nbsp;React with TypeScript&nbsp;</b> as read</label>
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+<script src="../app.js"></script><script>
+const box = document.getElementById("done");
+box.checked = Progress.isRead("react");
+box.addEventListener("change", () => Progress.setRead("react", box.checked));
+</script>
+</body>
+</html>

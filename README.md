@@ -106,6 +106,21 @@ unentitled reader.
 
 **Estimated time:** 18 to 24 hours including exercises.
 
+### 0. The learning hub and the interactive test (2026)
+
+A static site holding all of the above, plus a test over it.
+
+- [`site/`](./site/) · open `site/index.html`, or deploy the folder anywhere
+
+Seventy-six questions across nine topics, drawn at random and split evenly
+between straightforward and harder. Most of the harder ones are scenarios: a
+stolen laptop, a paywall that leaks, a webhook that grants twice, a
+cancellation that cannot reach the payment gateway. The reasoning appears after
+every answer, right or wrong.
+
+Progress is kept in the browser. No account, no cookies, no tracking, no build
+step. Deployment instructions are in [`site/README.md`](./site/README.md).
+
 ### 4. The Casey Workbook (2026)
 
 Ten parts on what a professional does with the language: architecture,
@@ -195,11 +210,17 @@ ts-react-courses/
 ├── react-typescript-course/
 │   ├── course.md
 │   └── solutions.md
-└── casey-workbook/                 (2026)
-    ├── workbook.md
-    ├── workbook.pdf
-    ├── solutions.md
-    └── solutions.pdf
+├── casey-workbook/                 (2026)
+│   ├── workbook.md
+│   ├── workbook.pdf
+│   ├── solutions.md
+│   └── solutions.pdf
+└── site/                           (2026) the static learning hub
+    ├── index.html                  the hub, with progress tracking
+    ├── test.html                   the interactive test
+    ├── questions.js                76 questions, 38 easy and 38 hard
+    ├── read/                       the courses, rendered from the markdown
+    └── README.md                   how to run and deploy it
 ```
 
 ## How the 2026 revision was verified

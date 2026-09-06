@@ -65,6 +65,18 @@ Do not read the solutions first. The solutions are written to be read **after**
 you have a wrong answer, because the interesting content is the reasoning, and
 reasoning only lands against something you already tried.
 
+### Checking yourself
+
+There is an **interactive test** in the learning hub (`site/index.html`, or
+wherever it is deployed): 76 questions across the nine topics, split evenly
+between straightforward ones and harder ones. Most of the harder ones are
+scenarios, and the reasoning appears after every answer whether you were right
+or wrong.
+
+Use it as the quick check after reading a part, and the exercises below as the
+slow one. The test tells you which reasoning you have not met. The exercises
+are where the skill actually forms, because they run against a real system.
+
 ---
 
 ## Contents

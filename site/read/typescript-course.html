@@ -1,0 +1,1614 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeScript · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>TypeScript: A Practical Course From Start to Finish</h1>
+<p>Revised for 2026. A hands-on course that takes you from zero to comfortable
+with TypeScript. Every lesson has runnable examples and a small exercise. Work
+through them in order. Total time: roughly 10 to 15 hours if you do the
+exercises.</p>
+<p>This course assumes you are comfortable with modern JavaScript (the topics
+covered in the JavaScript course in this series). If you are not, work through
+that course first.</p>
+<p>Material added or changed in the 2026 revision is marked <strong>(2026)</strong>.</p>
+<p><strong>Baseline (2026):</strong> TypeScript 7.0.2, Node.js 24 (Active LTS), Zod 4.5.4.
+Every sample was type-checked with <code>tsc --noEmit</code> against the <code>tsconfig.json</code>
+this course documents, and every runnable sample was executed on Node 24.20.0.
+The version table lives in <code>STACK.md</code> at the root of this repository.</p>
+<p>Some samples are <strong>meant</strong> to fail, because the error is the lesson. Those
+carry a comment naming the error, like <code>// error TS1294</code>. Everything else
+type-checks clean.</p>
+<hr>
+<h2>Lesson 0: Setup (rewritten for TypeScript 7)</h2>
+<h3>What is TypeScript?</h3>
+<p>TypeScript is a language created by Microsoft that adds static types to
+JavaScript. You write TypeScript, a checker verifies it, and the types are then
+removed so that plain JavaScript runs in browsers or in Node.</p>
+<blockquote>
+<p><strong>Background: What does &quot;static types&quot; mean?</strong></p>
+<p>In a dynamically typed language such as JavaScript, the type of a value
+(string, number, object) is checked only when the program runs. In a
+statically typed language such as TypeScript, the types are also checked
+before it runs. Bugs such as passing a string where a number was expected are
+caught in your editor instead of in production.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background (2026): Is TypeScript still a compiler?</strong></p>
+<p>Less than it was, and this is the single biggest change in the 2026 revision.</p>
+<p>TypeScript does two separate jobs. It <strong>checks</strong> types, and it <strong>erases</strong>
+them to produce JavaScript. Those jobs have come apart. Node 24 erases types
+itself, so <code>node app.ts</code> just runs. Vite, esbuild and Next.js all erase types
+as part of bundling. What is left for <code>tsc</code> is the checking, which is why
+almost every modern project runs it as <code>tsc --noEmit</code>.</p>
+<p>TypeScript 7, released on 8 July 2026, is a rewrite of the compiler in Go.
+Nothing about the language changed. It is the same checker, roughly ten times
+faster, and the practical consequence is that a whole-project check is fast
+enough to be a save-time habit rather than a coffee break.</p>
+</blockquote>
+<h3>What you need (2026)</h3>
+<p>Node.js 24 (the Active LTS line) and an editor with TypeScript support. That is
+all. Note what is <strong>not</strong> in the list:</p>
+<table>
+<thead>
+<tr>
+<th>No longer needed</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ts-node</code></td>
+<td>Node runs <code>.ts</code> files itself</td>
+</tr>
+<tr>
+<td><code>tsx</code></td>
+<td>The same</td>
+</tr>
+<tr>
+<td><code>nodemon</code></td>
+<td><code>node --watch</code></td>
+</tr>
+<tr>
+<td><code>dotenv</code></td>
+<td><code>node --env-file=.env</code></td>
+</tr>
+<tr>
+<td>A <code>dist/</code> build step for scripts</td>
+<td>Nothing is emitted at all</td>
+</tr>
+</tbody></table>
+<h3>Initialise the project (2026)</h3>
+<pre><code class="language-bash">mkdir ts-course &amp;&amp; cd ts-course
+npm init -y
+npm pkg set type=module
+npm install --save-dev typescript@7 @types/node
+npm install zod
+npx tsc --init
+</code></pre>
+<p>Two development dependencies rather than three. <code>ts-node</code> is gone.</p>
+<blockquote>
+<p><strong>Background: What is <code>@types/node</code>?</strong></p>
+<p>Many JavaScript libraries ship no type information. The community maintains a
+large collection of type definitions called DefinitelyTyped, published to npm
+with an <code>@types/</code> prefix. <code>@types/node</code> tells TypeScript what <code>process.argv</code>,
+<code>readFile</code> and <code>setTimeout</code> look like.</p>
+<p><strong>(2026)</strong> In TypeScript 7 this package is no longer picked up automatically.
+You must list it: <code>&quot;types&quot;: [&quot;node&quot;]</code>. The reason is below.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: What is <code>npx</code>?</strong></p>
+<p><code>npx</code> runs a command from a package installed in your project without
+installing it globally. <code>npx tsc</code> runs your project&#39;s own compiler, which
+means your build does not depend on what happens to be installed on the
+machine.</p>
+</blockquote>
+<h3>The tsconfig.json TypeScript 7 writes</h3>
+<p><code>npx tsc --init</code> produces this. It is a very different file from the one
+earlier versions wrote.</p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;module&quot;: &quot;nodenext&quot;,
+    &quot;target&quot;: &quot;esnext&quot;,
+    &quot;types&quot;: [],
+
+    &quot;sourceMap&quot;: true,
+    &quot;declaration&quot;: true,
+    &quot;declarationMap&quot;: true,
+
+    &quot;noUncheckedIndexedAccess&quot;: true,
+    &quot;exactOptionalPropertyTypes&quot;: true,
+
+    &quot;strict&quot;: true,
+    &quot;jsx&quot;: &quot;react-jsx&quot;,
+    &quot;verbatimModuleSyntax&quot;: true,
+    &quot;isolatedModules&quot;: true,
+    &quot;noUncheckedSideEffectImports&quot;: true,
+    &quot;moduleDetection&quot;: &quot;force&quot;,
+    &quot;skipLibCheck&quot;: true
+  }
+}
+</code></pre>
+<h3>The new defaults (2026)</h3>
+<p>These hold even with <strong>no</strong> <code>tsconfig.json</code> at all. Each was checked by running
+<code>tsc</code> 7.0.2; the probes and their exact output are in <code>STACK.md</code> section 4.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default in TypeScript 7</th>
+<th>What it used to be</th>
+<th>What this means for you</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>strict</code></td>
+<td><strong>on</strong></td>
+<td>off</td>
+<td><code>function f(x) {}</code> is now an error out of the box. You have to opt <em>out</em> of safety, not into it.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>esnext</code></td>
+<td><code>es5</code></td>
+<td>Nothing is downlevelled. The output is the input with the types removed.</td>
+</tr>
+<tr>
+<td><code>module</code></td>
+<td><code>esnext</code></td>
+<td><code>commonjs</code></td>
+<td>ES modules are the assumption.</td>
+</tr>
+<tr>
+<td><code>moduleResolution</code></td>
+<td><code>bundler</code></td>
+<td><code>node10</code></td>
+<td>Resolution matches what bundlers actually do.</td>
+</tr>
+<tr>
+<td><code>types</code></td>
+<td><code>[]</code></td>
+<td>every <code>@types/*</code> in <code>node_modules</code></td>
+<td>Ambient types are opt-in.</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Background (2026): Why did <code>types</code> change, and why is it an improvement?</strong></p>
+<p>Previously, every <code>@types/*</code> package anywhere in <code>node_modules</code> was loaded
+into the global scope of your project. Install one package whose dependency
+pulls in <code>@types/jest</code>, and suddenly <code>describe</code> and <code>it</code> are globals in your
+production code, and TypeScript will happily let you call them. Compilation
+got slower with every install and the global scope was decided by your
+dependency tree.</p>
+<p>With <code>&quot;types&quot;: []</code> you name what you want:</p>
+<pre><code class="language-json">{ &quot;compilerOptions&quot;: { &quot;types&quot;: [&quot;node&quot;] } }
+</code></pre>
+<p>If <code>process</code> is suddenly &quot;Cannot find name&quot;, this is why. Add <code>&quot;node&quot;</code>.</p>
+</blockquote>
+<h3>Options that are gone (2026)</h3>
+<p>TypeScript 6 deprecated these. TypeScript 7 refuses them. Each error below is
+the real message from <code>tsc</code> 7.0.2.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What happens now</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;target&quot;: &quot;es5&quot;</code></td>
+<td><code>error TS5108: Option &#39;target=ES5&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td><code>&quot;moduleResolution&quot;: &quot;node&quot;</code></td>
+<td><code>error TS5108: Option &#39;moduleResolution=node10&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td><code>&quot;baseUrl&quot;</code></td>
+<td><code>error TS5102: Option &#39;baseUrl&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td><code>importsNotUsedAsValues</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>preserveValueImports</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>keyofStringsOnly</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>suppressImplicitAnyIndexErrors</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>noImplicitUseStrict</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>out</code>, <code>charset</code></td>
+<td><code>error TS5023: Unknown compiler option</code></td>
+</tr>
+<tr>
+<td><code>module: &quot;amd&quot;</code>, <code>&quot;umd&quot;</code>, <code>&quot;system&quot;</code></td>
+<td>Rejected under the default <code>bundler</code> resolution</td>
+</tr>
+</tbody></table>
+<p><code>baseUrl</code> deserves a note, because a great many older projects use it for path
+aliases. Use <code>paths</code> on its own instead, with each entry relative to the
+<code>tsconfig.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;paths&quot;: { &quot;@/*&quot;: [&quot;./src/*&quot;] }
+  }
+}
+</code></pre>
+<h3>The options worth understanding (2026)</h3>
+<p><code>verbatimModuleSyntax</code>, <code>isolatedModules</code> and <code>erasableSyntaxOnly</code> are the
+three that shape how you write code. They exist because of the split described
+above: the thing that erases your types is often not <code>tsc</code>.</p>
+<p><strong><code>isolatedModules</code></strong> requires every file to be transformable <strong>on its own</strong>,
+with no knowledge of any other file. That is exactly the constraint esbuild,
+SWC and Node&#39;s type stripping work under: they see one file at a time.</p>
+<p><strong><code>verbatimModuleSyntax</code></strong> requires you to mark type-only imports, and then
+emits the rest verbatim.</p>
+<pre><code class="language-typescript">// Wrong under verbatimModuleSyntax: is Practitioner a value or a type?
+// The single-file tool cannot know, so it must guess.
+//   import { Practitioner, bookSession } from &quot;./booking.ts&quot;;
+
+// Right: the type import is erased, the value import is kept.
+import type { Practitioner } from &quot;./booking.ts&quot;;
+import { bookSession } from &quot;./booking.ts&quot;;
+
+// Also right, and often tidier:
+//   import { type Practitioner, bookSession } from &quot;./booking.ts&quot;;
+</code></pre>
+<p><strong><code>erasableSyntaxOnly</code></strong> rejects any TypeScript syntax that is not simply
+deleted. Three things fail:</p>
+<pre><code class="language-typescript">// All three are errors under erasableSyntaxOnly:
+enum Colour { Red, Green }                            // TS1294
+class P { constructor(private readonly x: number) {} } // TS1294
+namespace NS { export const a = 1; }                   // TS1294
+</code></pre>
+<p>Each of them <strong>generates runtime code</strong>. An <code>enum</code> becomes an object. A
+parameter property becomes an assignment in the constructor body. A <code>namespace</code>
+becomes an immediately invoked function. A tool that only deletes types cannot
+produce them, so they cannot run under <code>node app.ts</code>.</p>
+<blockquote>
+<p><strong>Background (2026): Should I turn <code>erasableSyntaxOnly</code> on?</strong></p>
+<p>Yes, on anything new. It is not a restriction so much as a description of the
+subset of TypeScript that works everywhere. The three features it removes all
+have better replacements, which Lesson 9 covers, and every one of them was
+already discouraged before this flag existed.</p>
+<p>If you maintain an older codebase full of enums, leave it off and migrate
+gradually. Nothing breaks; you simply cannot run those files with <code>node</code>.</p>
+</blockquote>
+<h3>Running TypeScript (2026)</h3>
+<p>Create <code>src/hello.ts</code>:</p>
+<pre><code class="language-typescript">const greet = (name: string): string =&gt; `Hello, ${name}.`;
+console.log(greet(&quot;World&quot;));
+</code></pre>
+<p>Run it:</p>
+<pre><code class="language-bash">node src/hello.ts
+</code></pre>
+<p>That is the whole story. Node 24 strips the types and runs the result. You can
+check that the feature is on:</p>
+<pre><code class="language-bash">node -p &quot;process.features.typescript&quot;   # &quot;strip&quot;
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What exactly does Node do to my file?</strong></p>
+<p>It <strong>erases</strong>, and it does not <strong>check</strong>. Every type annotation is replaced
+with whitespace of the same width, so the line and column numbers in a stack
+trace still point at your source and no source map is needed. That is the
+whole trick, and it is why the feature is fast and why it cannot support
+<code>enum</code>: erasing is all it does.</p>
+<p>The consequence matters: <strong><code>node app.ts</code> will happily run code that does not
+type-check.</strong> Node never looks at the types. Checking is a separate command
+and it belongs in your scripts and in CI.</p>
+<pre><code class="language-bash">node --experimental-transform-types app.ts   # also compiles enums, if you must
+</code></pre>
+</blockquote>
+<p>Add both jobs to <code>package.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: { &quot;node&quot;: &quot;&gt;=24&quot; },
+  &quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node src/main.ts&quot;,
+    &quot;dev&quot;: &quot;node --watch src/main.ts&quot;,
+    &quot;typecheck&quot;: &quot;tsc --noEmit&quot;,
+    &quot;test&quot;: &quot;node --test&quot;
+  }
+}
+</code></pre>
+<p><code>npm run typecheck</code> is the one that can fail your build. Run it before every
+commit. <code>node --run typecheck</code> does the same thing without npm in the middle.</p>
+<h3>Importing with a <code>.ts</code> extension (2026)</h3>
+<p>Because Node resolves the real file on disk, imports carry the real extension:</p>
+<pre><code class="language-typescript">import { calculate } from &quot;./interest.ts&quot;;
+</code></pre>
+<p>For <code>tsc</code> to accept that, add two options:</p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;allowImportingTsExtensions&quot;: true,
+    &quot;rewriteRelativeImportExtensions&quot;: true
+  }
+}
+</code></pre>
+<p><code>allowImportingTsExtensions</code> permits the spelling. <code>rewriteRelativeImportExtensions</code>
+turns <code>./interest.ts</code> into <code>./interest.js</code> <strong>if</strong> you ever do emit, so the same
+source works whether it is run directly or built.</p>
+<blockquote>
+<p><strong>Background (2026): Why not just write <code>./interest.js</code> as we used to?</strong></p>
+<p>Because it was always a lie. The file on disk is <code>interest.ts</code>, and writing
+<code>.js</code> only worked because a bundler was quietly rewriting it. Now that Node
+reads the file itself, the specifier has to name a file that exists. Writing
+what is true is a small mercy the ecosystem took twenty years to arrive at.</p>
+</blockquote>
+<p>If you see <code>Hello, World.</code>, you are ready.</p>
+<hr>
+<h2>Lesson 1: Primitive Types and Inference</h2>
+<p>TypeScript adds static types on top of JavaScript. The compiler often infers types for you, so you do not always need to annotate.</p>
+<blockquote>
+<p><strong>Background: What does &quot;type inference&quot; mean?</strong></p>
+<p>Inference is when TypeScript figures out the type of a value automatically based on how you use it. If you write <code>let count = 5</code>, TypeScript knows <code>count</code> is a number without you having to say so. Inference is one reason TypeScript feels lightweight: you only annotate when the compiler cannot guess, or when explicit annotations make the code clearer.</p>
+</blockquote>
+<pre><code class="language-typescript">// Explicit annotations
+let username: string = &quot;alice&quot;;
+let age: number = 30;
+let isAdmin: boolean = false;
+let nothing: null = null;
+let notDefined: undefined = undefined;
+
+// Inference: TypeScript figures it out
+let city = &quot;Cape Town&quot;; // inferred as string
+let score = 100;        // inferred as number
+
+// This will fail at compile time
+// city = 42; // Error: Type &#39;number&#39; is not assignable to type &#39;string&#39;
+</code></pre>
+<p>The <code>any</code> type opts out of type checking. Avoid it. Use <code>unknown</code> when you genuinely do not know the type:</p>
+<pre><code class="language-typescript">let dangerous: any = &quot;hello&quot;;
+dangerous.foo.bar(); // No error, but crashes at runtime
+
+let safe: unknown = &quot;hello&quot;;
+// safe.toUpperCase(); // Error: must narrow first
+if (typeof safe === &quot;string&quot;) {
+  console.log(safe.toUpperCase()); // OK now
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: Why is <code>any</code> bad and <code>unknown</code> good?</strong></p>
+<p><code>any</code> turns off the type system for that value, which removes the protection TypeScript provides. <code>unknown</code> says &quot;I do not yet know what this is&quot;, which forces you to check the type before using it. The compiler will not let you call methods on an <code>unknown</code> value until you have proven what it is.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Declare variables for a person&#39;s name, age, and whether they have a driving license. Try assigning a wrong type to each and read the error message.</p>
+<hr>
+<h2>Lesson 2: Arrays, Tuples, and Readonly</h2>
+<p>Arrays have one type:</p>
+<pre><code class="language-typescript">const numbers: number[] = [1, 2, 3];
+const names: Array&lt;string&gt; = [&quot;Alice&quot;, &quot;Bob&quot;]; // alternative syntax
+
+numbers.push(4);
+// numbers.push(&quot;five&quot;); // Error
+</code></pre>
+<p>Tuples are fixed-length arrays where each position has a known type:</p>
+<pre><code class="language-typescript">const coordinate: [number, number] = [50.1, 18.4];
+const userRow: [string, number, boolean] = [&quot;Maria&quot;, 30, true];
+
+// Destructuring
+const [lat, lng] = coordinate;
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the difference between an array and a tuple?</strong></p>
+<p>An array can grow or shrink and every element has the same type. A tuple has a fixed length and each position has its own type. Tuples are useful when a function returns multiple related values (like <code>useState</code> in React, which we will cover later) or for representing structured data like coordinates or rows.</p>
+</blockquote>
+<p><code>readonly</code> prevents mutation:</p>
+<pre><code class="language-typescript">const config: readonly string[] = [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;];
+// config.push(&quot;d&quot;); // Error
+</code></pre>
+<blockquote>
+<p><strong>Background: Why use <code>readonly</code>?</strong></p>
+<p><code>readonly</code> is a promise to other code that you will not change the array. This protects against accidental mutation, especially when passing arrays as function arguments. The original array still exists, but the reference cannot be used to modify it.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Build a tuple type that represents an HTTP response: status code, status text, and a body string. Create one and destructure it.</p>
+<hr>
+<h2>Lesson 3: Functions</h2>
+<p>Annotate parameters and return types:</p>
+<pre><code class="language-typescript">function add(a: number, b: number): number {
+  return a + b;
+}
+
+// Arrow function
+const multiply = (a: number, b: number): number =&gt; a * b;
+
+// Optional parameters
+function greet(name: string, title?: string): string {
+  return title ? `${title} ${name}` : name;
+}
+greet(&quot;Sarah&quot;);          // OK
+greet(&quot;Sarah&quot;, &quot;Dr.&quot;);   // OK
+
+// Default parameters
+function power(base: number, exp: number = 2): number {
+  return base ** exp;
+}
+
+// Rest parameters
+function sum(...values: number[]): number {
+  return values.reduce((acc, v) =&gt; acc + v, 0);
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: When should I annotate the return type?</strong></p>
+<p>For most short functions, TypeScript will infer the return type correctly. Annotating is still useful in two cases. First, on exported public APIs, an explicit return type acts as documentation. Second, an annotation catches mistakes where you accidentally return something different from what you intended.</p>
+</blockquote>
+<p>Function types as values:</p>
+<pre><code class="language-typescript">type BinaryOp = (a: number, b: number) =&gt; number;
+
+const subtract: BinaryOp = (a, b) =&gt; a - b;
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;type alias&quot;?</strong></p>
+<p>The <code>type</code> keyword creates a name for a type. It does not create a new value at runtime; it only exists during compilation. Type aliases let you avoid repeating long type definitions and give meaningful names to common shapes.</p>
+</blockquote>
+<p>Functions that never return (throw or loop forever) use <code>never</code>:</p>
+<pre><code class="language-typescript">function fail(message: string): never {
+  throw new Error(message);
+}
+</code></pre>
+<p><strong>Exercise:</strong> Write a function <code>formatPrice</code> that takes a number and an optional currency code (default &quot;ZAR&quot;). It should return a formatted string like &quot;R 99.00&quot; for ZAR, &quot;$ 99.00&quot; for USD.</p>
+<hr>
+<h2>Lesson 4: Objects, Interfaces, and Type Aliases</h2>
+<p>Object types describe shape:</p>
+<pre><code class="language-typescript">const user: { name: string; age: number } = {
+  name: &quot;Alex&quot;,
+  age: 30,
+};
+</code></pre>
+<p>Reusable shapes get a name. You can use either <code>interface</code> or <code>type</code>:</p>
+<pre><code class="language-typescript">interface User {
+  name: string;
+  age: number;
+  email?: string;       // optional
+  readonly id: number;  // cannot reassign after creation
+}
+
+type Product = {
+  name: string;
+  price: number;
+};
+
+const u: User = { name: &quot;Alex&quot;, age: 30, id: 1 };
+// u.id = 2; // Error: readonly
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the difference between <code>interface</code> and <code>type</code>?</strong></p>
+<p>Both describe the shape of an object. <code>interface</code> is older and is specifically designed for object shapes; it can be extended (<code>extends</code>) and merged across files. <code>type</code> is a more general feature that can describe anything, including unions, intersections, and primitives. For most cases the choice is style. A reasonable convention is <code>interface</code> for object shapes you might extend and <code>type</code> for everything else.</p>
+</blockquote>
+<p>Interfaces can extend; types can intersect:</p>
+<pre><code class="language-typescript">interface Animal {
+  name: string;
+}
+interface Dog extends Animal {
+  breed: string;
+}
+
+type Timestamped = { createdAt: Date };
+type LoggedUser = User &amp; Timestamped;
+</code></pre>
+<blockquote>
+<p><strong>Background: What does the <code>&amp;</code> (intersection) operator mean?</strong></p>
+<p>An intersection type combines two types into one. A value of type <code>A &amp; B</code> must satisfy both <code>A</code> and <code>B</code> simultaneously. It is similar to <code>extends</code> for interfaces, but it works with any types.</p>
+</blockquote>
+<p>Rule of thumb: use <code>interface</code> for object shapes that might be extended (especially for public APIs). Use <code>type</code> for unions, intersections, primitives, and tuples.</p>
+<p><strong>Exercise:</strong> Model a <code>BlogPost</code> with a title, author (who has a name and email), tags (string array), and a published flag. Create one valid blog post.</p>
+<hr>
+<h2>Lesson 5: Union and Literal Types</h2>
+<p>Union types let a value be one of several types:</p>
+<pre><code class="language-typescript">type ID = number | string;
+
+function printId(id: ID) {
+  console.log(`ID: ${id}`);
+}
+printId(101);
+printId(&quot;abc-123&quot;);
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;union type&quot;?</strong></p>
+<p>The <code>|</code> operator combines types so a value can be any one of them. A function that accepts <code>number | string</code> accepts either, and TypeScript will require you to handle both cases when you use the value.</p>
+</blockquote>
+<p>Literal types restrict values to specific constants:</p>
+<pre><code class="language-typescript">type Direction = &quot;north&quot; | &quot;south&quot; | &quot;east&quot; | &quot;west&quot;;
+
+function move(dir: Direction) {
+  console.log(`Moving ${dir}`);
+}
+move(&quot;north&quot;);
+// move(&quot;up&quot;); // Error
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;literal type&quot;?</strong></p>
+<p>A literal type is a type whose only valid value is one specific constant. For example, the type <code>&quot;north&quot;</code> (with the quotes) means &quot;the string north and nothing else&quot;. Combined with unions, literal types give you safe enums without needing the <code>enum</code> keyword.</p>
+</blockquote>
+<p>Combine literals with unions for state machines:</p>
+<pre><code class="language-typescript">type RequestState =
+  | { status: &quot;idle&quot; }
+  | { status: &quot;loading&quot; }
+  | { status: &quot;success&quot;; data: string }
+  | { status: &quot;error&quot;; error: string };
+
+function render(state: RequestState) {
+  switch (state.status) {
+    case &quot;idle&quot;: return &quot;Waiting...&quot;;
+    case &quot;loading&quot;: return &quot;Loading...&quot;;
+    case &quot;success&quot;: return `Got: ${state.data}`;
+    case &quot;error&quot;: return `Failed: ${state.error}`;
+  }
+}
+</code></pre>
+<p>This pattern is called a <strong>discriminated union</strong>. It is one of the most useful tools in TypeScript.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;discriminated union&quot;?</strong></p>
+<p>A discriminated union is a union of object types where each option has a shared field (the discriminator) with a different literal value. In the example above, <code>status</code> is the discriminator. When you check <code>state.status === &quot;success&quot;</code>, TypeScript narrows the type to that specific variant and lets you safely access <code>state.data</code>.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Model a <code>PaymentResult</code> discriminated union with cases for <code>approved</code> (with a transaction id), <code>declined</code> (with a reason), and <code>pending</code>. Write a function that returns a user-facing message for each.</p>
+<hr>
+<h2>Lesson 6: Type Narrowing and Guards</h2>
+<p>TypeScript narrows types based on runtime checks:</p>
+<blockquote>
+<p><strong>Background: What does &quot;narrowing&quot; mean?</strong></p>
+<p>Narrowing is when TypeScript reduces a value&#39;s possible types based on a condition. If a parameter is <code>string | number</code> and you check <code>typeof value === &quot;string&quot;</code>, inside the if block TypeScript knows it is a string and lets you call string methods on it.</p>
+</blockquote>
+<pre><code class="language-typescript">function describe(value: string | number) {
+  if (typeof value === &quot;string&quot;) {
+    return value.toUpperCase(); // narrowed to string
+  }
+  return value.toFixed(2);       // narrowed to number
+}
+
+function isError(value: unknown): value is Error {
+  return value instanceof Error;
+}
+
+function handle(result: unknown) {
+  if (isError(result)) {
+    console.error(result.message); // safe
+  }
+}
+</code></pre>
+<p>The <code>value is Error</code> syntax is a <strong>type predicate</strong>. It tells TypeScript that the function checks a type at runtime.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;type predicate&quot;?</strong></p>
+<p>A type predicate is a return-type annotation of the form <code>parameterName is SomeType</code>. When such a function returns true, TypeScript narrows the parameter to that type for the rest of the surrounding code. Type predicates let you write reusable type guards.</p>
+</blockquote>
+<p>The <code>in</code> operator narrows by property:</p>
+<pre><code class="language-typescript">type Fish = { swim: () =&gt; void };
+type Bird = { fly: () =&gt; void };
+
+function move(animal: Fish | Bird) {
+  if (&quot;swim&quot; in animal) animal.swim();
+  else animal.fly();
+}
+</code></pre>
+<p><strong>Exercise:</strong> Write a type guard <code>isString(x: unknown): x is string</code> and use it inside a function that accepts <code>unknown</code> and returns its length if it is a string, or 0 otherwise.</p>
+<hr>
+<h2>Lesson 7: Generics</h2>
+<p>Generics let you write reusable code that works with any type while preserving type safety.</p>
+<blockquote>
+<p><strong>Background: What is a &quot;generic&quot;?</strong></p>
+<p>A generic is a type that is parameterized over another type. Just as a function can take values as parameters, a generic function or type can take other types as parameters. The placeholder type (often called <code>T</code>) acts as a variable that gets filled in when the function or type is used. Generics let you write one piece of code that works with many types without losing type information.</p>
+</blockquote>
+<pre><code class="language-typescript">function identity&lt;T&gt;(value: T): T {
+  return value;
+}
+
+const a = identity&lt;string&gt;(&quot;hello&quot;); // string
+const b = identity(42);              // number (inferred)
+</code></pre>
+<p>Generic data structures:</p>
+<pre><code class="language-typescript">function first&lt;T&gt;(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+const n = first([1, 2, 3]);       // number | undefined
+const s = first([&quot;a&quot;, &quot;b&quot;]);      // string | undefined
+</code></pre>
+<p>Constraints with <code>extends</code>:</p>
+<pre><code class="language-typescript">interface HasLength {
+  length: number;
+}
+
+function logLength&lt;T extends HasLength&gt;(value: T): T {
+  console.log(value.length);
+  return value;
+}
+
+logLength(&quot;hello&quot;);      // OK
+logLength([1, 2, 3]);    // OK
+// logLength(42);        // Error: number has no length
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>T extends X</code> mean in a generic?</strong></p>
+<p><code>T extends X</code> is a constraint that says &quot;T can be any type, but it must be assignable to X&quot;. This lets you use the methods and properties of X inside the generic, while still keeping T flexible.</p>
+</blockquote>
+<p>Generic interfaces and types:</p>
+<pre><code class="language-typescript">interface ApiResponse&lt;T&gt; {
+  data: T;
+  status: number;
+}
+
+const userResponse: ApiResponse&lt;User&gt; = {
+  data: { name: &quot;Priya&quot;, age: 30, id: 1 },
+  status: 200,
+};
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>keyof T</code> mean?</strong></p>
+<p><code>keyof T</code> is a type that represents the union of all key names of T. For <code>User = { name: string; age: number }</code>, <code>keyof User</code> is <code>&quot;name&quot; | &quot;age&quot;</code>. This is essential for writing generic code that operates on object properties safely.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Write a generic function <code>pluck&lt;T, K extends keyof T&gt;(items: T[], key: K): T[K][]</code> that extracts an array of one property from an array of objects. Test it on a list of users.</p>
+<hr>
+<h2>Lesson 8: Classes</h2>
+<p>TypeScript classes add visibility modifiers and parameter properties:</p>
+<blockquote>
+<p><strong>Background: What are &quot;visibility modifiers&quot;?</strong></p>
+<p>Visibility modifiers (also called access modifiers) control whether class members can be accessed from outside the class. <code>public</code> (the default) means anyone can access. <code>private</code> means only the class itself can access. <code>protected</code> means the class and any subclasses can access. These are checked at compile time.</p>
+</blockquote>
+<pre><code class="language-typescript">class BankAccount {
+  // Visibility: public (default), private, protected
+  private balance: number = 0;
+  readonly owner: string;
+
+  constructor(owner: string, initialDeposit: number = 0) {
+    this.owner = owner;
+    this.balance = initialDeposit;
+  }
+
+  deposit(amount: number): void {
+    if (amount &lt;= 0) throw new Error(&quot;Amount must be positive&quot;);
+    this.balance += amount;
+  }
+
+  getBalance(): number {
+    return this.balance;
+  }
+}
+
+const account = new BankAccount(&quot;Jordan&quot;, 100);
+account.deposit(50);
+console.log(account.getBalance()); // 150
+// account.balance = 99999; // Error: private
+</code></pre>
+<p>Shorthand parameter properties (declares and assigns in one go):</p>
+<pre><code class="language-typescript">class Point {
+  constructor(public x: number, public y: number) {}
+}
+
+const p = new Point(3, 4);
+console.log(p.x, p.y);
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;parameter property&quot;?</strong></p>
+<p>When you put a visibility modifier (<code>public</code>, <code>private</code>, etc.) on a constructor parameter, TypeScript automatically creates a class field with that name and assigns the parameter to it. It is purely syntactic shorthand: <code>constructor(public x: number)</code> is equivalent to declaring <code>public x: number;</code> and writing <code>this.x = x</code> inside the constructor.</p>
+</blockquote>
+<p>Inheritance and abstract classes:</p>
+<pre><code class="language-typescript">abstract class Shape {
+  abstract area(): number;
+
+  describe(): string {
+    return `This shape has area ${this.area()}`;
+  }
+}
+
+class Circle extends Shape {
+  constructor(private radius: number) {
+    super();
+  }
+
+  area(): number {
+    return Math.PI * this.radius ** 2;
+  }
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What is an &quot;abstract class&quot;?</strong></p>
+<p>An abstract class is a class that cannot be instantiated directly. It exists to be extended by other classes. An abstract class can declare abstract methods (methods without implementation) that subclasses must provide. This lets you define a contract while sharing some implementation across subclasses.</p>
+</blockquote>
+<p>Implementing interfaces:</p>
+<pre><code class="language-typescript">interface Serializable {
+  toJSON(): string;
+}
+
+class User implements Serializable {
+  constructor(public name: string, public age: number) {}
+  toJSON(): string {
+    return JSON.stringify({ name: this.name, age: this.age });
+  }
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the difference between <code>extends</code> and <code>implements</code>?</strong></p>
+<p><code>extends</code> inherits from a parent class, including its implementation. <code>implements</code> is a contract: it says the class must provide certain methods and properties, but does not inherit any code. A class can extend at most one parent but can implement many interfaces.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Build a <code>Stack&lt;T&gt;</code> class with <code>push</code>, <code>pop</code>, <code>peek</code>, and <code>size</code> methods. Use generics so it can hold any type.</p>
+<hr>
+<h2>Lesson 9: Const Assertions and <code>satisfies</code> (2026, replacing enums)</h2>
+<p>Earlier versions of this course taught <code>enum</code> first and mentioned const
+assertions as an alternative. That is now the wrong way round, and under
+<code>erasableSyntaxOnly</code> the <code>enum</code> will not compile at all.</p>
+<h3>Why enums went</h3>
+<pre><code class="language-typescript">enum OrderStatus {
+  Pending = &quot;PENDING&quot;,
+  Shipped = &quot;SHIPPED&quot;,
+}
+</code></pre>
+<p>Four problems, in ascending order of seriousness.</p>
+<ol>
+<li>It generates runtime code. An <code>enum</code> becomes a real object in the output, so
+it cannot be erased, so <code>node app.ts</code> cannot run it and
+<code>erasableSyntaxOnly</code> rejects it (<code>error TS1294</code>).</li>
+<li>Numeric enums are not type-safe. <code>enum Direction { Up, Down }</code> accepts any
+number: <code>takesDirection(42)</code> compiles.</li>
+<li>Enum members are nominal. <code>OrderStatus.Pending</code> is not assignable to the
+string <code>&quot;PENDING&quot;</code> even though it is exactly that string at runtime, which
+makes every boundary awkward.</li>
+<li>It is TypeScript-only syntax. Nothing you learn about it transfers to
+JavaScript, and no JavaScript consumer of your package can use it.</li>
+</ol>
+<h3>The replacement</h3>
+<pre><code class="language-typescript">export const ORDER_STATUS = {
+  Pending: &quot;PENDING&quot;,
+  Shipped: &quot;SHIPPED&quot;,
+  Delivered: &quot;DELIVERED&quot;,
+  Cancelled: &quot;CANCELLED&quot;,
+} as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+// &quot;PENDING&quot; | &quot;SHIPPED&quot; | &quot;DELIVERED&quot; | &quot;CANCELLED&quot;
+
+function update(status: OrderStatus) {
+  console.log(status);
+}
+
+update(ORDER_STATUS.Shipped);  // fine
+update(&quot;DELIVERED&quot;);           // also fine: it is just a string
+update(&quot;POSTED&quot;);              // error: not assignable to OrderStatus
+</code></pre>
+<p>A plain object, a derived union, no runtime cost beyond the object itself, and
+the values are ordinary strings at every boundary.</p>
+<blockquote>
+<p><strong>Background: What does <code>as const</code> do?</strong></p>
+<p>Without it, TypeScript infers <code>string</code> for each property, and the derived
+union would collapse to <code>string</code>. <code>as const</code> is a const assertion: it infers
+the narrowest literal type for every value (<code>&quot;PENDING&quot;</code> rather than <code>string</code>)
+and marks every property <code>readonly</code>, recursively. That precision is what
+makes the derived union useful.</p>
+</blockquote>
+<p>If you also want the list of values:</p>
+<pre><code class="language-typescript">export const ORDER_STATUSES = Object.values(ORDER_STATUS);
+// (&quot;CANCELLED&quot; | &quot;DELIVERED&quot; | &quot;PENDING&quot; | &quot;SHIPPED&quot;)[]
+</code></pre>
+<p>Note that this is an ordinary mutable array of the union, not a <code>readonly</code>
+tuple: <code>Object.values</code> loses the order and the length. If you need the tuple,
+write the list and derive the union from it instead:</p>
+<pre><code class="language-typescript">export const ORDER_STATUSES = [&quot;PENDING&quot;, &quot;SHIPPED&quot;, &quot;DELIVERED&quot;, &quot;CANCELLED&quot;] as const;
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+</code></pre>
+<h3><code>satisfies</code> (2026)</h3>
+<p><code>as const</code> gives you precision. It does not give you <strong>checking</strong>. Nothing in
+the version above stops you writing <code>Pending: &quot;PENIDNG&quot;</code>.</p>
+<p><code>satisfies</code> checks a value against a type <strong>without widening it</strong>.</p>
+<pre><code class="language-typescript">type StatusMeta = {
+  readonly label: string;
+  readonly terminal: boolean;
+};
+
+export const STATUS_META = {
+  PENDING: { label: &quot;Awaiting payment&quot;, terminal: false },
+  SHIPPED: { label: &quot;On its way&quot;, terminal: false },
+  DELIVERED: { label: &quot;Delivered&quot;, terminal: true },
+  CANCELLED: { label: &quot;Cancelled&quot;, terminal: true },
+} as const satisfies Record&lt;OrderStatus, StatusMeta&gt;;
+</code></pre>
+<p>That one line does three things at once:</p>
+<ul>
+<li>Every key is checked against <code>OrderStatus</code>. Add <code>&quot;POSTED&quot;</code> and it fails.</li>
+<li>Every key must be present. Forget <code>&quot;CANCELLED&quot;</code> and it fails.</li>
+<li>Every value is checked against <code>StatusMeta</code>. Misspell <code>terminal</code> and it
+fails.</li>
+</ul>
+<p>And because of <code>as const</code>, the inferred type stays <strong>narrow</strong>:</p>
+<pre><code class="language-typescript">STATUS_META.DELIVERED.terminal;
+//                    ^? true, not boolean
+
+STATUS_META.PENDING.label;
+//                  ^? &quot;Awaiting payment&quot;, not string
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What is the difference between <code>as</code>, <code>satisfies</code> and a
+type annotation?</strong></p>
+<pre><code class="language-typescript">const a: Record&lt;OrderStatus, StatusMeta&gt; = { ... };  // checked, but widened
+const b = { ... } as Record&lt;OrderStatus, StatusMeta&gt;; // NOT checked at all
+const c = { ... } as const satisfies Record&lt;OrderStatus, StatusMeta&gt;; // checked AND narrow
+</code></pre>
+<p>The annotation on <code>a</code> checks the value but then types the variable as the
+annotation, so <code>a.DELIVERED.terminal</code> is <code>boolean</code> and you have lost the
+detail.</p>
+<p>The <code>as</code> on <code>b</code> is an assertion. It <strong>silences</strong> the checker rather than
+asking it anything. It is the most over-used operator in TypeScript and every
+<code>as</code> in a codebase is a place where you told the compiler to stop helping.</p>
+<p><code>satisfies</code> is the one you want almost every time you were reaching for <code>as</code>.</p>
+</blockquote>
+<h3>An exhaustiveness check</h3>
+<pre><code class="language-typescript">function describe(status: OrderStatus): string {
+  switch (status) {
+    case &quot;PENDING&quot;:   return &quot;Awaiting payment&quot;;
+    case &quot;SHIPPED&quot;:   return &quot;On its way&quot;;
+    case &quot;DELIVERED&quot;: return &quot;Delivered&quot;;
+    case &quot;CANCELLED&quot;: return &quot;Cancelled&quot;;
+    default: {
+      const unreachable: never = status;
+      throw new Error(`Unhandled status: ${String(unreachable)}`);
+    }
+  }
+}
+</code></pre>
+<p>Add a fifth status to <code>ORDER_STATUS</code> and this function stops compiling, at the
+<code>never</code> assignment, naming the case you forgot. That is the whole reason to
+derive the union from the object rather than writing it out twice.</p>
+<p><strong>Exercise:</strong> Model the twelve official languages of South Africa as a <code>const</code>
+object keyed by ISO 639 code, derive a <code>LanguageCode</code> type from it, and add a
+<code>LANGUAGE_META</code> table with an English name and an endonym for each, checked
+with <code>as const satisfies Record&lt;LanguageCode, LanguageMeta&gt;</code>. Then write
+<code>describeLanguage</code> with an exhaustiveness check and prove it fails when you
+remove a case.</p>
+<hr>
+<h2>Lesson 10: Modules</h2>
+<p>Each file is a module. Use <code>export</code> and <code>import</code>:</p>
+<pre><code class="language-typescript">// src/math.ts
+export function add(a: number, b: number): number {
+  return a + b;
+}
+
+export const PI = 3.14159;
+
+// Default export
+export default function square(n: number): number {
+  return n * n;
+}
+</code></pre>
+<pre><code class="language-typescript">// src/main.ts
+import square, { add, PI } from &quot;./math.ts&quot;;
+
+console.log(add(1, 2));   // 3
+console.log(square(5));   // 25
+console.log(PI);          // 3.14159
+</code></pre>
+<p>Re-export from a barrel file:</p>
+<pre><code class="language-typescript">// src/index.ts
+export * from &quot;./math.ts&quot;;
+export * from &quot;./users.ts&quot;;
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;barrel file&quot;?</strong></p>
+<p>A barrel file is a single file that re-exports everything from a folder. Consumers can then import multiple things from the folder with one import statement instead of importing from each individual file. Barrel files keep the import surface clean as a project grows.</p>
+</blockquote>
+<h3>Type-only imports and <code>.ts</code> extensions (2026)</h3>
+<p>Two changes to how you write an import.</p>
+<p><strong>Mark type-only imports.</strong> Under <code>verbatimModuleSyntax</code>, a plain <code>import</code>
+survives into the output. If the thing you imported is a type, that leaves an
+import of something that does not exist at runtime.</p>
+<pre><code class="language-typescript">import type { Task } from &quot;./types.ts&quot;;              // erased entirely
+import { createTask, type Priority } from &quot;./tasks.ts&quot;; // one value, one type
+</code></pre>
+<p><strong>Write the real extension.</strong> Because Node resolves the file itself, the
+specifier names the file on disk:</p>
+<pre><code class="language-typescript">import { add } from &quot;./math.ts&quot;;
+</code></pre>
+<p>This needs <code>allowImportingTsExtensions</code> and <code>rewriteRelativeImportExtensions</code>
+in <code>tsconfig.json</code>, both covered in Lesson 0.</p>
+<blockquote>
+<p><strong>Background (2026): What if my project uses a bundler instead?</strong></p>
+<p>Then extensionless imports still work, because the bundler resolves them. The
+two products beside this repository differ on exactly this: Mentisflow uses
+Vite and writes extensionless imports with an <code>@/</code> alias; a Node script or an
+edge function writes <code>./thing.ts</code>. Follow the project you are in. What does
+not change is <code>import type</code>: mark your type imports either way.</p>
+</blockquote>
+<p><strong>A note on barrel files.</strong> The <code>export * from &quot;./math.ts&quot;</code> pattern below is
+convenient and has a real cost: a bundler often cannot tell which exports are
+used, so importing one function from a barrel can pull in the whole folder.
+Use barrels at the edge of a package, where the export list is the public API.
+Do not use one inside a folder that only its own neighbours import from.</p>
+<p><strong>Exercise:</strong> Split a previous exercise solution across three files: types in <code>types.ts</code>, logic in <code>logic.ts</code>, and a runner in <code>main.ts</code>.</p>
+<hr>
+<h2>Lesson 11: Utility Types</h2>
+<p>TypeScript ships with built-in utility types. The most useful ones:</p>
+<blockquote>
+<p><strong>Background: What are &quot;utility types&quot;?</strong></p>
+<p>Utility types are pre-built generic types that transform other types. They live in TypeScript&#39;s standard library and let you express common patterns (like making every field optional) without writing the transformation manually. They are essential for working with APIs and data models.</p>
+</blockquote>
+<pre><code class="language-typescript">interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number;
+}
+
+// Partial: all fields optional (great for updates)
+type UserUpdate = Partial&lt;User&gt;;
+// { id?: number; name?: string; email?: string; age?: number }
+
+// Required: all fields required
+type FullUser = Required&lt;User&gt;;
+
+// Readonly: all fields readonly
+type ImmutableUser = Readonly&lt;User&gt;;
+
+// Pick: choose specific fields
+type UserPreview = Pick&lt;User, &quot;id&quot; | &quot;name&quot;&gt;;
+// { id: number; name: string }
+
+// Omit: exclude specific fields
+type UserWithoutEmail = Omit&lt;User, &quot;email&quot;&gt;;
+
+// Record: build object types from key/value
+type UsersByID = Record&lt;number, User&gt;;
+
+// ReturnType and Parameters
+function createUser(name: string, age: number): User {
+  return { id: 1, name, email: &quot;&quot;, age };
+}
+type CreatedUser = ReturnType&lt;typeof createUser&gt;;
+type CreateUserArgs = Parameters&lt;typeof createUser&gt;; // [string, number]
+</code></pre>
+<blockquote>
+<p><strong>Background: What does <code>typeof</code> do in a type context?</strong></p>
+<p>The <code>typeof</code> operator in a type position takes a value and produces its type. So <code>typeof createUser</code> is the function type of <code>createUser</code>. Combined with <code>ReturnType&lt;&gt;</code> and <code>Parameters&lt;&gt;</code>, this lets you derive types from functions instead of writing them out twice.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Given a <code>Product</code> interface with <code>id</code>, <code>name</code>, <code>price</code>, and <code>description</code>, derive: a <code>ProductSummary</code> (just <code>id</code> and <code>name</code>), a <code>ProductInput</code> (no id), and a <code>ProductMap</code> (record from id to product).</p>
+<hr>
+<h2>Lesson 12: Advanced Types</h2>
+<p>Mapped types transform existing types:</p>
+<blockquote>
+<p><strong>Background: What is a &quot;mapped type&quot;?</strong></p>
+<p>A mapped type loops over the keys of one type and produces a new type. The syntax <code>[K in keyof T]</code> is &quot;for each key K in T, produce a property with that key&quot;. You can transform the value, the key, or both. Many of TypeScript&#39;s built-in utility types are implemented using mapped types.</p>
+</blockquote>
+<pre><code class="language-typescript">type Nullable&lt;T&gt; = {
+  [K in keyof T]: T[K] | null;
+};
+
+type NullableUser = Nullable&lt;User&gt;;
+// { id: number | null; name: string | null; ... }
+</code></pre>
+<p>Conditional types:</p>
+<pre><code class="language-typescript">type IsString&lt;T&gt; = T extends string ? true : false;
+
+type A = IsString&lt;&quot;hello&quot;&gt;; // true
+type B = IsString&lt;42&gt;;      // false
+</code></pre>
+<blockquote>
+<p><strong>Background: What is a &quot;conditional type&quot;?</strong></p>
+<p>A conditional type is a type-level if-else. The syntax <code>A extends B ? X : Y</code> means &quot;if A is assignable to B, the result is X, otherwise Y&quot;. This is how libraries write generic types that branch based on input.</p>
+</blockquote>
+<p>Template literal types:</p>
+<pre><code class="language-typescript">type EventName&lt;T extends string&gt; = `on${Capitalize&lt;T&gt;}`;
+
+type ClickEvent = EventName&lt;&quot;click&quot;&gt;; // &quot;onClick&quot;
+type HoverEvent = EventName&lt;&quot;hover&quot;&gt;; // &quot;onHover&quot;
+</code></pre>
+<p>Combine them for powerful APIs:</p>
+<pre><code class="language-typescript">type RouteParams&lt;T extends string&gt; =
+  T extends `${string}/:${infer Param}/${infer Rest}`
+    ? { [K in Param | keyof RouteParams&lt;`/${Rest}`&gt;]: string }
+    : T extends `${string}/:${infer Param}`
+    ? { [K in Param]: string }
+    : {};
+
+type Params = RouteParams&lt;&quot;/users/:userId/posts/:postId&quot;&gt;;
+// { userId: string; postId: string }
+</code></pre>
+<p>This is advanced territory. You do not need it daily, but it is useful for library authors.</p>
+<p><strong>Exercise:</strong> Write a <code>DeepReadonly&lt;T&gt;</code> mapped type that recursively makes every property of an object (and nested objects) readonly.</p>
+<hr>
+<h2>Lesson 13: Working With External Data, and Zod 4 (2026)</h2>
+<p>Real code consumes JSON: from an HTTP response, from a file, from a message
+queue, from a form. Validate at the boundary.</p>
+<blockquote>
+<p><strong>Background: Why &quot;validate at the boundary&quot;?</strong></p>
+<p>TypeScript types exist only while the checker is running. They are erased
+before the code runs. So at runtime, an object you received from outside your
+program could be anything at all, and TypeScript cannot help you: an
+annotation is a claim, not a check. The fix is to <strong>validate the shape where
+the data enters</strong> and to trust it only after that. Inside your program, the
+types you defined are then true.</p>
+<p>This is not a style preference. It is the same boundary the workbook calls a
+trust boundary, and getting it wrong is the root of a large share of the
+OWASP Top Ten.</p>
+</blockquote>
+<h3>Hand-written validation, and why it does not scale</h3>
+<pre><code class="language-typescript">type Practitioner = {
+  id: string;
+  name: string;
+  profession: &quot;psychologist&quot; | &quot;psychiatrist&quot;;
+  feeCents: number;
+};
+
+function isPractitioner(value: unknown): value is Practitioner {
+  if (typeof value !== &quot;object&quot; || value === null) return false;
+  const candidate = value as Record&lt;string, unknown&gt;;
+  return (
+    typeof candidate[&quot;id&quot;] === &quot;string&quot; &amp;&amp;
+    typeof candidate[&quot;name&quot;] === &quot;string&quot; &amp;&amp;
+    (candidate[&quot;profession&quot;] === &quot;psychologist&quot; || candidate[&quot;profession&quot;] === &quot;psychiatrist&quot;) &amp;&amp;
+    typeof candidate[&quot;feeCents&quot;] === &quot;number&quot; &amp;&amp;
+    Number.isInteger(candidate[&quot;feeCents&quot;])
+  );
+}
+</code></pre>
+<p>That works, and it is written twice: once as a type and once as a check.
+Nothing keeps the two in step. Add a field to the type and the guard silently
+stops checking it, and a <code>value is Practitioner</code> predicate is a <strong>promise you
+made</strong>, not one the compiler verified.</p>
+<h3>Zod: write the schema, derive the type</h3>
+<pre><code class="language-bash">npm install zod
+</code></pre>
+<blockquote>
+<p><strong>Background: What is Zod?</strong></p>
+<p>Zod lets you define a schema once and get two things from it: a runtime
+validator, and a TypeScript type inferred from that validator. The type
+cannot drift from the check, because there is only one definition. It is what
+Casey Journals uses (<code>zod</code> 4.5.4 in <code>packages/core/package.json</code>).</p>
+</blockquote>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const Practitioner = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  profession: z.enum([&quot;psychologist&quot;, &quot;psychiatrist&quot;]),
+  feeCents: z.int().nonnegative(),
+});
+
+type Practitioner = z.infer&lt;typeof Practitioner&gt;;
+// { id: string; name: string; profession: &quot;psychologist&quot; | &quot;psychiatrist&quot;; feeCents: number }
+</code></pre>
+<h3>What changed in Zod 4 (2026)</h3>
+<p>If you have seen Zod before, five things moved. All of the following was
+verified against Zod 4.5.4.</p>
+<p><strong>1. String formats are top-level functions.</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+// Zod 3
+z.string().email();
+z.string().uuid();
+z.string().datetime();
+
+// Zod 4
+z.email();
+z.uuid();
+z.iso.datetime();
+z.iso.date();      // &quot;2026-09-06&quot;
+</code></pre>
+<p>The old spellings still work but are deprecated. The new ones are shorter and
+each is its own schema type rather than a refinement stacked on <code>string</code>.</p>
+<p><strong>2. <code>error</code> replaces <code>message</code>, <code>invalid_type_error</code> and <code>required_error</code>.</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+// Zod 3 (no longer compiles under Zod 4: TS2769, no overload matches)
+// z.string({ required_error: &quot;Name is required&quot;, invalid_type_error: &quot;Name must be text&quot; });
+
+// Zod 4
+z.string({ error: &quot;Name must be text&quot; });
+z.string().min(1, { error: &quot;Name is required&quot; });
+</code></pre>
+<p><code>error</code> also takes a function, which is how you write a message that depends on
+the input:</p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+z.int({ error: (issue) =&gt; `Expected a whole number, received ${typeof issue.input}.` });
+</code></pre>
+<p><strong>3. Error formatting has new names.</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const Practitioner = z.object({ name: z.string().min(1), feeCents: z.int() });
+declare const input: unknown;
+
+const result = Practitioner.safeParse(input);
+
+if (!result.success) {
+  console.log(z.prettifyError(result.error));  // human-readable, multi-line
+  console.log(z.treeifyError(result.error));   // nested, mirrors the object
+  console.log(z.flattenError(result.error));   // { formErrors, fieldErrors }
+  console.log(result.error.issues);            // the raw list
+}
+</code></pre>
+<p><code>.format()</code> and <code>.flatten()</code> are replaced by <code>z.treeifyError</code> and
+<code>z.flattenError</code>.</p>
+<p><strong>4. Object strictness is chosen by the constructor.</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const shape = { name: z.string() };
+
+// Zod 3
+z.object(shape).strict();
+z.object(shape).passthrough();
+
+// Zod 4
+z.strictObject(shape);   // unknown keys are an error
+z.looseObject(shape);    // unknown keys are kept
+z.object(shape);         // unknown keys are stripped (the default)
+</code></pre>
+<p><strong>5. <code>z.record</code> takes both a key and a value schema.</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+z.record(z.string(), z.number());
+</code></pre>
+<h3>Parsing, safely</h3>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+import { readFile } from &quot;node:fs/promises&quot;;
+
+const PractitionerList = z.array(Practitioner);
+
+type Result&lt;T&gt; =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
+
+export async function loadPractitioners(path: string): Promise&lt;Result&lt;Practitioner[]&gt;&gt; {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await readFile(path, &quot;utf8&quot;));
+  } catch (error) {
+    return { ok: false, error: `Could not read ${path}: ${(error as Error).message}` };
+  }
+
+  const parsed = PractitionerList.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: z.prettifyError(parsed.error) };
+  }
+  return { ok: true, value: parsed.data };
+}
+</code></pre>
+<p>Note <code>raw: unknown</code>, not <code>raw: any</code>. <code>JSON.parse</code> returns <code>any</code>, which turns
+off type checking for everything downstream. Annotating the variable <code>unknown</code>
+forces you through the schema before you can touch it. Make that a habit: every
+value crossing into your program starts life as <code>unknown</code>.</p>
+<blockquote>
+<p><strong>Background (2026): <code>parse</code> or <code>safeParse</code>?</strong></p>
+<p><code>parse</code> throws a <code>ZodError</code>. <code>safeParse</code> returns a discriminated union you
+narrow with <code>if (!result.success)</code>.</p>
+<p>Use <code>safeParse</code> for anything a user or a network can cause: a form, a request
+body, a webhook. The failure is expected and you owe the caller a message.
+Use <code>parse</code> for things that are your own fault if they fail: your own fixture
+files, your own configuration at startup. There, a throw at boot is better
+than a wrong value at midnight.</p>
+</blockquote>
+<h3>The other direction: validating what you send</h3>
+<p>Schemas are not only for input.</p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const CreateBooking = z.object({
+  practitionerId: z.uuid(),
+  startsAt: z.iso.datetime(),
+  feeCents: z.int().positive(),
+});
+
+export async function createBooking(baseUrl: string, body: z.input&lt;typeof CreateBooking&gt;) {
+  const payload = CreateBooking.parse(body); // fail here, not at the far end
+  const response = await fetch(new URL(&quot;/bookings&quot;, baseUrl), {
+    method: &quot;POST&quot;,
+    headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json() as Promise&lt;unknown&gt;;
+}
+</code></pre>
+<p><code>z.input</code> and <code>z.output</code> differ whenever a schema transforms. <code>z.infer</code> is
+<code>z.output</code>.</p>
+<p><strong>Exercise:</strong> Using the <code>fixtures/practitioners.json</code> file from the JavaScript
+course, write a <code>Practitioner</code> schema in Zod 4, load and validate the file, and
+print <code>z.prettifyError</code> output for a deliberately broken copy where <code>feeCents</code>
+is the string <code>&quot;95000&quot;</code> and <code>profession</code> is <code>&quot;dentist&quot;</code>. Then add
+<code>.strictObject</code> and see what happens when the fixture gains a field nobody
+asked for.</p>
+<hr>
+<h2>Lesson 13a: Branded Types (2026)</h2>
+<p>Zod checks shape. Branded types check <strong>meaning</strong>.</p>
+<h3>The problem</h3>
+<pre><code class="language-typescript">function refund(userId: string, orderId: string) { /* ... */ }
+
+refund(orderId, userId); // compiles. Both are strings.
+</code></pre>
+<p>Both arguments are <code>string</code>, so nothing stops you swapping them, and the bug is
+invisible in review. The same applies to every pair of identifiers, and, worse,
+to money:</p>
+<pre><code class="language-typescript">function charge(amount: number) { /* ... */ }
+
+charge(125000);    // cents? rands? Nobody knows.
+charge(1250.00);   // this compiles too
+</code></pre>
+<h3>The technique</h3>
+<p>Attach a phantom property that exists only in the type.</p>
+<pre><code class="language-typescript">declare const CENTS: unique symbol;
+
+export type Cents = number &amp; { readonly [CENTS]: &quot;Cents&quot; };
+
+export function cents(value: number): Cents {
+  if (!Number.isInteger(value)) {
+    throw new RangeError(`Cents must be a whole number, received ${value}.`);
+  }
+  return value as Cents;
+}
+</code></pre>
+<p>Now:</p>
+<pre><code class="language-typescript">function charge(amount: Cents) { /* ... */ }
+
+charge(cents(125_000));  // fine
+charge(125_000);         // error: number is not assignable to Cents
+charge(1250.00 as Cents); // compiles, and is why `as` is a smell
+</code></pre>
+<p><code>declare const CENTS: unique symbol</code> produces no output at all: <code>declare</code> means
+&quot;this exists somewhere, do not emit it&quot;. <code>Cents</code> is a <code>number</code> at runtime, so
+arithmetic works and <code>JSON.stringify</code> produces a plain number. The whole
+apparatus costs nothing.</p>
+<blockquote>
+<p><strong>Background (2026): Why a <code>unique symbol</code> rather than a string property?</strong></p>
+<pre><code class="language-typescript">type Cents = number &amp; { __brand: &quot;Cents&quot; };  // the older spelling
+</code></pre>
+<p>That works, but <code>__brand</code> is a real property name, so two brands written by
+two different libraries with the same string collide, and somebody can
+construct one by hand. A <code>unique symbol</code> declared in your module is unique to
+your module, and because it is <code>declare</code>d there is no runtime symbol to
+access.</p>
+</blockquote>
+<h3>Where the brand comes from</h3>
+<p>The point of the constructor function is that it is <strong>the only way in</strong>. Every
+brand should have exactly one such door, and the validation lives there:</p>
+<pre><code class="language-typescript">declare const ISO_DAY: unique symbol;
+export type IsoDay = string &amp; { readonly [ISO_DAY]: &quot;IsoDay&quot; };
+
+export function isoDay(value: string): IsoDay {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new RangeError(`Expected YYYY-MM-DD, received &quot;${value}&quot;.`);
+  }
+  return value as IsoDay;
+}
+</code></pre>
+<p>The single <code>as</code> inside the constructor is the price. Everywhere else in the
+codebase, an <code>IsoDay</code> is an <code>IsoDay</code> because it came through this function.</p>
+<h3>Zod does this for you</h3>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const Cents = z.int().nonnegative().brand&lt;&quot;Cents&quot;&gt;();
+type Cents = z.infer&lt;typeof Cents&gt;;
+
+const value = Cents.parse(125_000);  // Cents
+const bad: Cents = 125_000;          // error
+</code></pre>
+<p>Use Zod&#39;s brand when the value arrives from outside and needs parsing anyway.
+Use the hand-rolled version when the brand is internal and you want no
+dependency, which is what the capstone does.</p>
+<h3>When not to brand</h3>
+<p>Branding every string is misery. Brand where a mix-up is <strong>plausible and
+expensive</strong>: money, identifiers of different kinds that travel together, dates
+in different formats, values that have been validated versus values that have
+not (<code>SafeHtml</code> versus <code>string</code> is a classic, and the workbook returns to it
+under injection).</p>
+<p><strong>Exercise:</strong> Brand <code>Cents</code> and <code>Rands</code> separately. Write
+<code>toRands(value: Cents): Rands</code> and prove that passing a <code>Rands</code> to a function
+expecting <code>Cents</code> fails to compile. Then write the same pair with Zod&#39;s
+<code>.brand()</code> and decide which you prefer for a value read from a database.</p>
+<hr>
+<h2>Lesson 14: Strictness, Revisited (2026)</h2>
+<p><code>strict: true</code> is now the default, so this lesson is about what lies <strong>beyond</strong>
+strict. These options are not in <code>strict</code> and each one catches a real class of
+bug.</p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;strict&quot;: true,
+    &quot;noUncheckedIndexedAccess&quot;: true,
+    &quot;exactOptionalPropertyTypes&quot;: true,
+    &quot;noImplicitOverride&quot;: true,
+    &quot;noFallthroughCasesInSwitch&quot;: true,
+    &quot;noImplicitReturns&quot;: true,
+    &quot;noUnusedLocals&quot;: true,
+    &quot;noUnusedParameters&quot;: true,
+    &quot;erasableSyntaxOnly&quot;: true,
+    &quot;verbatimModuleSyntax&quot;: true,
+    &quot;isolatedModules&quot;: true,
+    &quot;noUncheckedSideEffectImports&quot;: true
+  }
+}
+</code></pre>
+<h3><code>noUncheckedIndexedAccess</code></h3>
+<p>The most valuable of the lot, and the one most likely to make an existing
+codebase go red.</p>
+<pre><code class="language-typescript">const names = [&quot;Alex&quot;, &quot;Maria&quot;];
+
+const first = names[0];
+//    ^? string | undefined      with the flag
+//    ^? string                  without it
+
+console.log(first.toUpperCase()); // error with the flag. And rightly:
+                                  // names[5] is undefined at runtime.
+</code></pre>
+<p>Without it, TypeScript pretends every index is in range, which is a lie about
+arrays and a bigger lie about records:</p>
+<pre><code class="language-typescript">const feesByCode: Record&lt;string, number&gt; = { psy: 95000 };
+const fee = feesByCode[&quot;dentist&quot;];
+//    ^? number | undefined       with the flag. It is undefined at runtime.
+</code></pre>
+<p>Turn it on, then handle the <code>undefined</code>:</p>
+<pre><code class="language-typescript">const first = names.at(0) ?? &quot;nobody&quot;;
+const [head] = names;
+if (head !== undefined) { /* ... */ }
+</code></pre>
+<p>Both Casey Journals (<code>packages/tsconfig/base.json</code>) and the TypeScript 7
+<code>tsc --init</code> template enable it.</p>
+<h3><code>exactOptionalPropertyTypes</code></h3>
+<pre><code class="language-typescript">type Profile = { nickname?: string };
+
+const a: Profile = {};                  // fine: absent
+const b: Profile = { nickname: undefined }; // error with the flag
+</code></pre>
+<p>Without the flag these are the same type. They are not the same thing:
+<code>&quot;nickname&quot; in a</code> is <code>false</code>, <code>&quot;nickname&quot; in b</code> is <code>true</code>, and <code>Object.keys</code>
+tells them apart. That difference matters the moment the object becomes a
+database update, where absent means &quot;leave it alone&quot; and <code>undefined</code> may mean
+&quot;set it to null&quot;.</p>
+<p>Casey Journals deliberately leaves this one <strong>off</strong>
+(<code>&quot;exactOptionalPropertyTypes&quot;: false</code> in <code>packages/tsconfig/base.json</code>) while
+the TypeScript 7 template turns it on. That is a legitimate disagreement: it is
+noisy on code that was not written with it. Know what it does and make the
+choice deliberately.</p>
+<h3><code>noImplicitOverride</code></h3>
+<pre><code class="language-typescript">class Base { greet() { return &quot;hello&quot;; } }
+
+class Child extends Base {
+  greet() { return &quot;hi&quot;; }          // error with the flag
+  override greet() { return &quot;hi&quot;; } // correct
+}
+</code></pre>
+<p>The bug it catches is renaming <code>greet</code> on the base class and silently leaving
+an orphaned method on the child that nothing calls any more.</p>
+<h3>Where strictness belongs</h3>
+<p>Turn every one of these on for a <strong>new</strong> project on the first day. On an
+existing project, turn on one at a time, fix the fallout, and commit each
+separately. What you must not do is turn <code>strict</code> off to make a build pass:
+that is not fixing anything, it is switching off the smoke alarm.</p>
+<blockquote>
+<p><strong>Background (2026): What about <code>any</code>?</strong></p>
+<p><code>strict</code> does not ban <code>any</code>; it bans <strong>implicit</strong> <code>any</code>. An explicit <code>any</code> is
+still allowed, and it is a hole through every guarantee on this page: values
+flow out of an <code>any</code> untyped in every direction.</p>
+<p>Reach for <code>unknown</code> instead. <code>unknown</code> accepts anything and lets you do
+nothing with it until you narrow, which is exactly the discipline the
+boundary needs. Then turn on the lint rule
+(<code>@typescript-eslint/no-explicit-any</code>) so the remaining <code>any</code> is a decision
+somebody had to write a comment about.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Take any file you wrote earlier in this course, enable
+<code>noUncheckedIndexedAccess</code> and <code>exactOptionalPropertyTypes</code>, and fix every
+error without using <code>as</code> or <code>!</code>. Where you cannot, write a one-line comment
+explaining what the compiler knows that you do not, or what you know that it
+does not.</p>
+<hr>
+<h2>Capstone Project: Casey Recover, a Mora Interest Engine</h2>
+<p>Casey Legal Tools, the legal-work platform beside this repository, holds a rule
+that shapes its whole architecture: <strong>the legal reasoning is not in the
+codebase.</strong> Prompts, playbooks, checklists and legal knowledge live in the
+owner&#39;s workflow runners. The application owns inputs, dispatch, results and
+exports.</p>
+<p>There is one carve-out, and it is stated in that repository&#39;s <code>CLAUDE.md</code>:</p>
+<blockquote>
+<p>Deterministic statutory arithmetic (court-day counting, mora interest,
+Companies Act voting thresholds as numbers) is allowed in
+<code>packages/legal-calc</code> with tests, because it is arithmetic, not know-how.</p>
+</blockquote>
+<p>You are going to build that package. It is an ideal TypeScript capstone,
+because the whole job is making illegal states unrepresentable in a domain
+where a wrong number has consequences.</p>
+<h3>What mora interest is, in one paragraph, carefully</h3>
+<p>When a debt is overdue, interest may run on it. In South Africa the rate is the
+prescribed rate set under the Prescribed Rate of Interest Act 55 of 1975, which
+changes from time to time. Your program&#39;s job is to answer one question:
+<strong>given a capital amount, a period, and a table of rates, what is the number?</strong></p>
+<p>Your program&#39;s job is <strong>not</strong> to decide whether interest runs, from what date,
+at what rate, on what basis, or subject to what cap. Those are legal questions.
+They are inputs, decided by a person.</p>
+<p>That line is the design constraint, and holding it is most of the exercise.</p>
+<h3>A warning about the rate</h3>
+<p><strong>The rate table in the reference solution is a placeholder.</strong> The real
+prescribed rate could not be verified from any repository read for this course,
+and <code>STACK.md</code> records that. Do not treat the numbers as authoritative and do
+not compute anything real with them.</p>
+<p>In the product the rate is not code at all: it lives in
+<code>app_settings.prescribed_rate</code>, editable by an operator, so that a rate change
+is a configuration change rather than a deploy. That is the arrangement to
+copy. A statutory figure baked into a build artefact is a bug waiting for a
+government gazette.</p>
+<h3>Requirements</h3>
+<p><strong>Domain</strong></p>
+<ul>
+<li>Money is an integer number of cents, branded as <code>Cents</code>. A plain <code>number</code>
+must not be assignable to it, and the constructor must reject a fraction.</li>
+<li>A rate is a fraction per annum, branded as <code>RatePerAnnum</code>.</li>
+<li>Dates are <code>YYYY-MM-DD</code> strings, validated. No <code>Date</code> object crosses a module
+boundary.</li>
+</ul>
+<p><strong>Calculation</strong></p>
+<ul>
+<li>Simple, non-compounding interest, actual days, 365-day year. Say so, in a
+comment, as a <strong>convention the caller chose</strong> and not a legal conclusion.</li>
+<li>Split the period at every rate change, so a period spanning a change is
+charged at each rate for the days it actually ran.</li>
+<li>Round <strong>once</strong>, at the end, on the sum of the exact segment amounts. Never
+round each segment and add the rounded pieces.</li>
+<li>Refuse rather than guess: an empty rate table, a period starting before the
+table begins, or an end date before the start date are all errors with
+messages that say what to do.</li>
+</ul>
+<p><strong>Boundary</strong></p>
+<ul>
+<li>Validate the input with a Zod 4 schema.</li>
+<li>Parse rands-and-cents input as digits, never with <code>parseFloat</code>.</li>
+<li>Format every amount through <code>Intl.NumberFormat(&quot;en-ZA&quot;, ...)</code>, in one place.</li>
+</ul>
+<p><strong>Verification</strong></p>
+<ul>
+<li><code>tsc --noEmit</code> clean under the strict options from Lesson 14.</li>
+<li>Tests with <code>node:test</code>, covering at minimum: a whole year at a round rate, a
+zero-length period, a period spanning two rate changes, that the segments
+cover every day exactly once, that the result is always whole cents, and
+every refusal path.</li>
+<li>Run the whole thing with <code>node src/main.ts</code>. No build step, no <code>ts-node</code>.</li>
+</ul>
+<h3>Structure</h3>
+<pre><code>casey-recover/
+  package.json
+  tsconfig.json
+  src/
+    money.ts      Cents, RatePerAnnum, the Intl formatter
+    days.ts       ISO day validation and day counting
+    rates.ts      the PLACEHOLDER rate table, as const satisfies
+    interest.ts   segmentByRate and calculate
+    report.ts     rendering
+    main.ts       parseArgs entry point
+  test/
+    interest.test.ts
+    parse.test.ts
+</code></pre>
+<h3><code>tsconfig.json</code></h3>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;module&quot;: &quot;nodenext&quot;,
+    &quot;types&quot;: [&quot;node&quot;],
+    &quot;erasableSyntaxOnly&quot;: true,
+    &quot;verbatimModuleSyntax&quot;: true,
+    &quot;rewriteRelativeImportExtensions&quot;: true,
+    &quot;allowImportingTsExtensions&quot;: true,
+    &quot;noEmit&quot;: true,
+    &quot;noUncheckedIndexedAccess&quot;: true,
+    &quot;exactOptionalPropertyTypes&quot;: true
+  },
+  &quot;include&quot;: [&quot;src&quot;, &quot;test&quot;]
+}
+</code></pre>
+<h3>Expected output</h3>
+<pre><code>$ node src/main.ts --capital 125000.00 --from 2024-03-01 --to 2026-09-06
+
+Capital        R 125 000,00
+Period         1 March 2024 to 6 September 2026 (919 days)
+
+Segments
+  2024-03-01 to 2024-07-01   122 days   10,50%      R 4 386,99
+  2024-07-01 to 2025-09-01   427 days   11,25%     R 16 451,20
+  2025-09-01 to 2026-09-06   370 days   10,75%     R 13 621,58
+
+Interest       R 34 459,76
+Total          R 159 459,76
+
+Arithmetic only. The rate table is a placeholder and the basis (simple,
+actual days, 365-day year) is a convention chosen by the caller, not a
+legal conclusion. A person decides what this figure means.
+</code></pre>
+<h3>The five hard parts</h3>
+<ol>
+<li><strong>Half-open intervals.</strong> Count days from <code>from</code> up to but <strong>not including</strong>
+<code>to</code>. Half-open composes: <code>[a, b)</code> plus <code>[b, c)</code> is exactly <code>[a, c)</code>, with
+no day counted twice and none missed. Closed intervals do not compose and
+every off-by-one in date arithmetic starts there.</li>
+<li><strong>Rounding once.</strong> Compute each segment exactly, round for display, and
+round the <strong>sum of the exact values</strong> separately for the reported total.
+Adding rounded pieces lets a long-running debt drift by up to half a cent
+per rate change.</li>
+<li><strong>Refusing to guess.</strong> If the period begins before the earliest rate in the
+table, there is no rate. Throwing with &quot;extend the table backwards rather
+than guessing a rate&quot; is the correct behaviour. Silently using the earliest
+known rate is how a program tells a confident lie.</li>
+<li><strong>Parsing money.</strong> <code>parseFloat(&quot;125000.00&quot;)</code> gives you a float, and floats
+cannot represent most decimal fractions. Match the digits with a regular
+expression and build the integer: <code>Number(whole) * 100 + Number(fraction)</code>.</li>
+<li><strong>Saying what the number is not.</strong> The output carries a line stating that
+this is arithmetic and that a person decides what it means. That is the
+product rule (&quot;nothing legally operative happens without a person&quot;) made
+visible at the only place a user sees.</li>
+</ol>
+<h3>Features you must use</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Branded types with a <code>unique symbol</code>, and one constructor per brand</li>
+<li><input disabled="" type="checkbox"> <code>as const satisfies</code> on the rate table</li>
+<li><input disabled="" type="checkbox"> <code>import type</code> for every type-only import</li>
+<li><input disabled="" type="checkbox"> <code>.ts</code> extensions on relative imports</li>
+<li><input disabled="" type="checkbox"> A Zod 4 schema with <code>z.int</code>, <code>z.iso.date</code> and <code>{ error: ... }</code> messages</li>
+<li><input disabled="" type="checkbox"> <code>satisfies</code> on the segment objects, so a missing field is an error</li>
+<li><input disabled="" type="checkbox"> A discriminated result or a typed throw, never a silent fallback</li>
+<li><input disabled="" type="checkbox"> <code>noUncheckedIndexedAccess</code> on, and no <code>!</code> used to get around it</li>
+<li><input disabled="" type="checkbox"> <code>node:util</code> <code>parseArgs</code>, no CLI library</li>
+<li><input disabled="" type="checkbox"> <code>Intl.NumberFormat(&quot;en-ZA&quot;)</code> for money, <code>Intl.DateTimeFormat(&quot;en-ZA&quot;)</code>
+for dates</li>
+<li><input disabled="" type="checkbox"> Zero <code>any</code>, and every <code>as</code> either inside a brand constructor or absent</li>
+</ul>
+<h3>Stretch goals</h3>
+<ol>
+<li>Add a court-day counter: days excluding weekends and a configurable list of
+public holidays supplied as data. Note that the holiday list is data for the
+same reason the rate table is.</li>
+<li>Add <code>--json</code> output and a <code>--rates &lt;file&gt;</code> flag that loads a rate table from
+JSON, validated with Zod. Refuse a table with overlapping or unsorted dates.</li>
+<li>Add a property-based check: for a thousand random periods, assert that the
+sum of segment days equals the total days and that the total is always
+<code>capital + interest</code>.</li>
+</ol>
+<hr>
+<h2>Where to Go Next</h2>
+<p>After the capstone, take the React with TypeScript course in this series, then
+work through <a href="workbook.html"><code>../casey-workbook/workbook.md</code></a>.</p>
+<p><strong>(2026)</strong> Other directions, if you want them:</p>
+<ol>
+<li><strong>Frontend:</strong> React with TypeScript is the industry standard, and it is the
+next course here.</li>
+<li><strong>Backend:</strong> A Next.js route handler, a Supabase edge function, or a
+Firebase Cloud Function. All three are TypeScript-first and all three appear
+in the products this course draws on.</li>
+<li><strong>Library author:</strong> Read the handbook on conditional and mapped types, then
+write something small with <code>isolatedDeclarations</code> turned on.</li>
+<li><strong>Domain modelling:</strong> Extend the capstone. Court days, Companies Act
+thresholds and day-count conventions are a deep, well-specified, testable
+problem, and the discipline of keeping the arithmetic separate from the
+judgement is worth more than any type-level trick.</li>
+</ol>
+<p><strong>Recommended reading:</strong></p>
+<ul>
+<li>The official TypeScript Handbook at typescriptlang.org/docs/handbook</li>
+<li>The TypeScript release notes, which are the only reliable record of what
+changed in 6 and 7</li>
+<li>&quot;Effective TypeScript&quot; by Dan Vanderkam</li>
+<li>&quot;Total TypeScript&quot; by Matt Pocock (free essentials course online)</li>
+<li>The Zod documentation at zod.dev, and its version 4 migration notes</li>
+</ul>
+<p>Good luck.</p>
+
+<label class="done"><input type="checkbox" id="done"> Mark <b>&nbsp;TypeScript&nbsp;</b> as read</label>
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+<script src="../app.js"></script><script>
+const box = document.getElementById("done");
+box.checked = Progress.isRead("ts");
+box.addEventListener("change", () => Progress.setRead("ts", box.checked));
+</script>
+</body>
+</html>

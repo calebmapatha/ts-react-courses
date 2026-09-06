@@ -1,0 +1,1997 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React with TypeScript: answers · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>React with TypeScript Course: Exercise Solutions</h1>
+<p>Working solutions for every exercise in the React + TypeScript course. Each
+solution is a complete, drop-in component.</p>
+<p><strong>(2026)</strong> To use any solution, save it to a <code>.tsx</code> file inside the project from
+Lesson 0 and import it. Solutions for Lessons 1 to 16 work on either path;
+Lesson 12 is Vite only, Lesson 17 and the capstone are Next.js.</p>
+<p>Everything here was type-checked with TypeScript 5.9 and run on React 19.2 and
+Node 24.20.0. The capstone was rebuilt from this file into a clean directory,
+where <code>next build</code> succeeds and all 17 Vitest cases pass, and the paywall was
+proved with <code>curl</code> against the running production server. The exact output is
+at the end of this file.</p>
+<hr>
+<h2>Lesson 1: Card Component</h2>
+<pre><code class="language-tsx">interface CardProps {
+  title: string;
+  subtitle?: string;
+  priority: 1 | 2 | 3;
+}
+
+const PRIORITY_COLORS: Record&lt;1 | 2 | 3, string&gt; = {
+  1: &quot;#dc2626&quot;, // red (highest)
+  2: &quot;#f59e0b&quot;, // amber
+  3: &quot;#16a34a&quot;, // green (lowest)
+};
+
+export function Card({ title, subtitle, priority }: CardProps) {
+  return (
+    &lt;div
+      style={{
+        border: `2px solid ${PRIORITY_COLORS[priority]}`,
+        padding: &quot;16px&quot;,
+        borderRadius: &quot;8px&quot;,
+        marginBottom: &quot;8px&quot;,
+      }}
+    &gt;
+      &lt;h2 style={{ margin: 0 }}&gt;{title}&lt;/h2&gt;
+      {subtitle &amp;&amp; &lt;p style={{ marginTop: &quot;4px&quot;, color: &quot;#666&quot; }}&gt;{subtitle}&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}
+
+// Demo usage
+export function CardDemo() {
+  return (
+    &lt;div&gt;
+      &lt;Card title=&quot;Critical bug&quot; subtitle=&quot;Server is down&quot; priority={1} /&gt;
+      &lt;Card title=&quot;Feature request&quot; priority={2} /&gt;
+      &lt;Card title=&quot;Documentation update&quot; subtitle=&quot;Low urgency&quot; priority={3} /&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> The literal type <code>1 | 2 | 3</code> rejects any other number at compile time. The <code>Record&lt;1 | 2 | 3, string&gt;</code> ensures the lookup table covers every possible priority.</p>
+<hr>
+<h2>Lesson 2: Modal Component</h2>
+<pre><code class="language-tsx">import { ReactNode, useEffect } from &quot;react&quot;;
+
+interface ModalProps {
+  title: string;
+  isOpen: boolean;
+  onClose: () =&gt; void;
+  children: ReactNode;
+}
+
+export function Modal({ title, isOpen, onClose, children }: ModalProps) {
+  // Close on Escape key
+  useEffect(() =&gt; {
+    if (!isOpen) return;
+    const handler = (event: KeyboardEvent) =&gt; {
+      if (event.key === &quot;Escape&quot;) onClose();
+    };
+    window.addEventListener(&quot;keydown&quot;, handler);
+    return () =&gt; window.removeEventListener(&quot;keydown&quot;, handler);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    &lt;div
+      onClick={onClose}
+      style={{
+        position: &quot;fixed&quot;,
+        inset: 0,
+        background: &quot;rgba(0, 0, 0, 0.5)&quot;,
+        display: &quot;flex&quot;,
+        alignItems: &quot;center&quot;,
+        justifyContent: &quot;center&quot;,
+      }}
+    &gt;
+      &lt;div
+        onClick={(e) =&gt; e.stopPropagation()}
+        style={{
+          background: &quot;white&quot;,
+          padding: &quot;24px&quot;,
+          borderRadius: &quot;8px&quot;,
+          maxWidth: &quot;500px&quot;,
+          width: &quot;100%&quot;,
+        }}
+      &gt;
+        &lt;header style={{ display: &quot;flex&quot;, justifyContent: &quot;space-between&quot; }}&gt;
+          &lt;h2 style={{ margin: 0 }}&gt;{title}&lt;/h2&gt;
+          &lt;button onClick={onClose}&gt;×&lt;/button&gt;
+        &lt;/header&gt;
+        &lt;div style={{ marginTop: &quot;16px&quot; }}&gt;{children}&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Demo usage
+import { useState } from &quot;react&quot;;
+
+export function ModalDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    &lt;&gt;
+      &lt;button onClick={() =&gt; setOpen(true)}&gt;Open modal&lt;/button&gt;
+      &lt;Modal title=&quot;Confirm&quot; isOpen={open} onClose={() =&gt; setOpen(false)}&gt;
+        &lt;p&gt;Are you sure you want to continue?&lt;/p&gt;
+        &lt;button onClick={() =&gt; setOpen(false)}&gt;Yes&lt;/button&gt;
+      &lt;/Modal&gt;
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> The <code>e.stopPropagation()</code> on the inner div prevents the backdrop click from triggering when the user clicks inside the modal content.</p>
+<hr>
+<h2>Lesson 3: Counter With High-Water Mark</h2>
+<pre><code class="language-tsx">import { useState } from &quot;react&quot;;
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  const [highest, setHighest] = useState(0);
+
+  const increment = () =&gt; {
+    const next = count + 1;
+    setCount(next);
+    setHighest((current) =&gt; Math.max(current, next));
+  };
+
+  const decrement = () =&gt; setCount((c) =&gt; c - 1);
+  const reset = () =&gt; setCount(0);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;p&gt;Highest reached: {highest}&lt;/p&gt;
+      &lt;button onClick={increment}&gt;+&lt;/button&gt;
+      &lt;button onClick={decrement}&gt;-&lt;/button&gt;
+      &lt;button onClick={reset}&gt;Reset&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> Reset clears the count but preserves <code>highest</code>, since the spec says &quot;highest value reached during the session.&quot; Using the functional updater form <code>setHighest((current) =&gt; ...)</code> is safer than reading <code>highest</code> directly.</p>
+<hr>
+<h2>Lesson 4: Search Box With Enter and Clear</h2>
+<pre><code class="language-tsx">import { useState } from &quot;react&quot;;
+
+interface SearchBoxProps {
+  onSearch: (query: string) =&gt; void;
+  placeholder?: string;
+}
+
+export function SearchBox({ onSearch, placeholder = &quot;Search...&quot; }: SearchBoxProps) {
+  const [query, setQuery] = useState(&quot;&quot;);
+
+  const handleKey = (event: React.KeyboardEvent&lt;HTMLInputElement&gt;) =&gt; {
+    if (event.key === &quot;Enter&quot;) {
+      onSearch(query);
+    }
+  };
+
+  const handleClear = () =&gt; {
+    setQuery(&quot;&quot;);
+    onSearch(&quot;&quot;);
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;input
+        value={query}
+        onChange={(e) =&gt; setQuery(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder={placeholder}
+      /&gt;
+      &lt;button onClick={handleClear} disabled={query.length === 0}&gt;
+        Clear
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Demo usage
+export function SearchDemo() {
+  const [results, setResults] = useState&lt;string&gt;(&quot;&quot;);
+  return (
+    &lt;div&gt;
+      &lt;SearchBox onSearch={(q) =&gt; setResults(q ? `Searching: ${q}` : &quot;&quot;)} /&gt;
+      &lt;p&gt;{results}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 5: useDocumentTitle Hook</h2>
+<pre><code class="language-tsx">import { useEffect } from &quot;react&quot;;
+
+export function useDocumentTitle(title: string): void {
+  useEffect(() =&gt; {
+    const previous = document.title;
+    document.title = title;
+    return () =&gt; {
+      document.title = previous;
+    };
+  }, [title]);
+}
+
+// Demo usage
+import { useState } from &quot;react&quot;;
+
+export function DocumentTitleDemo() {
+  const [page, setPage] = useState(&quot;Home&quot;);
+  useDocumentTitle(`${page} - My App`);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Current page: {page}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setPage(&quot;Home&quot;)}&gt;Home&lt;/button&gt;
+      &lt;button onClick={() =&gt; setPage(&quot;Profile&quot;)}&gt;Profile&lt;/button&gt;
+      &lt;button onClick={() =&gt; setPage(&quot;Settings&quot;)}&gt;Settings&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> Capturing <code>previous</code> inside the effect (not above) is important. If you captured it during render, it would always be the original title rather than whatever was there when the effect ran.</p>
+<hr>
+<h2>Lesson 6: Todo App With useReducer</h2>
+<pre><code class="language-tsx">import { useReducer, useState } from &quot;react&quot;;
+
+interface Todo {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+type TodoAction =
+  | { type: &quot;add&quot;; text: string }
+  | { type: &quot;toggle&quot;; id: string }
+  | { type: &quot;remove&quot;; id: string }
+  | { type: &quot;editText&quot;; id: string; text: string };
+
+function todoReducer(state: Todo[], action: TodoAction): Todo[] {
+  switch (action.type) {
+    case &quot;add&quot;:
+      return [...state, { id: crypto.randomUUID(), text: action.text, done: false }];
+    case &quot;toggle&quot;:
+      return state.map((t) =&gt;
+        t.id === action.id ? { ...t, done: !t.done } : t,
+      );
+    case &quot;remove&quot;:
+      return state.filter((t) =&gt; t.id !== action.id);
+    case &quot;editText&quot;:
+      return state.map((t) =&gt;
+        t.id === action.id ? { ...t, text: action.text } : t,
+      );
+  }
+}
+
+export function TodoApp() {
+  const [todos, dispatch] = useReducer(todoReducer, []);
+  const [input, setInput] = useState(&quot;&quot;);
+
+  const handleAdd = () =&gt; {
+    if (input.trim().length === 0) return;
+    dispatch({ type: &quot;add&quot;, text: input.trim() });
+    setInput(&quot;&quot;);
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Todos&lt;/h2&gt;
+      &lt;input
+        value={input}
+        onChange={(e) =&gt; setInput(e.target.value)}
+        onKeyDown={(e) =&gt; e.key === &quot;Enter&quot; &amp;&amp; handleAdd()}
+        placeholder=&quot;What needs doing?&quot;
+      /&gt;
+      &lt;button onClick={handleAdd}&gt;Add&lt;/button&gt;
+      &lt;ul&gt;
+        {todos.map((todo) =&gt; (
+          &lt;li key={todo.id}&gt;
+            &lt;input
+              type=&quot;checkbox&quot;
+              checked={todo.done}
+              onChange={() =&gt; dispatch({ type: &quot;toggle&quot;, id: todo.id })}
+            /&gt;
+            &lt;input
+              value={todo.text}
+              onChange={(e) =&gt;
+                dispatch({ type: &quot;editText&quot;, id: todo.id, text: e.target.value })
+              }
+              style={{ textDecoration: todo.done ? &quot;line-through&quot; : &quot;none&quot; }}
+            /&gt;
+            &lt;button onClick={() =&gt; dispatch({ type: &quot;remove&quot;, id: todo.id })}&gt;
+              ×
+            &lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 7: ThemeContext</h2>
+<pre><code class="language-tsx">import { createContext, useContext, useState, ReactNode } from &quot;react&quot;;
+
+type Theme = &quot;light&quot; | &quot;dark&quot;;
+
+interface ThemeContextValue {
+  theme: Theme;
+  toggleTheme: () =&gt; void;
+}
+
+const ThemeContext = createContext&lt;ThemeContextValue | undefined&gt;(undefined);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState&lt;Theme&gt;(&quot;light&quot;);
+  const toggleTheme = () =&gt;
+    setTheme((current) =&gt; (current === &quot;light&quot; ? &quot;dark&quot; : &quot;light&quot;));
+
+  return (
+    &lt;ThemeContext.Provider value={{ theme, toggleTheme }}&gt;
+      {children}
+    &lt;/ThemeContext.Provider&gt;
+  );
+}
+
+export function useTheme(): ThemeContextValue {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error(&quot;useTheme must be used within a ThemeProvider&quot;);
+  }
+  return context;
+}
+
+// Demo: a component that uses the theme
+function ThemedBox() {
+  const { theme, toggleTheme } = useTheme();
+  const styles = {
+    background: theme === &quot;light&quot; ? &quot;#ffffff&quot; : &quot;#111111&quot;,
+    color: theme === &quot;light&quot; ? &quot;#000000&quot; : &quot;#ffffff&quot;,
+    padding: &quot;24px&quot;,
+    borderRadius: &quot;8px&quot;,
+  };
+
+  return (
+    &lt;div style={styles}&gt;
+      &lt;p&gt;Current theme: {theme}&lt;/p&gt;
+      &lt;button onClick={toggleTheme}&gt;Toggle theme&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+export function ThemeDemo() {
+  return (
+    &lt;ThemeProvider&gt;
+      &lt;ThemedBox /&gt;
+    &lt;/ThemeProvider&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 8: useDebounce Hook</h2>
+<pre><code class="language-tsx">import { useState, useEffect } from &quot;react&quot;;
+
+export function useDebounce&lt;T&gt;(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState&lt;T&gt;(value);
+
+  useEffect(() =&gt; {
+    const handle = setTimeout(() =&gt; setDebounced(value), delay);
+    return () =&gt; clearTimeout(handle);
+  }, [value, delay]);
+
+  return debounced;
+}
+
+// Demo: search box that only fires the search 500ms after typing stops
+export function DebouncedSearch() {
+  const [query, setQuery] = useState(&quot;&quot;);
+  const debouncedQuery = useDebounce(query, 500);
+
+  useEffect(() =&gt; {
+    if (debouncedQuery.length === 0) return;
+    console.log(&quot;Searching for:&quot;, debouncedQuery);
+    // In a real app, fire your API call here
+  }, [debouncedQuery]);
+
+  return (
+    &lt;div&gt;
+      &lt;input
+        value={query}
+        onChange={(e) =&gt; setQuery(e.target.value)}
+        placeholder=&quot;Type to search...&quot;
+      /&gt;
+      &lt;p&gt;Live value: {query}&lt;/p&gt;
+      &lt;p&gt;Debounced value: {debouncedQuery}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 9: Generic Select Component</h2>
+<pre><code class="language-tsx">interface SelectProps&lt;T&gt; {
+  options: T[];
+  value: T;
+  onChange: (value: T) =&gt; void;
+  getLabel: (option: T) =&gt; string;
+  getKey: (option: T) =&gt; string | number;
+}
+
+export function Select&lt;T&gt;({
+  options,
+  value,
+  onChange,
+  getLabel,
+  getKey,
+}: SelectProps&lt;T&gt;) {
+  return (
+    &lt;select
+      value={String(getKey(value))}
+      onChange={(event) =&gt; {
+        const selected = options.find(
+          (option) =&gt; String(getKey(option)) === event.target.value,
+        );
+        if (selected !== undefined) onChange(selected);
+      }}
+    &gt;
+      {options.map((option) =&gt; (
+        &lt;option key={getKey(option)} value={String(getKey(option))}&gt;
+          {getLabel(option)}
+        &lt;/option&gt;
+      ))}
+    &lt;/select&gt;
+  );
+}
+
+// Demo: works for both primitive options and object options
+import { useState } from &quot;react&quot;;
+
+interface Country {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+// (2026) A readonly tuple, not an array. Under `noUncheckedIndexedAccess`,
+// `countries[0]` on a plain `Country[]` is `Country | undefined` and does not
+// satisfy `useState&lt;Country&gt;`. With `as const` the compiler knows the length,
+// so index 0 is a `Country`. That is a better answer than `countries[0]!`,
+// because it is true rather than asserted.
+const countries = [
+  { code: &quot;ZA&quot;, name: &quot;South Africa&quot;, flag: &quot;🇿🇦&quot; },
+  { code: &quot;US&quot;, name: &quot;United States&quot;, flag: &quot;🇺🇸&quot; },
+  { code: &quot;GB&quot;, name: &quot;United Kingdom&quot;, flag: &quot;🇬🇧&quot; },
+  { code: &quot;JP&quot;, name: &quot;Japan&quot;, flag: &quot;🇯🇵&quot; },
+] as const satisfies readonly Country[];
+
+export function SelectDemo() {
+  const [country, setCountry] = useState&lt;Country&gt;(countries[0]);
+  return (
+    &lt;div&gt;
+      &lt;Select
+        options={[...countries]}
+        value={country}
+        onChange={setCountry}
+        getLabel={(c) =&gt; `${c.flag} ${c.name}`}
+        getKey={(c) =&gt; c.code}
+      /&gt;
+      &lt;p&gt;You picked: {country.name}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> The keys are coerced to strings for the underlying <code>&lt;select&gt;</code>
+element, because HTML attributes are always strings. The lookup back to the
+original object preserves the full type, which is the whole reason to make the
+component generic rather than taking <code>{ label, value }</code> pairs.</p>
+<p><strong>Note (2026): <code>as const satisfies readonly Country[]</code>.</strong> <code>satisfies</code> checks
+every entry against <code>Country</code>, so a typo in <code>flag</code> or a missing <code>name</code> fails to
+compile. <code>as const</code> keeps the tuple length, which is what makes <code>countries[0]</code>
+a <code>Country</code> rather than <code>Country | undefined</code> under
+<code>noUncheckedIndexedAccess</code>. The <code>[...countries]</code> spread at the call site is
+because <code>Select</code> takes a mutable <code>T[]</code>; widening <code>SelectProps</code> to
+<code>readonly T[]</code> would remove it, and is the better fix if the component is
+yours.</p>
+<hr>
+<h2>Lesson 10: Create Event Form With Zod</h2>
+<pre><code class="language-tsx">import { useForm } from &quot;react-hook-form&quot;;
+import { zodResolver } from &quot;@hookform/resolvers/zod&quot;;
+import { z } from &quot;zod&quot;;
+
+const EventSchema = z.object({
+  title: z.string().min(1, { error: &quot;Enter a title.&quot; }).max(100),
+  date: z.iso.datetime({ local: true, error: &quot;Choose a date and a time.&quot; }),
+  location: z.string().min(1, { error: &quot;Enter a location.&quot; }),
+  // (2026) Zod 4: one `error` option replaces `invalid_type_error`,
+  // `required_error` and the bare-string second argument.
+  maxAttendees: z
+    .int({ error: &quot;Enter a whole number of attendees.&quot; })
+    .positive({ error: &quot;There must be at least one attendee.&quot; }),
+});
+
+type EventForm = z.infer&lt;typeof EventSchema&gt;;
+
+export function CreateEventForm() {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm&lt;EventForm&gt;({
+    resolver: zodResolver(EventSchema),
+  });
+
+  const onSubmit = async (data: EventForm) =&gt; {
+    console.log(&quot;Creating event:&quot;, data);
+    await new Promise((resolve) =&gt; setTimeout(resolve, 800));
+    reset();
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;h2&gt;Create event&lt;/h2&gt;
+
+      &lt;div&gt;
+        &lt;label&gt;Title&lt;/label&gt;
+        &lt;input {...register(&quot;title&quot;)} /&gt;
+        {errors.title &amp;&amp; &lt;span style={{ color: &quot;red&quot; }}&gt;{errors.title.message}&lt;/span&gt;}
+      &lt;/div&gt;
+
+      &lt;div&gt;
+        &lt;label&gt;Date&lt;/label&gt;
+        &lt;input type=&quot;datetime-local&quot; {...register(&quot;date&quot;)} /&gt;
+        {errors.date &amp;&amp; &lt;span style={{ color: &quot;red&quot; }}&gt;{errors.date.message}&lt;/span&gt;}
+      &lt;/div&gt;
+
+      &lt;div&gt;
+        &lt;label&gt;Location&lt;/label&gt;
+        &lt;input {...register(&quot;location&quot;)} /&gt;
+        {errors.location &amp;&amp; (
+          &lt;span style={{ color: &quot;red&quot; }}&gt;{errors.location.message}&lt;/span&gt;
+        )}
+      &lt;/div&gt;
+
+      &lt;div&gt;
+        &lt;label&gt;Max attendees&lt;/label&gt;
+        &lt;input type=&quot;number&quot; {...register(&quot;maxAttendees&quot;, { valueAsNumber: true })} /&gt;
+        {errors.maxAttendees &amp;&amp; (
+          &lt;span style={{ color: &quot;red&quot; }}&gt;{errors.maxAttendees.message}&lt;/span&gt;
+        )}
+      &lt;/div&gt;
+
+      &lt;button type=&quot;submit&quot; disabled={isSubmitting}&gt;
+        {isSubmitting ? &quot;Creating...&quot; : &quot;Create event&quot;}
+      &lt;/button&gt;
+
+      {isSubmitSuccessful &amp;&amp; &lt;p style={{ color: &quot;green&quot; }}&gt;Event created!&lt;/p&gt;}
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<p>Install dependencies:</p>
+<pre><code class="language-bash">npm install react-hook-form zod @hookform/resolvers
+</code></pre>
+<p><strong>Note (2026): <code>z.iso.datetime({ local: true })</code>.</strong> An
+<code>&lt;input type=&quot;datetime-local&quot;&gt;</code> submits <code>2026-09-06T14:00</code>, with no timezone
+offset, which is exactly what <code>local: true</code> accepts and what plain
+<code>z.iso.datetime()</code> rejects. Validating the shape the input actually produces,
+rather than the shape you wish it produced, is most of what boundary
+validation is.</p>
+<p><strong>Note (2026): consider <code>useActionState</code> instead.</strong> Lesson 16 rebuilds this
+form with a Server Action and no form library at all. React Hook Form still
+earns its place on large forms with field arrays, cross-field validation and
+watched values. For a form of four fields that posts once, the built-in Action
+is fewer moving parts and it works before the JavaScript loads.</p>
+<hr>
+<h2>Lesson 11: Paginated Posts With TanStack Query</h2>
+<p><strong><code>lib/articles.ts</code></strong></p>
+<pre><code class="language-tsx">import { keepPreviousData, queryOptions } from &quot;@tanstack/react-query&quot;;
+import { z } from &quot;zod&quot;;
+
+const Article = z.object({
+  id: z.int(),
+  title: z.string(),
+  standfirst: z.string(),
+});
+
+const ArticleList = z.array(Article);
+export type Article = z.infer&lt;typeof Article&gt;;
+
+const PAGE_SIZE = 10;
+
+async function fetchArticles(page: number): Promise&lt;Article[]&gt; {
+  const url = new URL(&quot;/api/articles&quot;, window.location.origin);
+  url.searchParams.set(&quot;page&quot;, String(page));
+  url.searchParams.set(&quot;limit&quot;, String(PAGE_SIZE));
+
+  const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  if (!response.ok) throw new Error(`HTTP ${response.status} loading page ${page}`);
+  return ArticleList.parse(await response.json());
+}
+
+// One definition. Every caller gets the same key and the same result type.
+export const articlesPage = (page: number) =&gt;
+  queryOptions({
+    queryKey: [&quot;articles&quot;, { page }] as const,
+    queryFn: () =&gt; fetchArticles(page),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+
+export const ARTICLES_PAGE_SIZE = PAGE_SIZE;
+</code></pre>
+<p><strong><code>PaginatedArticles.tsx</code></strong></p>
+<pre><code class="language-tsx">import { useQuery } from &quot;@tanstack/react-query&quot;;
+import { useState } from &quot;react&quot;;
+import { ARTICLES_PAGE_SIZE, articlesPage } from &quot;./lib/articles&quot;;
+
+export function PaginatedArticles() {
+  const [page, setPage] = useState(1);
+  const { data, isPending, isError, error, isFetching } = useQuery(articlesPage(page));
+
+  if (isPending) return &lt;p&gt;Loading the first page&lt;/p&gt;;
+  if (isError) return &lt;p role=&quot;alert&quot;&gt;Could not load articles: {error.message}&lt;/p&gt;;
+
+  const atLastPage = data.length &lt; ARTICLES_PAGE_SIZE;
+
+  return (
+    &lt;div aria-busy={isFetching}&gt;
+      &lt;h2&gt;Articles, page {page}&lt;/h2&gt;
+      &lt;ul&gt;
+        {data.map((article) =&gt; (
+          &lt;li key={article.id}&gt;
+            &lt;strong&gt;{article.title}&lt;/strong&gt;
+            &lt;p&gt;{article.standfirst}&lt;/p&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      &lt;nav&gt;
+        &lt;button onClick={() =&gt; setPage((p) =&gt; Math.max(1, p - 1))} disabled={page === 1}&gt;
+          Previous
+        &lt;/button&gt;
+        &lt;span&gt; Page {page} &lt;/span&gt;
+        &lt;button onClick={() =&gt; setPage((p) =&gt; p + 1)} disabled={isFetching || atLastPage}&gt;
+          Next
+        &lt;/button&gt;
+      &lt;/nav&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Note on <code>isPending</code>.</strong> After the <code>isPending</code> and <code>isError</code> guards, <code>data</code> is
+<code>Article[]</code>, not <code>Article[] | undefined</code>, so <code>data.map</code> needs no <code>?.</code> and
+<code>data.length</code> is safe. Checking <code>isPending</code> first is how you buy that
+narrowing. <code>isLoading</code> in version 5 means &quot;pending <strong>and</strong> fetching&quot; and would
+not have narrowed it.</p>
+<p><strong>Note on <code>keepPreviousData</code>.</strong> It stops the list flashing empty between pages.
+The <code>error.message</code> is shown because a user who cannot see what failed cannot
+tell you what to fix; <code>isFetching</code> drives <code>aria-busy</code> so the change is
+announced rather than only drawn.</p>
+<p><strong>Note on the URL.</strong> The old solution called a public placeholder API. This one
+calls <code>/api/articles</code> on the same origin, which you provide: a Route Handler on
+the Next.js path, a small Express or <code>node:http</code> server on the Vite path. A
+test for this component should mock <code>fetch</code> and never touch a network.</p>
+<hr>
+<h2>Lesson 12: Three-Route App</h2>
+<pre><code class="language-tsx">import { BrowserRouter, Routes, Route, Link, useParams } from &quot;react-router&quot;;
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+}
+
+const PRODUCTS: Product[] = [
+  { id: 1, name: &quot;Laptop&quot;, description: &quot;15-inch laptop&quot;, price: 1500 },
+  { id: 2, name: &quot;Phone&quot;, description: &quot;Latest model&quot;, price: 800 },
+  { id: 3, name: &quot;Headphones&quot;, description: &quot;Noise-cancelling&quot;, price: 200 },
+];
+
+function Home() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Welcome&lt;/h1&gt;
+      &lt;p&gt;Browse our products from the menu above.&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+function ProductList() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Products&lt;/h1&gt;
+      &lt;ul&gt;
+        {PRODUCTS.map((product) =&gt; (
+          &lt;li key={product.id}&gt;
+            &lt;Link to={`/products/${product.id}`}&gt;
+              {product.name} - ${product.price}
+            &lt;/Link&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+function ProductDetail() {
+  const { id } = useParams&lt;{ id: string }&gt;();
+  const product = PRODUCTS.find((p) =&gt; p.id === Number(id));
+
+  if (!product) {
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;Product not found&lt;/h1&gt;
+        &lt;Link to=&quot;/products&quot;&gt;Back to products&lt;/Link&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{product.name}&lt;/h1&gt;
+      &lt;p&gt;{product.description}&lt;/p&gt;
+      &lt;p&gt;Price: ${product.price}&lt;/p&gt;
+      &lt;Link to=&quot;/products&quot;&gt;Back to products&lt;/Link&gt;
+    &lt;/div&gt;
+  );
+}
+
+function NotFound() {
+  return &lt;h1&gt;404 - Page not found&lt;/h1&gt;;
+}
+
+export function App() {
+  return (
+    &lt;BrowserRouter&gt;
+      &lt;nav style={{ padding: &quot;16px&quot;, borderBottom: &quot;1px solid #ccc&quot; }}&gt;
+        &lt;Link to=&quot;/&quot; style={{ marginRight: &quot;16px&quot; }}&gt;Home&lt;/Link&gt;
+        &lt;Link to=&quot;/products&quot;&gt;Products&lt;/Link&gt;
+      &lt;/nav&gt;
+      &lt;main style={{ padding: &quot;16px&quot; }}&gt;
+        &lt;Routes&gt;
+          &lt;Route path=&quot;/&quot; element={&lt;Home /&gt;} /&gt;
+          &lt;Route path=&quot;/products&quot; element={&lt;ProductList /&gt;} /&gt;
+          &lt;Route path=&quot;/products/:id&quot; element={&lt;ProductDetail /&gt;} /&gt;
+          &lt;Route path=&quot;*&quot; element={&lt;NotFound /&gt;} /&gt;
+        &lt;/Routes&gt;
+      &lt;/main&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 13: Compound Accordion Component</h2>
+<pre><code class="language-tsx">import { createContext, useContext, useState, ReactNode } from &quot;react&quot;;
+
+interface AccordionContextValue {
+  openId: string | null;
+  setOpenId: (id: string | null) =&gt; void;
+}
+
+const AccordionContext = createContext&lt;AccordionContextValue | null&gt;(null);
+const ItemContext = createContext&lt;string | null&gt;(null);
+
+function useAccordionContext(componentName: string) {
+  const ctx = useContext(AccordionContext);
+  if (!ctx) {
+    throw new Error(`${componentName} must be used inside &lt;Accordion&gt;`);
+  }
+  return ctx;
+}
+
+function useItemContext(componentName: string) {
+  const id = useContext(ItemContext);
+  if (id === null) {
+    throw new Error(`${componentName} must be used inside &lt;Accordion.Item&gt;`);
+  }
+  return id;
+}
+
+function Root({ children }: { children: ReactNode }) {
+  const [openId, setOpenId] = useState&lt;string | null&gt;(null);
+  return (
+    &lt;AccordionContext.Provider value={{ openId, setOpenId }}&gt;
+      &lt;div&gt;{children}&lt;/div&gt;
+    &lt;/AccordionContext.Provider&gt;
+  );
+}
+
+function Item({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    &lt;ItemContext.Provider value={id}&gt;
+      &lt;div style={{ borderBottom: &quot;1px solid #ccc&quot; }}&gt;{children}&lt;/div&gt;
+    &lt;/ItemContext.Provider&gt;
+  );
+}
+
+function Header({ children }: { children: ReactNode }) {
+  const { openId, setOpenId } = useAccordionContext(&quot;Accordion.Header&quot;);
+  const id = useItemContext(&quot;Accordion.Header&quot;);
+  const isOpen = openId === id;
+
+  return (
+    &lt;button
+      onClick={() =&gt; setOpenId(isOpen ? null : id)}
+      style={{
+        width: &quot;100%&quot;,
+        textAlign: &quot;left&quot;,
+        padding: &quot;12px&quot;,
+        background: isOpen ? &quot;#f0f0f0&quot; : &quot;transparent&quot;,
+        border: &quot;none&quot;,
+        cursor: &quot;pointer&quot;,
+        fontWeight: isOpen ? &quot;bold&quot; : &quot;normal&quot;,
+      }}
+    &gt;
+      {children} {isOpen ? &quot;▼&quot; : &quot;▶&quot;}
+    &lt;/button&gt;
+  );
+}
+
+function Body({ children }: { children: ReactNode }) {
+  const { openId } = useAccordionContext(&quot;Accordion.Body&quot;);
+  const id = useItemContext(&quot;Accordion.Body&quot;);
+  if (openId !== id) return null;
+  return &lt;div style={{ padding: &quot;12px&quot; }}&gt;{children}&lt;/div&gt;;
+}
+
+export const Accordion = Object.assign(Root, {
+  Item,
+  Header,
+  Body,
+});
+
+// Demo usage
+export function AccordionDemo() {
+  return (
+    &lt;Accordion&gt;
+      &lt;Accordion.Item id=&quot;one&quot;&gt;
+        &lt;Accordion.Header&gt;What is TypeScript?&lt;/Accordion.Header&gt;
+        &lt;Accordion.Body&gt;
+          A typed superset of JavaScript that compiles to plain JavaScript.
+        &lt;/Accordion.Body&gt;
+      &lt;/Accordion.Item&gt;
+      &lt;Accordion.Item id=&quot;two&quot;&gt;
+        &lt;Accordion.Header&gt;Why use it with React?&lt;/Accordion.Header&gt;
+        &lt;Accordion.Body&gt;
+          It catches prop and state errors at compile time and improves refactoring.
+        &lt;/Accordion.Body&gt;
+      &lt;/Accordion.Item&gt;
+      &lt;Accordion.Item id=&quot;three&quot;&gt;
+        &lt;Accordion.Header&gt;Is it hard to learn?&lt;/Accordion.Header&gt;
+        &lt;Accordion.Body&gt;
+          The basics take a weekend if you already know JavaScript.
+        &lt;/Accordion.Body&gt;
+      &lt;/Accordion.Item&gt;
+    &lt;/Accordion&gt;
+  );
+}
+</code></pre>
+<p><strong>Note:</strong> <code>Object.assign(Root, { Item, Header, Body })</code> is a clean way to attach the subcomponents to the parent. It also typechecks properly without needing namespace declarations.</p>
+<hr>
+<h2>Lesson 14: Tests for the Signup Form</h2>
+<pre><code class="language-tsx">// test/signup-form.test.tsx
+import { render, screen, waitFor } from &quot;@testing-library/react&quot;;
+import userEvent from &quot;@testing-library/user-event&quot;;
+import { describe, expect, test, vi } from &quot;vitest&quot;;
+import { SignupForm } from &quot;../SignupForm&quot;;
+
+describe(&quot;SignupForm&quot;, () =&gt; {
+  test(&quot;an empty submission reports every missing field&quot;, async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;SignupForm /&gt;);
+
+    await user.click(screen.getByRole(&quot;button&quot;, { name: &quot;Sign up&quot; }));
+
+    expect(await screen.findByText(/invalid email/i)).toBeTruthy();
+    expect(screen.getByText(/at least 8 characters/i)).toBeTruthy();
+  });
+
+  test(&quot;an address that is not an address is refused&quot;, async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;SignupForm /&gt;);
+
+    await user.type(screen.getByLabelText(/email/i), &quot;not-an-email&quot;);
+    await user.click(screen.getByRole(&quot;button&quot;, { name: &quot;Sign up&quot; }));
+
+    expect(await screen.findByText(/invalid email/i)).toBeTruthy();
+  });
+
+  test(&quot;an age below eighteen is refused&quot;, async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;SignupForm /&gt;);
+
+    await user.type(screen.getByLabelText(/age/i), &quot;16&quot;);
+    await user.click(screen.getByRole(&quot;button&quot;, { name: &quot;Sign up&quot; }));
+
+    expect(await screen.findByText(/18 or older/i)).toBeTruthy();
+  });
+
+  test(&quot;a valid submission reaches the handler once, with parsed values&quot;, async () =&gt; {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(&lt;SignupForm onSubmit={onSubmit} /&gt;);
+
+    await user.type(screen.getByLabelText(/email/i), &quot;reader@example.com&quot;);
+    await user.type(screen.getByLabelText(/password/i), &quot;correct horse&quot;);
+    await user.type(screen.getByLabelText(/age/i), &quot;25&quot;);
+    await user.click(screen.getByRole(&quot;button&quot;, { name: &quot;Sign up&quot; }));
+
+    await waitFor(() =&gt; {
+      expect(onSubmit).toHaveBeenCalledExactlyOnceWith({
+        email: &quot;reader@example.com&quot;,
+        password: &quot;correct horse&quot;,
+        age: 25,
+      });
+    });
+  });
+});
+</code></pre>
+<p><strong>Note (2026): three changes from the older version of this solution.</strong></p>
+<p><strong><code>getByLabelText</code>, not <code>getByPlaceholderText</code>.</strong> A placeholder is not a label:
+it disappears when the field has content, screen readers treat it
+inconsistently, and a form whose only labels are placeholders fails
+accessibility review. Querying by label is both the better test and a check
+that the label exists.</p>
+<p><strong>A spy on the component&#39;s own prop, not on <code>console.log</code>.</strong> Spying on
+<code>console</code> couples the test to a debugging statement somebody will delete.
+Passing <code>onSubmit</code> in makes the contract explicit and gives you
+<code>toHaveBeenCalledExactlyOnceWith</code>, which catches a double submission that
+<code>toHaveBeenCalledWith</code> would pass.</p>
+<p><strong>No <code>toBeInTheDocument</code>.</strong> These solutions leave out
+<code>@testing-library/jest-dom</code>, so assertions use plain <code>expect</code>. <code>getBy*</code> throws
+when nothing matches, so <code>expect(...).toBeTruthy()</code> is checking that the query
+returned, which is what the jest-dom matcher was doing more prettily. Add the
+package if your team already uses it.</p>
+<p><strong>And one thing that did not change:</strong> every query is by role, label or visible
+text. Never by class name, and by test id only when nothing user-visible
+identifies the element.</p>
+<hr>
+<h2>Capstone: Casey Journal, a Tiered Publication</h2>
+<p>A complete reference implementation on Next.js 16.3, React 19.2 and Vitest 4.
+Rebuilt from this file into a clean directory: <code>next build</code> succeeds, all 17
+Vitest cases pass, and the paywall was proved with <code>curl</code> against the running
+production server. The exact output is at the end.</p>
+<p>Article bodies say <code>PLACEHOLDER</code>. Prices are placeholders and the page says so.
+No legal copy appears anywhere in this project, because legal wording is
+owner-approved in the real product and a course is not where it gets
+republished.</p>
+<p><strong><code>package.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;casey-journal-capstone&quot;,
+  &quot;private&quot;: true,
+  &quot;version&quot;: &quot;0.0.0&quot;,
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;next dev&quot;,
+    &quot;build&quot;: &quot;next build&quot;,
+    &quot;start&quot;: &quot;next start&quot;,
+    &quot;typecheck&quot;: &quot;tsc --noEmit&quot;,
+    &quot;test&quot;: &quot;vitest run&quot;
+  },
+  &quot;dependencies&quot;: {
+    &quot;next&quot;: &quot;16.3.4&quot;,
+    &quot;react&quot;: &quot;19.2.8&quot;,
+    &quot;react-dom&quot;: &quot;19.2.8&quot;,
+    &quot;zod&quot;: &quot;4.5.4&quot;
+  },
+  &quot;devDependencies&quot;: {
+    &quot;@testing-library/react&quot;: &quot;16.3.3&quot;,
+    &quot;@testing-library/user-event&quot;: &quot;14.6.1&quot;,
+    &quot;@types/node&quot;: &quot;24.10.1&quot;,
+    &quot;@types/react&quot;: &quot;19.2.18&quot;,
+    &quot;@types/react-dom&quot;: &quot;19.2.7&quot;,
+    &quot;@vitejs/plugin-react&quot;: &quot;6.1.1&quot;,
+    &quot;jsdom&quot;: &quot;27.4.0&quot;,
+    &quot;typescript&quot;: &quot;5.9.3&quot;,
+    &quot;vitest&quot;: &quot;4.1.11&quot;
+  }
+}
+</code></pre>
+<p><strong><code>tsconfig.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;target&quot;: &quot;ES2023&quot;,
+    &quot;lib&quot;: [
+      &quot;DOM&quot;,
+      &quot;DOM.Iterable&quot;,
+      &quot;ES2024&quot;
+    ],
+    &quot;module&quot;: &quot;ESNext&quot;,
+    &quot;moduleResolution&quot;: &quot;bundler&quot;,
+    &quot;jsx&quot;: &quot;react-jsx&quot;,
+    &quot;strict&quot;: true,
+    &quot;noUncheckedIndexedAccess&quot;: true,
+    &quot;esModuleInterop&quot;: true,
+    &quot;isolatedModules&quot;: true,
+    &quot;moduleDetection&quot;: &quot;force&quot;,
+    &quot;resolveJsonModule&quot;: true,
+    &quot;skipLibCheck&quot;: true,
+    &quot;allowJs&quot;: true,
+    &quot;noEmit&quot;: true,
+    &quot;incremental&quot;: true,
+    &quot;types&quot;: [
+      &quot;node&quot;
+    ],
+    &quot;plugins&quot;: [
+      {
+        &quot;name&quot;: &quot;next&quot;
+      }
+    ],
+    &quot;paths&quot;: {
+      &quot;@/*&quot;: [
+        &quot;./*&quot;
+      ]
+    }
+  },
+  &quot;include&quot;: [
+    &quot;next-env.d.ts&quot;,
+    &quot;**/*.ts&quot;,
+    &quot;**/*.tsx&quot;,
+    &quot;.next/types/**/*.ts&quot;,
+    &quot;.next/dev/types/**/*.ts&quot;
+  ],
+  &quot;exclude&quot;: [
+    &quot;node_modules&quot;
+  ]
+}
+</code></pre>
+<p><strong>Note on <code>lib</code>.</strong> <code>ES2024</code> rather than <code>ES2023</code>, because the bookmark test
+uses <code>Promise.withResolvers</code>. <code>lib</code> describes what the runtime provides;
+<code>target</code> describes what the output may use. They are different questions and
+the compiler asks them separately. Casey Journals pins <code>ES2022</code> for both, which
+is why <code>toSorted</code> in <code>lib/content.ts</code> would not compile there without the same
+bump.</p>
+<p><strong><code>next.config.ts</code></strong></p>
+<pre><code class="language-ts">import type { NextConfig } from &quot;next&quot;;
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+  typedRoutes: true,
+};
+
+export default nextConfig;
+</code></pre>
+<p><strong><code>vitest.config.mts</code></strong></p>
+<pre><code class="language-ts">import react from &quot;@vitejs/plugin-react&quot;;
+import { defineConfig } from &quot;vitest/config&quot;;
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    include: [&quot;test/**/*.test.{ts,tsx}&quot;],
+    environment: &quot;jsdom&quot;,
+    setupFiles: [&quot;./test/setup.ts&quot;],
+  },
+  resolve: {
+    alias: { &quot;@&quot;: new URL(&quot;.&quot;, import.meta.url).pathname },
+  },
+});
+</code></pre>
+<h3>The domain</h3>
+<p><strong><code>lib/content.ts</code></strong></p>
+<pre><code class="language-ts">// The article store. In a real product this is a database behind row-level
+// security; here it is a module so the capstone runs with nothing installed.
+// What matters is where it is READ from, which is the server, always.
+
+export const TIERS = [&quot;free&quot;, &quot;reader&quot;, &quot;practitioner&quot;] as const;
+export type Tier = (typeof TIERS)[number];
+
+/** How much of a tier a reader must hold to see content at that tier. */
+const RANK = { free: 0, reader: 1, practitioner: 2 } as const satisfies Record&lt;Tier, number&gt;;
+
+export type Article = {
+  readonly slug: string;
+  readonly title: string;
+  readonly standfirst: string;
+  readonly tier: Tier;
+  readonly publishedOn: string;
+  readonly author: string;
+  /** Paragraphs. Never sent to a reader who has not earned them. */
+  readonly body: readonly string[];
+};
+
+const ARTICLES: readonly Article[] = [
+  {
+    slug: &quot;notice-periods-in-lease-agreements&quot;,
+    title: &quot;Notice periods in lease agreements&quot;,
+    standfirst: &quot;What the Rental Housing Act requires, and what parties keep getting wrong.&quot;,
+    tier: &quot;free&quot;,
+    publishedOn: &quot;2026-08-14&quot;,
+    author: &quot;Placeholder Author&quot;,
+    body: [
+      &quot;PLACEHOLDER. This paragraph stands in for editorial copy.&quot;,
+      &quot;PLACEHOLDER. A second paragraph, so the preview has something to cut.&quot;,
+      &quot;PLACEHOLDER. A third paragraph that only an entitled reader receives.&quot;,
+    ],
+  },
+  {
+    slug: &quot;drafting-a-letter-of-demand&quot;,
+    title: &quot;Drafting a letter of demand&quot;,
+    standfirst: &quot;The parts that matter, in the order a court reads them.&quot;,
+    tier: &quot;reader&quot;,
+    publishedOn: &quot;2026-08-28&quot;,
+    author: &quot;Placeholder Author&quot;,
+    body: [
+      &quot;PLACEHOLDER. This paragraph stands in for editorial copy.&quot;,
+      &quot;PLACEHOLDER. A second paragraph, so the preview has something to cut.&quot;,
+      &quot;PLACEHOLDER. A third paragraph that only an entitled reader receives.&quot;,
+      &quot;PLACEHOLDER. A fourth paragraph, likewise.&quot;,
+    ],
+  },
+  {
+    slug: &quot;conditions-precedent-that-survive&quot;,
+    title: &quot;Conditions precedent that survive the deal&quot;,
+    standfirst: &quot;Fulfilment, waiver, and the day-count arithmetic nobody checks.&quot;,
+    tier: &quot;practitioner&quot;,
+    publishedOn: &quot;2026-09-04&quot;,
+    author: &quot;Placeholder Author&quot;,
+    body: [
+      &quot;PLACEHOLDER. This paragraph stands in for editorial copy.&quot;,
+      &quot;PLACEHOLDER. A second paragraph, so the preview has something to cut.&quot;,
+      &quot;PLACEHOLDER. A third paragraph that only an entitled reader receives.&quot;,
+    ],
+  },
+];
+
+export function listArticles(): readonly Article[] {
+  return ARTICLES.toSorted((a, b) =&gt; b.publishedOn.localeCompare(a.publishedOn));
+}
+
+export function findArticle(slug: string): Article | undefined {
+  return ARTICLES.find((article) =&gt; article.slug === slug);
+}
+
+/** Does a reader holding `held` reach content at `required`? */
+export function entitled(held: Tier, required: Tier): boolean {
+  return RANK[held] &gt;= RANK[required];
+}
+
+export type ArticleView =
+  | { readonly kind: &quot;full&quot;; readonly article: Article; readonly body: readonly string[] }
+  | {
+      readonly kind: &quot;preview&quot;;
+      readonly article: Omit&lt;Article, &quot;body&quot;&gt;;
+      readonly body: readonly string[];
+      readonly requiredTier: Tier;
+    };
+
+const PREVIEW_PARAGRAPHS = 1;
+
+/**
+ * THE PAYWALL. This function is the only way an article body reaches a
+ * response, and it runs on the server. An unentitled reader is handed the
+ * preview paragraphs and nothing else: the rest of the text never enters the
+ * HTML, so it cannot be recovered by disabling JavaScript, reading the
+ * payload, or editing state in a browser tool.
+ *
+ * A client-side gate that renders the whole article and hides it with CSS is
+ * not a paywall. It is a suggestion.
+ */
+export function viewArticle(article: Article, held: Tier): ArticleView {
+  if (entitled(held, article.tier)) {
+    return { kind: &quot;full&quot;, article, body: article.body };
+  }
+  const { body, ...withoutBody } = article;
+  return {
+    kind: &quot;preview&quot;,
+    article: withoutBody,
+    body: body.slice(0, PREVIEW_PARAGRAPHS),
+    requiredTier: article.tier,
+  };
+}
+</code></pre>
+<p><strong>Note on <code>viewArticle</code>, which is the whole exercise.</strong> The preview branch
+destructures <code>body</code> <strong>off</strong> the article before returning it. The returned
+<code>article</code> therefore has type <code>Omit&lt;Article, &quot;body&quot;&gt;</code>, and any later attempt to
+render <code>view.article.body</code> in the preview case is a compile error rather than a
+leak. That is a security rule expressed as a type, which is the only kind that
+cannot be forgotten during a refactor.</p>
+<p><strong>Note on <code>RANK</code>.</strong> <code>as const satisfies Record&lt;Tier, number&gt;</code> means adding a
+fourth tier to <code>TIERS</code> without ranking it fails to compile, naming the file and
+the line. Without <code>satisfies</code>, <code>entitled</code> would return <code>NaN &gt;= 0</code>, which is
+<code>false</code>, and the new tier would silently see nothing.</p>
+<p><strong><code>lib/reader.ts</code></strong></p>
+<pre><code class="language-ts">import { cookies } from &quot;next/headers&quot;;
+import { TIERS, type Tier } from &quot;./content&quot;;
+
+const TIER_COOKIE = &quot;cj_tier&quot;;
+const BOOKMARK_COOKIE = &quot;cj_bookmarks&quot;;
+
+function isTier(value: string | undefined): value is Tier {
+  return value !== undefined &amp;&amp; (TIERS as readonly string[]).includes(value);
+}
+
+/**
+ * The reader&#39;s tier, read on the server.
+ *
+ * A cookie is used here because the capstone has no database. In production
+ * this is a session lookup: a value the browser can edit must never decide
+ * entitlement. That is the whole point of the exercise, and the comment stays
+ * in the code so nobody copies this into something real.
+ */
+export async function readerTier(): Promise&lt;Tier&gt; {
+  const store = await cookies();
+  const value = store.get(TIER_COOKIE)?.value;
+  return isTier(value) ? value : &quot;free&quot;;
+}
+
+export async function readerBookmarks(): Promise&lt;ReadonlySet&lt;string&gt;&gt; {
+  const store = await cookies();
+  const raw = store.get(BOOKMARK_COOKIE)?.value ?? &quot;&quot;;
+  return new Set(raw.split(&quot;,&quot;).filter((slug) =&gt; slug !== &quot;&quot;));
+}
+
+export async function writeBookmarks(slugs: ReadonlySet&lt;string&gt;): Promise&lt;void&gt; {
+  const store = await cookies();
+  store.set(BOOKMARK_COOKIE, [...slugs].join(&quot;,&quot;), {
+    httpOnly: true,
+    sameSite: &quot;lax&quot;,
+    path: &quot;/&quot;,
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
+export const TIER_COOKIE_NAME = TIER_COOKIE;
+</code></pre>
+<p><strong>Note on the cookie, again.</strong> It is a teaching shortcut and the comment in the
+file says so. <code>readerTier</code> falls back to <code>&quot;free&quot;</code> for any value it does not
+recognise, which is why the forged-cookie <code>curl</code> below returns zero. <strong>Fail
+closed:</strong> an unrecognised session is the lowest privilege, never an error page
+and never a default of trust.</p>
+<p><strong><code>lib/subscribe.ts</code></strong></p>
+<pre><code class="language-ts">import { z } from &quot;zod&quot;;
+import { TIERS } from &quot;./content&quot;;
+
+/** Validated on the server. The client form is a convenience, not a control. */
+export const SubscribeInput = z.object({
+  email: z.email({ error: &quot;Enter an email address we can reach you at.&quot; }),
+  tier: z.enum(TIERS, { error: &quot;Choose one of the listed plans.&quot; }),
+  consent: z.literal(&quot;on&quot;, {
+    error: &quot;We need your agreement before we may email you.&quot;,
+  }),
+});
+
+export type SubscribeState =
+  | { readonly status: &quot;idle&quot; }
+  | { readonly status: &quot;ok&quot;; readonly email: string }
+  | { readonly status: &quot;error&quot;; readonly errors: Readonly&lt;Record&lt;string, string&gt;&gt; };
+
+export const IDLE: SubscribeState = { status: &quot;idle&quot; };
+
+/** Flatten Zod issues into one message per field, which is what a form shows. */
+export function fieldErrors(error: z.ZodError): Record&lt;string, string&gt; {
+  const out: Record&lt;string, string&gt; = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join(&quot;.&quot;) || &quot;form&quot;;
+    out[key] ??= issue.message;
+  }
+  return out;
+}
+</code></pre>
+<p><strong>Note on <code>fieldErrors</code>.</strong> It keeps the <strong>first</strong> message per field (<code>out[key] ??= issue.message</code>). A form that stacks three messages under one input is
+harder to act on than one that names the first thing to fix.</p>
+<p><strong><code>lib/format.ts</code></strong></p>
+<pre><code class="language-ts">const LONG_DATE = new Intl.DateTimeFormat(&quot;en-ZA&quot;, {
+  timeZone: &quot;Africa/Johannesburg&quot;,
+  day: &quot;numeric&quot;,
+  month: &quot;long&quot;,
+  year: &quot;numeric&quot;,
+});
+
+const RANDS = new Intl.NumberFormat(&quot;en-ZA&quot;, {
+  style: &quot;currency&quot;,
+  currency: &quot;ZAR&quot;,
+  minimumFractionDigits: 0,
+});
+
+/** &quot;2026-09-04&quot; becomes &quot;4 September 2026&quot;. */
+export function formatDay(iso: string): string {
+  return LONG_DATE.format(new Date(`${iso}T00:00:00Z`));
+}
+
+/**
+ * Money is integer cents everywhere in this app. 19900 becomes &quot;R 199&quot;.
+ * Intl uses a no-break space, normalised here so tests and copied text behave.
+ */
+export function formatCents(cents: number): string {
+  return RANDS.format(cents / 100).replaceAll(&quot;\u00A0&quot;, &quot; &quot;);
+}
+</code></pre>
+<h3>The server actions</h3>
+<p><strong><code>app/actions.ts</code></strong></p>
+<pre><code class="language-ts">&quot;use server&quot;;
+
+import { revalidatePath } from &quot;next/cache&quot;;
+import { findArticle } from &quot;@/lib/content&quot;;
+import { readerBookmarks, writeBookmarks } from &quot;@/lib/reader&quot;;
+import { fieldErrors, IDLE, SubscribeInput, type SubscribeState } from &quot;@/lib/subscribe&quot;;
+
+/**
+ * A Server Action is a PUBLIC ENDPOINT. Next.js gives it a URL and anybody can
+ * post to it. Everything below therefore validates its own input and reads its
+ * own session; nothing is trusted because a form rendered it.
+ */
+export async function subscribe(
+  _previous: SubscribeState,
+  formData: FormData,
+): Promise&lt;SubscribeState&gt; {
+  const parsed = SubscribeInput.safeParse({
+    email: formData.get(&quot;email&quot;),
+    tier: formData.get(&quot;tier&quot;),
+    consent: formData.get(&quot;consent&quot;),
+  });
+
+  if (!parsed.success) {
+    return { status: &quot;error&quot;, errors: fieldErrors(parsed.error) };
+  }
+
+  // A real implementation records the consent event here: what was agreed, to
+  // what wording, at what time. See the workbook on consent as events.
+  await new Promise((resolve) =&gt; setTimeout(resolve, 200));
+
+  return { status: &quot;ok&quot;, email: parsed.data.email };
+}
+
+export async function resetSubscribe(): Promise&lt;SubscribeState&gt; {
+  return IDLE;
+}
+
+/**
+ * Toggle a bookmark. The client renders the change immediately with
+ * useOptimistic; this is the server deciding what actually happened.
+ */
+export async function toggleBookmark(slug: string): Promise&lt;{ bookmarked: boolean }&gt; {
+  if (findArticle(slug) === undefined) {
+    throw new Error(`No article with slug &quot;${slug}&quot;.`);
+  }
+
+  const current = new Set(await readerBookmarks());
+  const bookmarked = !current.has(slug);
+
+  if (bookmarked) current.add(slug);
+  else current.delete(slug);
+
+  await writeBookmarks(current);
+  revalidatePath(&quot;/&quot;);
+  return { bookmarked };
+}
+</code></pre>
+<p><strong>Note on the comment at the top.</strong> It is the most important comment in the
+project. A Server Action is a public endpoint: it has a URL, and anybody can
+post to it. <code>subscribe</code> validates its own input even though the form already
+did. <code>toggleBookmark</code> checks that the slug names a real article, and reads the
+session itself rather than accepting a user id as an argument.</p>
+<p><strong>Note on <code>revalidatePath</code>.</strong> Without it the list page would keep serving its
+cached render and the bookmark would appear to revert on the next navigation.
+With it, the optimistic value and the eventual real value agree, which is why
+there is no flicker.</p>
+<h3>The pages</h3>
+<p><strong><code>app/layout.tsx</code></strong></p>
+<pre><code class="language-tsx">import type { Metadata } from &quot;next&quot;;
+import Link from &quot;next/link&quot;;
+import &quot;./globals.css&quot;;
+
+export const metadata: Metadata = {
+  title: &quot;Casey Journal&quot;,
+  description: &quot;A teaching capstone modelled on a tiered legal publication.&quot;,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang=&quot;en-ZA&quot;&gt;
+      &lt;body&gt;
+        &lt;main&gt;
+          &lt;header&gt;
+            &lt;p className=&quot;meta&quot;&gt;
+              &lt;Link href=&quot;/&quot;&gt;Casey Journal&lt;/Link&gt; · &lt;Link href=&quot;/subscribe&quot;&gt;Subscribe&lt;/Link&gt;
+            &lt;/p&gt;
+            &lt;hr /&gt;
+          &lt;/header&gt;
+          {children}
+        &lt;/main&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}
+</code></pre>
+<p><strong><code>app/page.tsx</code></strong></p>
+<pre><code class="language-tsx">import Link from &quot;next/link&quot;;
+import { BookmarkButton } from &quot;@/components/bookmark-button&quot;;
+import { listArticles } from &quot;@/lib/content&quot;;
+import { formatDay } from &quot;@/lib/format&quot;;
+import { readerBookmarks, readerTier } from &quot;@/lib/reader&quot;;
+
+// This page is a Server Component. It reads the session and the article list
+// on the server, and ships no data-fetching JavaScript to the browser.
+export default async function HomePage() {
+  const [tier, bookmarks] = await Promise.all([readerTier(), readerBookmarks()]);
+  const articles = listArticles();
+
+  return (
+    &lt;&gt;
+      &lt;h1&gt;Casey Journal&lt;/h1&gt;
+      &lt;p className=&quot;meta&quot;&gt;You are reading on the {tier} plan.&lt;/p&gt;
+
+      {articles.map((article) =&gt; (
+        &lt;article key={article.slug}&gt;
+          &lt;hr /&gt;
+          &lt;h2&gt;
+            &lt;Link href={`/articles/${article.slug}`}&gt;{article.title}&lt;/Link&gt;
+          &lt;/h2&gt;
+          &lt;p&gt;{article.standfirst}&lt;/p&gt;
+          &lt;p className=&quot;meta&quot;&gt;
+            {formatDay(article.publishedOn)} · {article.tier}{&quot; &quot;}
+          &lt;/p&gt;
+          &lt;BookmarkButton
+            slug={article.slug}
+            title={article.title}
+            bookmarked={bookmarks.has(article.slug)}
+          /&gt;
+        &lt;/article&gt;
+      ))}
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p><strong>Note on <code>Promise.all</code>.</strong> <code>readerTier()</code> and <code>readerBookmarks()</code> do not depend
+on each other, so they are awaited together. Two sequential <code>await</code>s here would
+be two round trips for no reason. This is the same lesson as the JavaScript
+course&#39;s sequential-versus-parallel section, in its natural habitat.</p>
+<p><strong>Note on what is not here.</strong> No <code>useEffect</code>, no loading state, no
+<code>QueryClientProvider</code>. This is a Server Component: the data is read before the
+HTML exists, so there is no moment at which the page has no data. The only
+JavaScript this page ships is <code>BookmarkButton</code>.</p>
+<p><strong><code>app/articles/[slug]/page.tsx</code></strong></p>
+<pre><code class="language-tsx">import { notFound } from &quot;next/navigation&quot;;
+import Link from &quot;next/link&quot;;
+import { findArticle, listArticles, viewArticle } from &quot;@/lib/content&quot;;
+import { formatDay } from &quot;@/lib/format&quot;;
+import { readerTier } from &quot;@/lib/reader&quot;;
+
+export function generateStaticParams() {
+  return listArticles().map((article) =&gt; ({ slug: article.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise&lt;{ slug: string }&gt; }) {
+  const { slug } = await params;
+  const article = findArticle(slug);
+  return article === undefined
+    ? { title: &quot;Not found&quot; }
+    : { title: article.title, description: article.standfirst };
+}
+
+export default async function ArticlePage({ params }: { params: Promise&lt;{ slug: string }&gt; }) {
+  const { slug } = await params;
+  const article = findArticle(slug);
+  if (article === undefined) notFound();
+
+  // The entitlement decision happens here, on the server, before any body text
+  // is chosen. `view.body` is what reaches the HTML and it is all that reaches
+  // the HTML.
+  const view = viewArticle(article, await readerTier());
+
+  return (
+    &lt;&gt;
+      &lt;h1&gt;{view.article.title}&lt;/h1&gt;
+      &lt;p className=&quot;meta&quot;&gt;
+        {formatDay(view.article.publishedOn)} · {view.article.author}
+      &lt;/p&gt;
+
+      {view.body.map((paragraph, index) =&gt; (
+        &lt;p key={index}&gt;{paragraph}&lt;/p&gt;
+      ))}
+
+      {view.kind === &quot;preview&quot; ? (
+        &lt;div className=&quot;locked&quot;&gt;
+          &lt;h2&gt;The rest of this article is for {view.requiredTier} subscribers&lt;/h2&gt;
+          &lt;p&gt;
+            The remaining paragraphs were never sent to your browser. Nothing is
+            hidden here; there is nothing to reveal.
+          &lt;/p&gt;
+          &lt;p&gt;
+            &lt;Link href=&quot;/subscribe&quot;&gt;See the plans&lt;/Link&gt;
+          &lt;/p&gt;
+        &lt;/div&gt;
+      ) : null}
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p><strong>Note on the shape.</strong> <code>viewArticle</code> is called before any body text is chosen,
+and <code>view.body</code> is the only thing rendered. There is no branch in which the
+full body is in scope and conditionally hidden. Compare with the version people
+write first:</p>
+<pre><code class="language-tsx">// WRONG. Every paragraph is in the HTML; the CSS is the only thing stopping you.
+&lt;div className={entitled ? &quot;&quot; : &quot;blurred&quot;}&gt;
+  {article.body.map((p) =&gt; &lt;p&gt;{p}&lt;/p&gt;)}
+&lt;/div&gt;
+</code></pre>
+<p><strong>Note on <code>generateStaticParams</code> with a dynamic page.</strong> The params are
+pre-computed, but the page still renders per request because it reads a cookie.
+That is correct and the build output says <code>ƒ /articles/[slug]</code>. A cached render
+would be served to the wrong reader, which is the bug the whole capstone is
+about.</p>
+<p><strong><code>app/subscribe/page.tsx</code></strong></p>
+<pre><code class="language-tsx">import { SubscribeForm } from &quot;@/components/subscribe-form&quot;;
+import { formatCents } from &quot;@/lib/format&quot;;
+
+// PLACEHOLDER PRICES. Casey Journals&#39; real launch prices are a dated owner
+// decision (docs/decisions/0012-launch-pricing.md) and are not reproduced here.
+const PLAN_CENTS = { free: 0, reader: 19900, practitioner: 39900 } as const;
+
+export default function SubscribePage() {
+  return (
+    &lt;&gt;
+      &lt;h1&gt;Subscribe&lt;/h1&gt;
+      &lt;p className=&quot;meta&quot;&gt;
+        Reader {formatCents(PLAN_CENTS.reader)} a month · Practitioner{&quot; &quot;}
+        {formatCents(PLAN_CENTS.practitioner)} a month. Placeholder figures.
+      &lt;/p&gt;
+      &lt;SubscribeForm /&gt;
+    &lt;/&gt;
+  );
+}
+</code></pre>
+<p><strong><code>app/api/health/route.ts</code></strong></p>
+<pre><code class="language-ts">import { NextResponse } from &quot;next/server&quot;;
+
+/**
+ * A Route Handler: a plain HTTP endpoint under app/. Use one when the caller
+ * is not a React tree (a webhook, a health check, a feed). Use a Server Action
+ * when the caller is your own form.
+ */
+export function GET() {
+  return NextResponse.json({ status: &quot;ok&quot; }, { headers: { &quot;Cache-Control&quot;: &quot;no-store&quot; } });
+}
+</code></pre>
+<p><strong><code>app/globals.css</code></strong></p>
+<pre><code class="language-css">:root {
+  --ink: #111111;
+  --paper: #ffffff;
+  --rule: #dddddd;
+  --muted: #555555;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+  line-height: 1.6;
+}
+
+main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+a { color: inherit; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+.meta { color: var(--muted); font-size: 0.875rem; font-family: system-ui, sans-serif; }
+.locked { border: 1px solid var(--rule); padding: 1.25rem; margin-top: 2rem; }
+.field { display: block; margin-bottom: 1rem; font-family: system-ui, sans-serif; }
+.field input, .field select { display: block; width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+.error { color: #b00020; font-size: 0.875rem; font-family: system-ui, sans-serif; }
+button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; }
+button[aria-pressed=&quot;true&quot;] { font-weight: bold; }
+</code></pre>
+<h3>The client components</h3>
+<p><strong><code>components/subscribe-form.tsx</code></strong></p>
+<pre><code class="language-tsx">&quot;use client&quot;;
+
+import { useActionState } from &quot;react&quot;;
+import { useFormStatus } from &quot;react-dom&quot;;
+import { subscribe } from &quot;@/app/actions&quot;;
+import { TIERS } from &quot;@/lib/content&quot;;
+import { IDLE, type SubscribeState } from &quot;@/lib/subscribe&quot;;
+
+function SubmitButton() {
+  // useFormStatus reads the state of the enclosing form. It only works in a
+  // CHILD of the form, which is why this is its own component.
+  const { pending } = useFormStatus();
+  return (
+    &lt;button type=&quot;submit&quot; disabled={pending}&gt;
+      {pending ? &quot;Subscribing&quot; : &quot;Subscribe&quot;}
+    &lt;/button&gt;
+  );
+}
+
+export function SubscribeForm() {
+  const [state, formAction] = useActionState&lt;SubscribeState, FormData&gt;(subscribe, IDLE);
+
+  if (state.status === &quot;ok&quot;) {
+    return &lt;p role=&quot;status&quot;&gt;Check {state.email} for a confirmation link.&lt;/p&gt;;
+  }
+
+  const errors = state.status === &quot;error&quot; ? state.errors : {};
+
+  return (
+    &lt;form action={formAction} noValidate&gt;
+      &lt;label className=&quot;field&quot;&gt;
+        Email address
+        &lt;input
+          name=&quot;email&quot;
+          type=&quot;email&quot;
+          required
+          aria-invalid={errors[&quot;email&quot;] !== undefined}
+          aria-describedby={errors[&quot;email&quot;] ? &quot;email-error&quot; : undefined}
+        /&gt;
+      &lt;/label&gt;
+      {errors[&quot;email&quot;] ? (
+        &lt;p className=&quot;error&quot; id=&quot;email-error&quot;&gt;{errors[&quot;email&quot;]}&lt;/p&gt;
+      ) : null}
+
+      &lt;label className=&quot;field&quot;&gt;
+        Plan
+        &lt;select name=&quot;tier&quot; defaultValue=&quot;reader&quot;&gt;
+          {TIERS.map((tier) =&gt; (
+            &lt;option key={tier} value={tier}&gt;{tier}&lt;/option&gt;
+          ))}
+        &lt;/select&gt;
+      &lt;/label&gt;
+      {errors[&quot;tier&quot;] ? &lt;p className=&quot;error&quot;&gt;{errors[&quot;tier&quot;]}&lt;/p&gt; : null}
+
+      &lt;label className=&quot;field&quot;&gt;
+        &lt;input name=&quot;consent&quot; type=&quot;checkbox&quot; /&gt;
+        {&quot; &quot;}I agree to receive the newsletter.
+      &lt;/label&gt;
+      {errors[&quot;consent&quot;] ? &lt;p className=&quot;error&quot;&gt;{errors[&quot;consent&quot;]}&lt;/p&gt; : null}
+
+      &lt;SubmitButton /&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<p><strong>Note on <code>SubmitButton</code> being a separate component.</strong> <code>useFormStatus</code> reads
+the form <strong>above</strong> it. Called in the same component that renders the <code>&lt;form&gt;</code>,
+it returns <code>pending: false</code> forever. Splitting it out is not style; it is the
+API.</p>
+<p><strong>Note on <code>aria-invalid</code> and <code>aria-describedby</code>.</strong> An error rendered as a red
+paragraph beside an input is invisible to a screen reader unless the input
+points at it. Two attributes, and the difference between a form that works for
+everybody and one that does not.</p>
+<p><strong>Note on <code>noValidate</code>.</strong> The browser&#39;s own validation bubbles would fire
+before the action ran, and the messages would be the browser&#39;s rather than
+yours. The <code>required</code> and <code>type=&quot;email&quot;</code> attributes stay, because they still
+drive the mobile keyboard and the autofill behaviour.</p>
+<p><strong><code>components/bookmark-button.tsx</code></strong></p>
+<pre><code class="language-tsx">&quot;use client&quot;;
+
+import { useOptimistic, useTransition } from &quot;react&quot;;
+import { toggleBookmark } from &quot;@/app/actions&quot;;
+
+type Props = {
+  slug: string;
+  title: string;
+  bookmarked: boolean;
+};
+
+/**
+ * The optimistic bookmark.
+ *
+ * `useOptimistic` gives a value that follows the real prop, except while a
+ * transition is running, when it shows what you expect the answer to be.
+ * React discards the optimistic value automatically when the transition ends,
+ * so a failed action rolls back with no rollback code.
+ */
+export function BookmarkButton({ slug, title, bookmarked }: Props) {
+  const [pending, startTransition] = useTransition();
+  const [shown, setShown] = useOptimistic(bookmarked);
+
+  return (
+    &lt;button
+      type=&quot;button&quot;
+      aria-pressed={shown}
+      aria-label={shown ? `Remove ${title} from your bookmarks` : `Bookmark ${title}`}
+      disabled={pending}
+      onClick={() =&gt; {
+        startTransition(async () =&gt; {
+          setShown(!shown);
+          await toggleBookmark(slug);
+        });
+      }}
+    &gt;
+      {shown ? &quot;Bookmarked&quot; : &quot;Bookmark&quot;}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<p><strong>Note on where the rollback is.</strong> There is not one. <code>useOptimistic</code> returns
+the prop, except during a transition, when it returns what you set. When the
+transition ends the optimistic value is dropped and the prop wins. Succeed and
+the prop already agrees; fail and it snaps back. The <code>try</code>/<code>catch</code>/restore
+dance that optimistic updates used to require is gone, and with it the bug
+where the restore ran but a second click had already changed the value.</p>
+<p><strong>Note on <code>aria-pressed</code>.</strong> This is a toggle, not an action, so it takes
+<code>aria-pressed</code> rather than changing its accessible name alone. The <code>aria-label</code>
+changes too, so a screen-reader user hears what the button will do rather than
+what state it is in.</p>
+<h3>The tests</h3>
+<p><strong><code>test/setup.ts</code></strong></p>
+<pre><code class="language-ts">import { afterEach } from &quot;vitest&quot;;
+import { cleanup } from &quot;@testing-library/react&quot;;
+
+// Testing Library unmounts automatically only when a global `afterEach` exists,
+// which means `globals: true`. This project keeps globals off and does it by
+// hand: leftover components from a previous test are the cause of most
+// &quot;found multiple elements&quot; failures.
+afterEach(cleanup);
+</code></pre>
+<p><strong><code>test/paywall.test.ts</code></strong></p>
+<pre><code class="language-ts">import { describe, expect, test } from &quot;vitest&quot;;
+import { entitled, findArticle, listArticles, viewArticle, type Tier } from &quot;@/lib/content&quot;;
+
+const article = findArticle(&quot;conditions-precedent-that-survive&quot;)!;
+
+describe(&quot;entitlement&quot;, () =&gt; {
+  test(&quot;a tier reaches its own content and everything below it&quot;, () =&gt; {
+    expect(entitled(&quot;practitioner&quot;, &quot;free&quot;)).toBe(true);
+    expect(entitled(&quot;practitioner&quot;, &quot;reader&quot;)).toBe(true);
+    expect(entitled(&quot;practitioner&quot;, &quot;practitioner&quot;)).toBe(true);
+  });
+
+  test(&quot;a tier does not reach content above it&quot;, () =&gt; {
+    expect(entitled(&quot;free&quot;, &quot;reader&quot;)).toBe(false);
+    expect(entitled(&quot;reader&quot;, &quot;practitioner&quot;)).toBe(false);
+  });
+});
+
+describe(&quot;the paywall withholds text rather than hiding it&quot;, () =&gt; {
+  test(&quot;an entitled reader gets every paragraph&quot;, () =&gt; {
+    const view = viewArticle(article, &quot;practitioner&quot;);
+    expect(view.kind).toBe(&quot;full&quot;);
+    expect(view.body).toEqual(article.body);
+  });
+
+  test(&quot;an unentitled reader gets the preview and NOTHING else&quot;, () =&gt; {
+    const view = viewArticle(article, &quot;free&quot;);
+    expect(view.kind).toBe(&quot;preview&quot;);
+    expect(view.body).toHaveLength(1);
+    expect(view.body[0]).toBe(article.body[0]);
+  });
+
+  test(&quot;the withheld paragraphs are absent from the returned value entirely&quot;, () =&gt; {
+    const view = viewArticle(article, &quot;free&quot;);
+    const serialised = JSON.stringify(view);
+    for (const paragraph of article.body.slice(1)) {
+      expect(serialised).not.toContain(paragraph);
+    }
+  });
+
+  test(&quot;a preview carries no body field on the article itself&quot;, () =&gt; {
+    const view = viewArticle(article, &quot;free&quot;);
+    expect(view.kind === &quot;preview&quot; &amp;&amp; &quot;body&quot; in view.article).toBe(false);
+  });
+
+  test(&quot;every tier is handled for every article&quot;, () =&gt; {
+    const tiers: Tier[] = [&quot;free&quot;, &quot;reader&quot;, &quot;practitioner&quot;];
+    for (const item of listArticles()) {
+      for (const tier of tiers) {
+        const view = viewArticle(item, tier);
+        expect(view.body.length).toBeGreaterThan(0);
+        expect(view.body.length).toBeLessThanOrEqual(item.body.length);
+      }
+    }
+  });
+});
+</code></pre>
+<p><strong>Note on the third test.</strong> <code>JSON.stringify(view)</code> and then asserting the
+withheld paragraphs are <strong>not in the string</strong> is the closest a unit test gets to
+the real question. It would catch somebody adding <code>body</code> back onto the preview
+object for convenience. It does not replace the <code>curl</code> check below, because
+serialising a value in a test is not the same as rendering a page.</p>
+<p><strong><code>test/subscribe.test.ts</code></strong></p>
+<pre><code class="language-ts">import { describe, expect, test } from &quot;vitest&quot;;
+import { fieldErrors, SubscribeInput } from &quot;@/lib/subscribe&quot;;
+
+const valid = { email: &quot;reader@example.com&quot;, tier: &quot;reader&quot;, consent: &quot;on&quot; };
+
+describe(&quot;subscribe input&quot;, () =&gt; {
+  test(&quot;accepts a complete submission&quot;, () =&gt; {
+    expect(SubscribeInput.safeParse(valid).success).toBe(true);
+  });
+
+  test(&quot;refuses an address that is not an address&quot;, () =&gt; {
+    const result = SubscribeInput.safeParse({ ...valid, email: &quot;reader&quot; });
+    expect(result.success).toBe(false);
+    expect(fieldErrors(result.error!)[&quot;email&quot;]).toMatch(/email address/i);
+  });
+
+  test(&quot;refuses a plan that is not offered&quot;, () =&gt; {
+    const result = SubscribeInput.safeParse({ ...valid, tier: &quot;enterprise&quot; });
+    expect(fieldErrors(result.error!)[&quot;tier&quot;]).toMatch(/listed plans/i);
+  });
+
+  test(&quot;refuses an unticked consent box, and says why in the user&#39;s terms&quot;, () =&gt; {
+    const result = SubscribeInput.safeParse({ ...valid, consent: null });
+    expect(fieldErrors(result.error!)[&quot;consent&quot;]).toMatch(/agreement before we may email/i);
+  });
+
+  test(&quot;reports one message per field, not a list per field&quot;, () =&gt; {
+    const result = SubscribeInput.safeParse({ email: &quot;no&quot;, tier: &quot;no&quot;, consent: null });
+    const errors = fieldErrors(result.error!);
+    expect(Object.keys(errors).toSorted()).toEqual([&quot;consent&quot;, &quot;email&quot;, &quot;tier&quot;]);
+    for (const message of Object.values(errors)) expect(typeof message).toBe(&quot;string&quot;);
+  });
+});
+</code></pre>
+<p><strong>Note on asserting the message text.</strong> The tests match the wording a user
+sees, not Zod&#39;s default. That means changing the copy breaks the test, which is
+the point: the message is part of the contract with the user, and a silent
+change to &quot;Invalid input: expected string&quot; is a regression nobody would notice.</p>
+<p><strong><code>test/bookmark-button.test.tsx</code></strong></p>
+<pre><code class="language-tsx">import { describe, expect, test, vi, beforeEach } from &quot;vitest&quot;;
+import { render, screen, waitFor } from &quot;@testing-library/react&quot;;
+import userEvent from &quot;@testing-library/user-event&quot;;
+
+// The action is mocked. A Server Action cannot run in jsdom, and this test is
+// about the component&#39;s behaviour, not the server&#39;s.
+const toggleBookmark = vi.fn&lt;(slug: string) =&gt; Promise&lt;{ bookmarked: boolean }&gt;&gt;();
+vi.mock(&quot;@/app/actions&quot;, () =&gt; ({ toggleBookmark }));
+
+const { BookmarkButton } = await import(&quot;@/components/bookmark-button&quot;);
+
+beforeEach(() =&gt; {
+  toggleBookmark.mockReset();
+  toggleBookmark.mockResolvedValue({ bookmarked: true });
+});
+
+describe(&quot;BookmarkButton&quot;, () =&gt; {
+  test(&quot;announces its state to assistive technology&quot;, () =&gt; {
+    render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={false} /&gt;);
+    const button = screen.getByRole(&quot;button&quot;, { name: &quot;Bookmark An article&quot; });
+    expect(button.getAttribute(&quot;aria-pressed&quot;)).toBe(&quot;false&quot;);
+  });
+
+  test(&quot;an already-bookmarked article offers removal&quot;, () =&gt; {
+    render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={true} /&gt;);
+    const button = screen.getByRole(&quot;button&quot;, { name: &quot;Remove An article from your bookmarks&quot; });
+    expect(button.getAttribute(&quot;aria-pressed&quot;)).toBe(&quot;true&quot;);
+  });
+
+  test(&quot;clicking calls the server action once with the slug&quot;, async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={false} /&gt;);
+    await user.click(screen.getByRole(&quot;button&quot;));
+    expect(toggleBookmark).toHaveBeenCalledExactlyOnceWith(&quot;a&quot;);
+  });
+
+  test(&quot;the label updates optimistically, while the action is still in flight&quot;, async () =&gt; {
+    // Hold the action open so the transition cannot finish.
+    const { promise, resolve } = Promise.withResolvers&lt;{ bookmarked: boolean }&gt;();
+    toggleBookmark.mockReturnValue(promise);
+
+    const user = userEvent.setup();
+    render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={false} /&gt;);
+
+    // Not awaited: the click starts the transition and we look at the screen
+    // before it settles.
+    void user.click(screen.getByRole(&quot;button&quot;));
+
+    await waitFor(() =&gt; {
+      expect(screen.getByRole(&quot;button&quot;).textContent).toBe(&quot;Bookmarked&quot;);
+    });
+
+    resolve({ bookmarked: true });
+  });
+
+  test(&quot;the optimistic value is discarded when the transition ends&quot;, async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;BookmarkButton slug=&quot;a&quot; title=&quot;An article&quot; bookmarked={false} /&gt;);
+
+    await user.click(screen.getByRole(&quot;button&quot;));
+
+    // The prop never changed, because nothing re-rendered this test&#39;s tree with
+    // a new value. React therefore drops the optimistic state and the button
+    // returns to what the source of truth says. That is the rollback, and it is
+    // free: there is no rollback code in the component.
+    await waitFor(() =&gt; {
+      expect(screen.getByRole(&quot;button&quot;).textContent).toBe(&quot;Bookmark&quot;);
+    });
+  });
+});
+</code></pre>
+<p><strong>Note on the last two tests, which are a pair.</strong> One holds the action open
+with <code>Promise.withResolvers</code> and sees the optimistic label. The other lets it
+settle and sees the label return. Together they describe the whole behaviour,
+and the second one is the test that documents the rollback. Written alone, the
+second looks like a bug report.</p>
+<h3>Verification</h3>
+<pre><code>$ npm run typecheck &amp;&amp; npm run build
+✓ Compiled successfully
+  Running TypeScript ...
+  Finished TypeScript in 1651ms
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /api/health
+├ ƒ /articles/[slug]
+└ ○ /subscribe
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+</code></pre>
+<p>Read that table. <code>/subscribe</code> is static: it reads nothing request-scoped. <code>/</code>
+and <code>/articles/[slug]</code> are dynamic because they read a cookie. <code>/api/health</code> is
+dynamic because it sets <code>no-store</code>. Every one of those is the mode you wanted,
+and if one were wrong this is where you would find out.</p>
+<pre><code>$ npm test
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+</code></pre>
+<p>And the acceptance test, against the running production server:</p>
+<pre><code>$ npm run start &amp;
+$ URL=http://localhost:3000/articles/conditions-precedent-that-survive
+
+$ curl -s &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+0
+
+$ curl -s -H &quot;Cookie: cj_tier=practitioner&quot; &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+2
+
+$ curl -s -H &quot;Cookie: cj_tier=superuser&quot; &quot;$URL&quot; | grep -o &quot;A third paragraph&quot; | wc -l
+0
+</code></pre>
+<p>Three numbers: <strong>0, 2, 0.</strong></p>
+<p><strong>Note on <code>grep -o ... | wc -l</code> rather than <code>grep -c</code>.</strong> A rendered Next.js
+page is effectively one long line, so <code>grep -c</code> reports the number of matching
+<strong>lines</strong>, which is 1 whether the text appears once or twenty times. The first
+draft of this section used <code>grep -c</code> and recorded &quot;2&quot;, which was wrong: the
+number came from a different command. Counting occurrences is the question you
+meant to ask. A security check that measures the wrong thing is worse than no
+check, because it produces a number you will believe.</p>
+<p>The withheld text is not in the response for a reader without entitlement. It
+is there for one with it. A forged tier falls back to the lowest, not the
+highest. The second number is 2 rather than 1 because a Next.js page appears
+twice in the HTML: once as rendered markup and once in the streamed React
+payload. That is worth knowing, because it is exactly the place where a
+client-side gate leaks: the payload contains everything the component was
+given, whether or not the CSS drew it.</p>
+<p>One more detail worth noticing:</p>
+<pre><code>free reader:         7956 bytes
+practitioner reader: 7632 bytes
+</code></pre>
+<p>The free reader&#39;s page is <strong>larger</strong>, because the locked panel is longer than
+the two paragraphs it replaced. If your unentitled page is the same size as
+your entitled one, you have not built a paywall. You have built a curtain.</p>
+<h3>What this capstone was really teaching</h3>
+<p>Not Next.js. Three things:</p>
+<ol>
+<li><strong>The trust boundary is a place in the code</strong>, and you can point at it. Here
+it is <code>viewArticle</code>, on the server, and everything else is display.</li>
+<li><strong>A type can carry a security rule.</strong> <code>Omit&lt;Article, &quot;body&quot;&gt;</code> in the preview
+branch means the leak does not compile. Reach for that whenever a rule
+matters more than a comment can express.</li>
+<li><strong>Verify at the boundary you care about.</strong> Seventeen passing unit tests did
+not prove the paywall. Three <code>curl</code> commands did. Choose the check that
+answers the actual question, not the one that is easiest to write.</li>
+</ol>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>
