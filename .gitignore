@@ -46,3 +46,6 @@ Thumbs.db
 # Capstone project artifacts
 tasks.json
 site/node_modules/
+
+# Vercel
+.vercel
