@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>Glossary</h1>
+<p>Every term these courses use in passing, defined once. Added September 2026
+after a review found terms introduced without explanation, such as &quot;native
+shells (Capacitor)&quot;.</p>
+<p>Definitions are short on purpose. Where a term has a full lesson or workbook
+section, it is named.</p>
+<hr>
+<h2>Running code</h2>
+<p><strong>Runtime</strong>: the program that executes your code. A browser is one. Node.js is
+another. The language is the same; what is available around it is not, which is
+why <code>document</code> exists in a browser and <code>readFile</code> does not.</p>
+<p><strong>Node.js</strong>: a runtime that executes JavaScript outside a browser. Used for
+servers, build tools and command-line programs. <em>JavaScript course, Lesson 0.</em></p>
+<p><strong>Thread</strong>: one sequence of instructions executing. JavaScript gives your code
+a single thread, which is why slow work must not block. <em>JavaScript course,
+Lesson 13.</em></p>
+<p><strong>Event loop</strong>: the mechanism that resumes paused work when a result arrives.
+<em>JavaScript course, Lesson 13.</em></p>
+<p><strong>REPL</strong>: read, evaluate, print, loop. An interactive prompt where you type an
+expression and see its value. Type <code>node</code> with no arguments to get one.</p>
+<hr>
+<h2>Tools around the code</h2>
+<p><strong>Package</strong>: someone else&#39;s code, published so you can install it. <strong>npm</strong> is
+both the registry they are published to and the command that installs them.
+<strong>pnpm</strong> and <strong>yarn</strong> are alternative commands for the same registry; pnpm is
+stricter about which packages a file may import.</p>
+<p><strong>Dependency</strong>: a package your project needs. A <strong>transitive dependency</strong> is a
+package your dependency needs. You end up running all of them.</p>
+<p><strong>Lockfile</strong>: <code>package-lock.json</code> or <code>pnpm-lock.yaml</code>. Records the exact
+version of every package installed, so two machines get identical code. Commit
+it. <em>Workbook, Part 5.6.</em></p>
+<p><strong>Bundler</strong>: a tool that takes your many source files and produces a few files
+a browser can load efficiently, resolving imports and removing what is unused.
+<strong>Vite</strong> and <strong>webpack</strong> are bundlers. <em>React course, Lesson 0.</em></p>
+<p><strong>Tree shaking</strong>: a bundler dropping code nothing imports. Why a barrel file
+that re-exports a whole folder can quietly enlarge your bundle.</p>
+<p><strong>Transpiler</strong>: a compiler whose output is another high-level language.
+Removing types from TypeScript to produce JavaScript is transpiling.
+<em>TypeScript course, Lesson 0.</em></p>
+<p><strong>Minification</strong>: making the output smaller by shortening names and removing
+whitespace. <strong>Source maps</strong> map the minified output back to your source so a
+stack trace still points at a line you wrote.</p>
+<p><strong>Hot reload</strong> (also HMR, hot module replacement): the development server
+replacing a changed module in the running page without a full refresh, so you
+keep your state.</p>
+<p><strong>Linter</strong>: a tool that reads your code and reports patterns known to cause
+bugs. <strong>ESLint</strong> is the usual one. A <strong>formatter</strong> such as <strong>Prettier</strong> only
+changes layout. Different jobs; run both.</p>
+<p><strong>CI</strong> (continuous integration): a service that runs your checks on every
+change, on a machine that is not yours. <strong>CD</strong> is the same pipeline deploying
+the result. <em>Workbook, Part 7.2.</em></p>
+<p><strong>Monorepo</strong>: one repository holding several related projects that share code.
+<strong>Turborepo</strong> is a tool for running and caching tasks across one.</p>
+<hr>
+<h2>The web</h2>
+<p><strong>DOM</strong> (Document Object Model): the browser&#39;s in-memory representation of the
+page, as a tree of nodes. JavaScript changes the DOM; the browser redraws.
+React does this for you. <em>React course, Lesson 0.</em></p>
+<p><strong>JSX</strong>: the markup-like syntax inside React components. Not HTML; a build
+tool converts it into function calls. <em>React course, Lesson 0.</em></p>
+<p><strong>Render</strong>: producing the output for a given state. <strong>Server rendering</strong> does
+it on a server and sends HTML. <strong>Client rendering</strong> does it in the browser
+with JavaScript. <strong>Hydration</strong> is the browser attaching behaviour to
+server-rendered HTML that is already on screen.</p>
+<p><strong>Bundle</strong>: the JavaScript the browser downloads. Anything in it is readable
+by anyone, which is why no secret may be in it. <em>Workbook, Part 3.1.</em></p>
+<p><strong>SPA</strong> (single-page application): one page that swaps its content with
+JavaScript instead of loading new documents. Mentisflow is one.</p>
+<p><strong>PWA</strong> (progressive web app): a website that can be installed like an app,
+using a <strong>service worker</strong>: a script the browser keeps running in the
+background that can serve cached files, including when offline. A service
+worker can serve stale code forever if you have no way to unregister it.
+<em>Workbook, Part 4.6.</em></p>
+<p><strong>WebView</strong>: a browser engine embedded inside a native app, with no address
+bar. How a web page runs inside an app from an app store.</p>
+<p><strong>Native shell</strong>: a small native app whose entire job is to host a WebView
+running your web code, plus <strong>plugins</strong> giving that code access to native
+features a browser cannot reach: the camera, biometrics, push notifications,
+the filesystem.</p>
+<p><strong>Capacitor</strong>: the tool that builds such a shell for iOS and Android from a
+web project. Mentisflow uses one: the same React bundle that serves the website
+runs inside the app. The catch is that the plugin set is fixed at the moment
+the shell is built, so a JavaScript-only update cannot add native capability.
+<em>Workbook, Part 4.6.</em></p>
+<p><strong>OTA</strong> (over the air): updating the JavaScript inside an installed app
+without going through app-store review. Fast, and bounded by the frozen plugin
+set above.</p>
+<p><strong>Expo</strong>: a framework for building genuinely native apps with React. Different
+approach from a native shell: real native views, not a WebView. Casey Journals
+uses Expo.</p>
+<p><strong>CDN</strong> (content delivery network): servers in many places holding copies of
+your files, so a request is answered near the user.</p>
+<hr>
+<h2>Backend</h2>
+<p><strong>BaaS</strong> (backend as a service): a hosted backend: database, authentication,
+file storage and a place to run server code, without operating servers.
+<em>Workbook, Part 4.2, has a concept map across the two below.</em></p>
+<p><strong>Firebase</strong>: Google&#39;s BaaS. <strong>Firestore</strong> is its document database, and
+<strong>Security Rules</strong> is the language its authorisation is written in. Mentisflow
+uses it.</p>
+<p><strong>Supabase</strong>: a BaaS built on <strong>PostgreSQL</strong> (a relational database, usually
+&quot;Postgres&quot;). Both Casey products use it.</p>
+<p><strong>RLS</strong> (row-level security): a Postgres feature where the database itself
+decides which rows a given user may see, so the application cannot leak them by
+forgetting a filter. Firestore Security Rules do the same job.
+<em>Workbook, Part 5.3.</em></p>
+<p><strong>Migration</strong>: a versioned, committed file that changes the database schema,
+so every environment gets the same change in the same order.</p>
+<p><strong>Edge function</strong>: server code that runs close to the user rather than in one
+region. Supabase&#39;s name for its server-side functions.</p>
+<p><strong>Emulator</strong>: a local copy of the hosted services so you can develop and test
+without touching a real project.</p>
+<p><strong>Serverless</strong>: code that runs on demand with no server you maintain.
+&quot;Serverless&quot; means you do not operate the server, not that there is not one.</p>
+<hr>
+<h2>Web plumbing</h2>
+<p><strong>HTTP</strong>: the request-and-response protocol the web runs on. A <strong>status code</strong>
+says what happened: 200 fine, 401 not authenticated, 403 not allowed, 404 not
+found, 500 the server broke.</p>
+<p><strong>API</strong> (application programming interface): the set of operations one piece
+of software offers another. A <strong>REST API</strong> offers them as HTTP endpoints.</p>
+<p><strong>Endpoint</strong>: one URL that accepts requests.</p>
+<p><strong>Webhook</strong>: an HTTP request sent <em>to</em> you when something happens elsewhere: a
+payment succeeded, a build finished. You do not ask; it arrives. Since anyone
+can post to that URL, it must be <strong>signed</strong> and verified.
+<em>Workbook, Parts 4.4 and 8.3.</em></p>
+<p><strong>Idempotent</strong>: safe to do more than once, with the same result. Necessary for
+webhooks, because providers retry. <em>Workbook, Part 4.4.</em></p>
+<p><strong>Middleware</strong>: code that runs before the main handler on every matching
+request. Used for security headers, redirects and cheap checks.
+<em>React course, Lesson 17.</em></p>
+<p><strong>Cookie</strong>: a small value the browser stores and sends back on every request
+to that site. Usually how a session is carried. The browser can edit it, so it
+must never decide permission on its own.</p>
+<p><strong>localStorage</strong>: a per-site key-value store in the browser. Survives a
+refresh, never leaves the device, and the user can change it. Fine for a
+remembered preference; never for a permission or a count that matters.</p>
+<p><strong>Cache</strong>: a stored copy kept to avoid redoing work. Most caching bugs are
+about serving one person&#39;s copy to someone else.</p>
+<hr>
+<h2>Security and data</h2>
+<p><strong>Authentication</strong>: establishing who the caller is. <strong>Authorisation</strong>: what
+they are allowed to do. Different questions, and most breaches are the second.
+<em>Workbook, Part 5.</em></p>
+<p><strong>Session</strong>: the server&#39;s record that this browser is a signed-in user.</p>
+<p><strong>JWT</strong> (JSON web token): a signed token carrying claims about a user. Signed,
+not encrypted: anyone can read it, nobody can forge it.</p>
+<p><strong>TLS</strong>: the encryption behind <code>https</code>. Protects data in transit, and nothing
+at either end.</p>
+<p><strong>HMAC</strong>: a signature proving a message came from someone holding a shared
+secret, and was not altered. How webhooks are verified.</p>
+<p><strong>PBKDF2</strong>: a deliberately slow function for turning a password into a key, so
+guessing is expensive. <strong>AES-GCM</strong> is the cipher used to encrypt with that key.
+<em>Workbook, Part 6.8.</em></p>
+<p><strong>CSP</strong> (Content-Security-Policy): a header telling the browser which sources
+of script it may execute. The last line against injected script.
+<em>Workbook, Part 5.5.</em></p>
+<p><strong>Injection</strong>: untrusted data being treated as code. SQL injection, script
+injection, and prompt injection are the same bug in three costumes.
+<em>Workbook, Parts 5.5 and 9.2.</em></p>
+<p><strong>OWASP Top Ten</strong>: a widely used list of the most serious application security
+risks, revised every few years. <em>Workbook, Part 5.1.</em></p>
+<p><strong>STRIDE</strong>: six prompts for finding threats in a feature: spoofing, tampering,
+repudiation, information disclosure, denial of service, elevation of privilege.
+<em>Workbook, Part 5.10.</em></p>
+<p><strong>POPIA</strong>: South Africa&#39;s Protection of Personal Information Act 4 of 2013.
+<strong>GDPR</strong> is the European equivalent. <em>Workbook, Part 6, maps them.</em></p>
+<p><strong>Audit log</strong>: an append-only record of who did what, when. Written by the
+server, so the person acting cannot omit it. <em>Workbook, Part 5.7.</em></p>
+<hr>
+<h2>Types and validation</h2>
+<p><strong>Static types</strong>: types checked before the program runs, in your editor,
+rather than when it breaks. <em>TypeScript course, Lesson 0.</em></p>
+<p><strong>Type inference</strong>: the compiler working out a type you did not write.</p>
+<p><strong>Schema</strong>: a description of a data shape, precise enough to check a value
+against. <strong>Zod</strong> turns one schema into both a runtime check and a TypeScript
+type, so the two cannot drift. <em>TypeScript course, Lesson 13.</em></p>
+<p><strong>Validation</strong>: checking that data actually has the shape you assumed, at the
+point it enters your program. A type annotation is a claim; validation is a
+check.</p>
+<p><strong>Branded type</strong>: a type that stops two values of the same underlying shape
+being confused, such as cents and rands. <em>TypeScript course, Lesson 13a.</em></p>
+<hr>
+<h2>Miscellaneous</h2>
+<p><strong>Intl</strong>: JavaScript&#39;s built-in internationalisation API. Formats dates,
+numbers and currency for a given locale. <code>Intl.NumberFormat(&quot;en-ZA&quot;, ...)</code>
+produces South African rand formatting. Used instead of hand-written
+formatting, which gets the separators and the currency symbol wrong.</p>
+<p><strong>Vercel</strong>: a hosting service for websites, and the company behind Next.js.
+The learning hub in <code>site/</code> is deployed there.</p>
+<p><strong>HPCSA</strong>: the Health Professions Council of South Africa, which registers
+practitioners. It appears in examples drawn from a health product.</p>
+<p><strong>Fixture</strong>: a fixed piece of sample data used by tests, so a test does not
+depend on a network or a database. <em>JavaScript course, Lesson 14.</em></p>
+<p><strong>Mock</strong>: a stand-in for a real dependency during a test, so the test exercises
+your code and not somebody else&#39;s service.</p>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>

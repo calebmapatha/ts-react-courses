@@ -35,6 +35,30 @@ browsers. It is now used everywhere: in browsers (frontend), on servers
 (Node.js), in desktop apps (Electron), on mobile (React Native), and inside
 native shells (Capacitor).</p>
 <blockquote>
+<p><strong>Background: what are all those things at the end?</strong></p>
+<p>One language, many <strong>runtimes</strong>. A runtime is the program that executes your
+code, and each gives you a different set of surroundings.</p>
+<ul>
+<li><strong>Browser.</strong> The original. Your code can reach the page and the network.</li>
+<li><strong>Node.js.</strong> JavaScript outside a browser, with files, processes and
+servers instead of a page. This course runs here.</li>
+<li><strong>Electron.</strong> A browser and Node bundled into a desktop application. VS
+Code and Slack are built this way.</li>
+<li><strong>React Native.</strong> Your JavaScript drives real native views on a phone,
+rather than a web page.</li>
+<li><strong>Native shell (Capacitor).</strong> A small native app that hosts a <strong>WebView</strong>,
+a browser engine with no address bar, running your ordinary web code, plus
+plugins for things a browser cannot reach such as the camera or
+biometrics. To the user it is an app from the app store; inside, it is your
+website.</li>
+</ul>
+<p>The language in this course is identical in all five. What changes is what is
+available around it, which is why <code>document</code> exists in a browser and
+<code>readFile</code> does not.</p>
+</blockquote>
+<p><strong>(2026)</strong> Any term these courses use without stopping to define is defined once
+in <a href="glossary.html"><code>../GLOSSARY.md</code></a>.</p>
+<blockquote>
 <p><strong>Background: What does &quot;ES2026&quot; mean?</strong></p>
 <p>ES stands for ECMAScript, which is the official specification that JavaScript
 implements. ES2015 (also called ES6) was a major upgrade in 2015 that added
@@ -163,6 +187,166 @@ workbook returns to under supply chain security.</p>
 committed and the real <code>.env</code> ignored. Copy that habit from the first day.</p>
 <p>If you see <code>Hello, JavaScript.</code>, you are ready.</p>
 <hr>
+<h2>Lesson 0a: The Four Building Blocks (2026)</h2>
+<p>This course says it assumes you know variables, loops, functions and
+conditionals from some other language. This lesson is the ten-minute version of
+that assumption, so nobody has to go and find it elsewhere. If you already
+write code in any language, skim it for the JavaScript spelling and move on.</p>
+<h3>Variables: a name for a value</h3>
+<pre><code class="language-javascript">const rate = 0.15;     // a name bound to a value
+let total = 0;         // the same, but you intend to change it
+total = total + 100;   // changed
+</code></pre>
+<p><code>const</code> and <code>let</code> are covered properly in Lesson 1. For now: <strong>a variable is a
+name you give a value so you can refer to it later.</strong></p>
+<h3>Conditionals: doing one thing or another</h3>
+<pre><code class="language-javascript">const age = 20;
+
+if (age &gt;= 18) {
+  console.log(&quot;Adult&quot;);
+} else if (age &gt;= 13) {
+  console.log(&quot;Teenager&quot;);
+} else {
+  console.log(&quot;Child&quot;);
+}
+</code></pre>
+<p>The thing in the brackets is a <strong>condition</strong>: an expression that comes out true
+or false. Comparison operators produce one:</p>
+<pre><code class="language-javascript">a === b   // equal, and the same type. Use this one.
+a !== b   // not equal
+a &gt; b     a &gt;= b     a &lt; b     a &lt;= b
+</code></pre>
+<blockquote>
+<p><strong>Background: why <code>===</code> and not <code>==</code>?</strong></p>
+<p><code>==</code> converts the two sides to a common type before comparing, and its rules
+are surprising: <code>0 == &quot;&quot;</code> is true, <code>null == undefined</code> is true, and
+<code>&quot;1&quot; == 1</code> is true. <code>===</code> compares without converting, so it means what you
+expect. Use <code>===</code> and <code>!==</code> everywhere. The only common exception is
+<code>value == null</code>, which is a deliberate idiom meaning &quot;null or undefined&quot;.</p>
+</blockquote>
+<p>Combine conditions with <code>&amp;&amp;</code> (and), <code>||</code> (or), <code>!</code> (not):</p>
+<pre><code class="language-javascript">const age = 20, hasLicence = true, isAdmin = false, isOwner = true, isBanned = false;
+
+if (age &gt;= 18 &amp;&amp; hasLicence) console.log(&quot;may drive&quot;);   // both must be true
+if (isAdmin || isOwner)      console.log(&quot;may edit&quot;);    // either will do
+if (!isBanned)               console.log(&quot;may post&quot;);    // not banned
+</code></pre>
+<p>A short form for picking between two values, called the <strong>ternary</strong>:</p>
+<pre><code class="language-javascript">const age = 20;
+
+const label = age &gt;= 18 ? &quot;Adult&quot; : &quot;Minor&quot;;
+//            condition  ? if true : if false
+
+console.log(label);   // &quot;Adult&quot;
+</code></pre>
+<blockquote>
+<p><strong>Background: what is &quot;truthy&quot;?</strong></p>
+<p>JavaScript accepts any value where a condition is expected, not only <code>true</code>
+and <code>false</code>. Six values count as false: <code>false</code>, <code>0</code>, <code>&quot;&quot;</code> (the empty
+string), <code>null</code>, <code>undefined</code>, and <code>NaN</code>. Everything else counts as true,
+including <code>&quot;0&quot;</code>, <code>[]</code> and <code>{}</code>.</p>
+<p>This trips people constantly. <code>if (count)</code> is false when <code>count</code> is zero,
+which is usually not what you meant, because zero is a real count. Lesson 9
+introduces <code>??</code>, which exists precisely to handle that.</p>
+</blockquote>
+<h3>Loops: doing something repeatedly</h3>
+<pre><code class="language-javascript">// for...of: each value in a list. Use this by default.
+for (const name of [&quot;Alex&quot;, &quot;Maria&quot;, &quot;Jordan&quot;]) {
+  console.log(name);
+}
+
+// while: keep going until a condition stops being true
+let countdown = 3;
+while (countdown &gt; 0) {
+  console.log(countdown);
+  countdown = countdown - 1;
+}
+
+// The classic C-style for loop. You will read it; you will rarely write it.
+for (let i = 0; i &lt; 3; i++) {
+  console.log(i);   // 0, 1, 2
+}
+</code></pre>
+<p><code>break</code> leaves the loop early. <code>continue</code> skips to the next turn.</p>
+<pre><code class="language-javascript">for (const n of [1, 2, 3, 4, 5]) {
+  if (n === 2) continue;   // skip 2
+  if (n === 4) break;      // stop entirely at 4
+  console.log(n);          // 1, 3
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: why so few loops in modern JavaScript?</strong></p>
+<p>Because most loops are really one of a handful of shapes: transform every
+item, keep the items that match, or reduce a list to one value. Lesson 7
+gives each of those a name (<code>map</code>, <code>filter</code>, <code>reduce</code>), and a named operation
+is easier to read than a loop whose purpose you have to reconstruct.</p>
+<p>Write loops when you genuinely need one: when you must stop early, when the
+work is asynchronous and must happen in order, or when there is no list.</p>
+</blockquote>
+<h3>Functions: a named piece of behaviour</h3>
+<pre><code class="language-javascript">// A declaration.
+function add(a, b) {
+  return a + b;
+}
+
+// The same thing as a value assigned to a name, in the arrow form.
+const addAgain = (a, b) =&gt; a + b;
+
+console.log(add(2, 3));   // 5
+</code></pre>
+<p><code>a</code> and <code>b</code> are <strong>parameters</strong>: names for the values the function is given.
+The <code>2</code> and <code>3</code> at the call site are <strong>arguments</strong>: the actual values.
+<code>return</code> hands a value back to the caller. A function with no <code>return</code> gives
+back <code>undefined</code>.</p>
+<p>Arrow functions get a lesson of their own (Lesson 3) because they differ from
+<code>function</code> in one important way beyond looking shorter.</p>
+<blockquote>
+<p><strong>Background: what does &quot;calling&quot; a function mean?</strong></p>
+<p>Writing <code>add</code> refers to the function itself, as a value you could store or
+pass somewhere. Writing <code>add(2, 3)</code> <strong>calls</strong> it: runs the body with those
+arguments and evaluates to whatever it returns.</p>
+<p>The distinction matters more than it looks. <code>setTimeout(save, 1000)</code> passes
+the function so the timer can call it in a second. <code>setTimeout(save(), 1000)</code>
+calls it <strong>now</strong> and passes the result, which is almost never what you
+wanted. This is one of the most common early bugs.</p>
+</blockquote>
+<h3>Objects and arrays, in one breath</h3>
+<p>Two ways of holding several values, used constantly from here on.</p>
+<pre><code class="language-javascript">// An array: an ordered list, reached by position, counting from zero.
+const names = [&quot;Alex&quot;, &quot;Maria&quot;];
+console.log(names[0]);        // &quot;Alex&quot;
+console.log(names.length);    // 2
+
+// An object: named fields, reached by name.
+const person = { name: &quot;Alex&quot;, age: 30 };
+console.log(person.name);     // &quot;Alex&quot;
+console.log(person[&quot;name&quot;]);  // the same, when the name is in a variable
+</code></pre>
+<p>Objects nest, and so do arrays:</p>
+<pre><code class="language-javascript">const booking = {
+  patient: { name: &quot;Alex&quot; },
+  slots: [&quot;09:00&quot;, &quot;10:00&quot;],
+};
+
+console.log(booking.patient.name);  // &quot;Alex&quot;
+console.log(booking.slots[1]);      // &quot;10:00&quot;
+</code></pre>
+<h3>Printing things while you learn</h3>
+<pre><code class="language-javascript">const people = [{ name: &quot;Alex&quot;, age: 30 }, { name: &quot;Maria&quot;, age: 25 }];
+const booking = { patient: { name: &quot;Alex&quot; }, slots: [&quot;09:00&quot;, &quot;10:00&quot;] };
+
+console.log(&quot;how many:&quot;, people.length);
+console.table(people);                      // a readable grid, for arrays of objects
+console.dir(booking, { depth: null });      // the whole nested structure
+</code></pre>
+<p><code>console.log</code> is not cheating and it is not only for beginners. Printing the
+value at the point you stopped understanding is the fastest debugging tool
+there is, in any language.</p>
+<p><strong>Exercise:</strong> Write <code>describe(person)</code> taking an object like
+<code>{ name: &quot;Alex&quot;, age: 20 }</code> and returning <code>&quot;Alex is an adult&quot;</code> or
+<code>&quot;Alex is a minor&quot;</code>. Then write <code>describeAll(people)</code> that loops over an array
+of them and prints each. Use <code>const</code>, a ternary, and <code>for...of</code>.</p>
+<hr>
 <h2>Lesson 1: let, const, and Block Scope</h2>
 <p>Modern JavaScript has three ways to declare variables: <code>var</code>, <code>let</code>, and <code>const</code>. You should almost never use <code>var</code>.</p>
 <pre><code class="language-javascript">// const: cannot be reassigned (use this by default)
@@ -204,6 +388,17 @@ console.log(list); // [1, 2, 3, 4]
 <hr>
 <h2>Lesson 2: Template Literals</h2>
 <p>Template literals use backticks instead of quotes and let you embed expressions:</p>
+<blockquote>
+<p><strong>Background: what is a &quot;literal&quot;, and why a third kind of quote?</strong></p>
+<p>A literal is a value written directly in the source: <code>42</code>, <code>&quot;hello&quot;</code>,
+<code>[1, 2]</code>. JavaScript has three ways to write a string literal: single quotes,
+double quotes, and backticks. The first two are interchangeable and inert.
+Backticks make a <strong>template literal</strong>, which does two things the others
+cannot: it may run across several lines, and <code>${...}</code> inside it is evaluated
+and its result inserted.</p>
+<p>That insertion is called <strong>interpolation</strong>. The alternative is <code>+</code> between
+the pieces, which is harder to read and easy to get wrong by one space.</p>
+</blockquote>
 <pre><code class="language-javascript">const name = &quot;Maria&quot;;
 const age = 30;
 
@@ -216,7 +411,9 @@ const greeting = `Hello, ${name}. You are ${age} years old.`;
 console.log(greeting);
 </code></pre>
 <p>Multi-line strings without escape characters:</p>
-<pre><code class="language-javascript">const message = `
+<pre><code class="language-javascript">const name = &quot;Maria&quot;;
+
+const message = `
 Dear ${name},
 
 Thank you for signing up.
@@ -224,6 +421,8 @@ Thank you for signing up.
 Best regards,
 The Team
 `;
+
+console.log(message);
 </code></pre>
 <p>You can put any expression inside <code>${...}</code>:</p>
 <pre><code class="language-javascript">const a = 5;
@@ -340,6 +539,23 @@ const customConfig = { ...baseConfig, retries: 5, debug: true };
 <p><strong>Exercise:</strong> Write a function <code>merge(...objects)</code> that takes any number of objects and returns a single object with all properties combined (later objects override earlier ones). Use rest and spread.</p>
 <hr>
 <h2>Lesson 5: Destructuring</h2>
+<blockquote>
+<p><strong>Background: what is destructuring, in one sentence?</strong></p>
+<p><strong>Pulling values out of an object or array into their own variables, in one
+step, using a pattern that mirrors the shape of the thing.</strong></p>
+<pre><code class="language-javascript">const point = { x: 1, y: 2 };
+
+const x = point.x;        // without
+const y = point.y;
+
+const { x, y } = point;   // with
+</code></pre>
+<p>The left-hand side is not an object being created. It is a <strong>pattern</strong> being
+matched against the value on the right. That is why the same syntax works for
+arrays (<code>const [first, second] = list</code>), for function parameters, and nested
+several levels deep. Once you read <code>{ }</code> on the left as &quot;take these out of
+that&quot;, the rest of this lesson is one idea applied in five places.</p>
+</blockquote>
 <p>Destructuring extracts values from arrays or objects into named variables.</p>
 <h3>Array destructuring</h3>
 <pre><code class="language-javascript">const point = [10, 20];
@@ -427,6 +643,17 @@ setup({ port: 8080, debug: true, retries: 3 });
 </code></pre>
 <hr>
 <h2>Lesson 6: Object Enhancements</h2>
+<blockquote>
+<p><strong>Background: why does an object literal have special syntax at all?</strong></p>
+<p>Because three things happen so often that writing them out became noise:
+naming a property the same as the variable holding it, attaching a function
+to an object, and using a name held in a variable as the key.</p>
+<p>Each shorthand in this lesson compiles to exactly what you would have
+written; none of them adds behaviour. They exist so the shape of the object
+is visible at a glance rather than buried in repetition. That is the whole
+theme, and it is worth noticing because the same instinct produced the array
+methods in Lesson 7.</p>
+</blockquote>
 <h3>Property shorthand</h3>
 <p>When the variable name matches the property name, you can omit the value:</p>
 <pre><code class="language-javascript">const name = &quot;Sam&quot;;
@@ -751,6 +978,33 @@ console.log(theme); // &quot;light&quot;
 <hr>
 <h2>Lesson 10: Classes</h2>
 <p>Classes give you a clean syntax for creating objects with shared methods.</p>
+<blockquote>
+<p><strong>Background: what is a class, an instance, and <code>this</code>?</strong></p>
+<p>A <strong>class</strong> is a template. An <strong>instance</strong> is one thing made from it with
+<code>new</code>. <code>new Person(&quot;Alex&quot;, 30)</code> creates an empty object, runs the
+<code>constructor</code> with that object as <code>this</code>, and hands it back.</p>
+<p><code>this</code> is the instance the method was called on. So <code>alex.greet()</code> runs
+<code>greet</code> with <code>this</code> being <code>alex</code>, which is how one method serves every
+instance: the code is shared, the data is not.</p>
+<p>A <strong>method</strong> is a function stored on the class. A <strong>static</strong> method belongs
+to the class rather than to any instance, which is why it is called as
+<code>Person.fromString(...)</code> and not <code>alex.fromString(...)</code>. Use one for a
+factory, or a helper that does not need an instance.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: do I need classes in JavaScript?</strong></p>
+<p>Less than you would in Java or C#. A plain object and a few functions do most
+of what a class does, with less to learn and nothing to bind.</p>
+<p>Reach for a class when you have <strong>state plus behaviour that belong together
+and there will be several of them</strong>: a queue, a cache, a parser, a
+connection. Reach for a plain object when it is only data. Most application
+code is the second, which is why the rest of this course uses far more
+objects than classes.</p>
+<p>Note also that a class is not a separate kind of thing underneath.
+JavaScript&#39;s inheritance works by one object delegating to another, and
+<code>class</code> is a tidier way of writing that. You do not need the underlying
+mechanism to use classes, but it explains why <code>this</code> behaves as it does.</p>
+</blockquote>
 <pre><code class="language-javascript">class Person {
   constructor(name, age) {
     this.name = name;
@@ -1061,6 +1315,32 @@ and <code>Array.fromAsync</code> when you are draining a stream or paging an API
 <hr>
 <h2>Lesson 13: async/await</h2>
 <p><code>async</code> and <code>await</code> are syntactic sugar over Promises. They let you write asynchronous code that reads like synchronous code.</p>
+<blockquote>
+<p><strong>Background: what does &quot;asynchronous&quot; mean, and why does JavaScript need it?</strong></p>
+<p>JavaScript runs your code on <strong>one thread</strong>. There is no second worker to
+pick up the slack, so anything that waits, a file read, a network request, a
+timer, would freeze everything else if it blocked: in a browser the page
+stops responding to clicks, and on a server nothing else gets served.</p>
+<p>So the slow things do not block. They are started, your code carries on, and
+when the result is ready the runtime comes back to the rest of your function.
+That is what <strong>asynchronous</strong> means here: not &quot;in parallel&quot;, but &quot;not waiting
+in line&quot;.</p>
+<p>A <strong>Promise</strong> is the object representing a result that has not arrived yet.
+<code>await</code> says &quot;pause this function here until that Promise settles, and let
+everything else run meanwhile&quot;. <code>async</code> marks a function as one that is
+allowed to pause, and makes it return a Promise itself.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: if <code>await</code> pauses, what resumes it?</strong></p>
+<p>The <strong>event loop</strong>. Your code runs to a stopping point, then the runtime
+checks a queue of things that have become ready, a file that finished
+loading, a timer that expired, a response that arrived, and resumes whatever
+was waiting on each.</p>
+<p>Two consequences worth carrying with you. Between an <code>await</code> and the line
+after it, <strong>other code has run</strong>, so state you read before may have changed.
+And a slow synchronous loop still blocks everything, because it never gives
+the event loop a turn. <code>await</code> helps with waiting, not with work.</p>
+</blockquote>
 <p><strong>(2026)</strong> The examples in this lesson read from disk rather than from a
 network, so that every one of them runs on your machine with nothing installed
 and nobody else&#39;s server involved. Lesson 14 explains why that is the default
@@ -1085,6 +1365,17 @@ async function loadPractitioners() {
 // Calling it returns a Promise
 loadPractitioners().then((list) =&gt; console.log(list.length)); // 3
 </code></pre>
+<blockquote>
+<p><strong>Background: <code>.then</code> and <code>await</code> are the same thing, written twice.</strong></p>
+<p><code>loadPractitioners()</code> returns a Promise either way. <code>.then(fn)</code> says &quot;run
+<code>fn</code> when it settles&quot;. <code>await</code> says &quot;pause here until it settles, then carry
+on with the value&quot;.</p>
+<p>Use <code>await</code> in your own code: it reads top to bottom and the failing line
+appears in the stack trace. You still need to recognise <code>.then</code>, because
+library documentation is full of it.</p>
+<p>What you must not do is mix them on one call. <code>await x.then(...)</code> runs, and
+is a sign that somebody was unsure which of the two they were using.</p>
+</blockquote>
 <h3>try/catch with async/await</h3>
 <p>Error handling looks like normal synchronous code:</p>
 <pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
