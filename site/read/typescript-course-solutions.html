@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeScript: answers · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>TypeScript Course: Exercise Solutions</h1>
+<p>Working solutions for every exercise in the TypeScript fundamentals course.
+Each solution includes runnable code and a short note on the approach.</p>
+<p><strong>(2026)</strong> To run any solution, save it to a <code>.ts</code> file inside the project from
+Lesson 0 and run it with <code>node src/your-file.ts</code>. There is no <code>ts-node</code> and no
+build step. Node erases the types; it does not check them, so run
+<code>npm run typecheck</code> (<code>tsc --noEmit</code>) separately.</p>
+<p>Every solution here was type-checked with TypeScript 7.0.2 against the
+<code>tsconfig.json</code> in Lesson 0, and every runnable one was executed on Node
+24.20.0. The capstone was rebuilt from this file into a clean directory: its 17
+<code>node:test</code> cases pass and <code>tsc --noEmit</code> is silent.</p>
+<hr>
+<h2>Lesson 1: Primitive Types and Inference</h2>
+<pre><code class="language-typescript">const personName: string = &quot;Alex&quot;;
+const age: number = 30;
+const hasDrivingLicense: boolean = true;
+
+console.log(`${personName}, age ${age}, license: ${hasDrivingLicense}`);
+
+// Errors you would see if you tried wrong types:
+// const wrongName: string = 42;          // Type &#39;number&#39; is not assignable to type &#39;string&#39;
+// const wrongAge: number = &quot;thirty&quot;;     // Type &#39;string&#39; is not assignable to type &#39;number&#39;
+// const wrongLicense: boolean = &quot;yes&quot;;   // Type &#39;string&#39; is not assignable to type &#39;boolean&#39;
+</code></pre>
+<p><strong>Note:</strong> TypeScript would also infer these types correctly without annotations. The annotations are useful here because they make the intent explicit and produce errors on assignment.</p>
+<hr>
+<h2>Lesson 2: Arrays, Tuples, and Readonly</h2>
+<pre><code class="language-typescript">type HttpResponse = [number, string, string];
+
+const response: HttpResponse = [200, &quot;OK&quot;, &#39;{&quot;message&quot;: &quot;Hello&quot;}&#39;];
+const [statusCode, statusText, body] = response;
+
+console.log(`HTTP ${statusCode} ${statusText}`);
+console.log(`Body: ${body}`);
+
+// Bonus: a readonly version that cannot be mutated
+type ImmutableHttpResponse = readonly [number, string, string];
+const frozen: ImmutableHttpResponse = [404, &quot;Not Found&quot;, &quot;&quot;];
+// frozen[0] = 500; // Error: Cannot assign to &#39;0&#39; because it is a read-only property
+</code></pre>
+<hr>
+<h2>Lesson 3: Functions</h2>
+<pre><code class="language-typescript">function formatPrice(amount: number, currency: string = &quot;ZAR&quot;): string {
+  const symbols: Record&lt;string, string&gt; = {
+    ZAR: &quot;R&quot;,
+    USD: &quot;$&quot;,
+    EUR: &quot;€&quot;,
+    GBP: &quot;£&quot;,
+    JPY: &quot;¥&quot;,
+  };
+  const symbol = symbols[currency] ?? currency;
+  return `${symbol} ${amount.toFixed(2)}`;
+}
+
+console.log(formatPrice(99));           // R 99.00
+console.log(formatPrice(99, &quot;USD&quot;));    // $ 99.00
+console.log(formatPrice(1500, &quot;EUR&quot;));  // € 1500.00
+console.log(formatPrice(50, &quot;XYZ&quot;));    // XYZ 50.00 (falls back to code)
+</code></pre>
+<p><strong>Note:</strong> The <code>??</code> operator (nullish coalescing) is preferred over <code>||</code> because it only falls back on <code>null</code> or <code>undefined</code>, not on empty strings or zero.</p>
+<hr>
+<h2>Lesson 4: Objects, Interfaces, and Type Aliases</h2>
+<pre><code class="language-typescript">interface Author {
+  name: string;
+  email: string;
+}
+
+interface BlogPost {
+  title: string;
+  author: Author;
+  tags: string[];
+  published: boolean;
+}
+
+const post: BlogPost = {
+  title: &quot;Getting Started with TypeScript&quot;,
+  author: {
+    name: &quot;Maria&quot;,
+    email: &quot;maria@example.com&quot;,
+  },
+  tags: [&quot;typescript&quot;, &quot;tutorial&quot;, &quot;beginner&quot;],
+  published: true,
+};
+
+console.log(`&quot;${post.title}&quot; by ${post.author.name}`);
+console.log(`Tags: ${post.tags.join(&quot;, &quot;)}`);
+</code></pre>
+<hr>
+<h2>Lesson 5: Union and Literal Types</h2>
+<pre><code class="language-typescript">type PaymentResult =
+  | { status: &quot;approved&quot;; transactionId: string; amount: number }
+  | { status: &quot;declined&quot;; reason: string }
+  | { status: &quot;pending&quot;; estimatedCompletion: Date };
+
+function getPaymentMessage(result: PaymentResult): string {
+  switch (result.status) {
+    case &quot;approved&quot;:
+      return `Payment of ${result.amount} approved. Reference: ${result.transactionId}`;
+    case &quot;declined&quot;:
+      return `Payment declined. Reason: ${result.reason}`;
+    case &quot;pending&quot;:
+      return `Payment is being processed. Expected by ${result.estimatedCompletion.toLocaleString()}`;
+  }
+}
+
+// Test all three branches
+console.log(getPaymentMessage({ status: &quot;approved&quot;, transactionId: &quot;TX123&quot;, amount: 99.99 }));
+console.log(getPaymentMessage({ status: &quot;declined&quot;, reason: &quot;Insufficient funds&quot; }));
+console.log(getPaymentMessage({ status: &quot;pending&quot;, estimatedCompletion: new Date() }));
+</code></pre>
+<p><strong>Note:</strong> The <code>switch</code> is exhaustive. If you add a new variant to the union, TypeScript will complain about the function not handling it. That is the whole point of discriminated unions.</p>
+<hr>
+<h2>Lesson 6: Type Narrowing and Guards</h2>
+<pre><code class="language-typescript">function isString(value: unknown): value is string {
+  return typeof value === &quot;string&quot;;
+}
+
+function getLength(value: unknown): number {
+  if (isString(value)) {
+    return value.length;
+  }
+  return 0;
+}
+
+console.log(getLength(&quot;hello&quot;));       // 5
+console.log(getLength(42));             // 0
+console.log(getLength(undefined));      // 0
+console.log(getLength([&quot;a&quot;, &quot;b&quot;]));     // 0 (arrays have length, but the guard is strict)
+
+// Bonus: a more flexible &quot;has length&quot; guard
+function hasLength(value: unknown): value is { length: number } {
+  return (
+    value !== null &amp;&amp;
+    typeof value === &quot;object&quot; &amp;&amp;
+    &quot;length&quot; in value &amp;&amp;
+    typeof (value as { length: unknown }).length === &quot;number&quot;
+  );
+}
+</code></pre>
+<hr>
+<h2>Lesson 7: Generics</h2>
+<pre><code class="language-typescript">function pluck&lt;T, K extends keyof T&gt;(items: T[], key: K): T[K][] {
+  return items.map((item) =&gt; item[key]);
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number;
+}
+
+const users: User[] = [
+  { id: 1, name: &quot;Alex&quot;, email: &quot;alex@example.com&quot;, age: 28 },
+  { id: 2, name: &quot;Maria&quot;, email: &quot;maria@example.com&quot;, age: 34 },
+  { id: 3, name: &quot;Jordan&quot;, email: &quot;jordan@example.com&quot;, age: 41 },
+];
+
+const names = pluck(users, &quot;name&quot;);   // string[]
+const ages = pluck(users, &quot;age&quot;);     // number[]
+const ids = pluck(users, &quot;id&quot;);       // number[]
+
+console.log(names); // [&quot;Alex&quot;, &quot;Maria&quot;, &quot;Jordan&quot;]
+
+// pluck(users, &quot;phone&quot;); // Error: &quot;phone&quot; is not a key of User
+</code></pre>
+<p><strong>Note:</strong> The <code>K extends keyof T</code> constraint is what gives you compile-time safety on the key. Without it, you could pass any string and get a runtime undefined.</p>
+<hr>
+<h2>Lesson 8: Classes (Generic Stack)</h2>
+<pre><code class="language-typescript">class Stack&lt;T&gt; {
+  private items: T[] = [];
+
+  push(item: T): void {
+    this.items.push(item);
+  }
+
+  pop(): T | undefined {
+    return this.items.pop();
+  }
+
+  peek(): T | undefined {
+    return this.items[this.items.length - 1];
+  }
+
+  size(): number {
+    return this.items.length;
+  }
+
+  isEmpty(): boolean {
+    return this.items.length === 0;
+  }
+
+  clear(): void {
+    this.items = [];
+  }
+}
+
+// Usage with numbers
+const numbers = new Stack&lt;number&gt;();
+numbers.push(1);
+numbers.push(2);
+numbers.push(3);
+console.log(numbers.peek()); // 3
+console.log(numbers.size()); // 3
+console.log(numbers.pop());  // 3
+console.log(numbers.size()); // 2
+
+// Usage with strings
+const words = new Stack&lt;string&gt;();
+words.push(&quot;hello&quot;);
+words.push(&quot;world&quot;);
+console.log(words.peek()); // &quot;world&quot;
+
+// Usage with custom types
+interface Task {
+  id: string;
+  title: string;
+}
+const tasks = new Stack&lt;Task&gt;();
+tasks.push({ id: &quot;1&quot;, title: &quot;Write code&quot; });
+console.log(tasks.peek()?.title); // &quot;Write code&quot;
+</code></pre>
+<hr>
+<h2>Lesson 9: Const Assertions and <code>satisfies</code> (2026)</h2>
+<p>The exercise asked for the twelve official languages of South Africa, a derived
+<code>LanguageCode</code> type, a metadata table checked with <code>as const satisfies</code>, and an
+exhaustiveness check.</p>
+<pre><code class="language-typescript">export const LANGUAGE = {
+  Afrikaans: &quot;af&quot;,
+  English: &quot;en&quot;,
+  Ndebele: &quot;nr&quot;,
+  Pedi: &quot;nso&quot;,
+  Sotho: &quot;st&quot;,
+  Swati: &quot;ss&quot;,
+  Tsonga: &quot;ts&quot;,
+  Tswana: &quot;tn&quot;,
+  Venda: &quot;ve&quot;,
+  Xhosa: &quot;xh&quot;,
+  Zulu: &quot;zu&quot;,
+  SignLanguage: &quot;sfs&quot;,
+} as const;
+
+export type LanguageCode = (typeof LANGUAGE)[keyof typeof LANGUAGE];
+
+type LanguageMeta = {
+  readonly english: string;
+  readonly endonym: string;
+};
+
+export const LANGUAGE_META = {
+  af: { english: &quot;Afrikaans&quot;, endonym: &quot;Afrikaans&quot; },
+  en: { english: &quot;English&quot;, endonym: &quot;English&quot; },
+  nr: { english: &quot;Ndebele&quot;, endonym: &quot;isiNdebele&quot; },
+  nso: { english: &quot;Northern Sotho&quot;, endonym: &quot;Sesotho sa Leboa&quot; },
+  st: { english: &quot;Southern Sotho&quot;, endonym: &quot;Sesotho&quot; },
+  ss: { english: &quot;Swati&quot;, endonym: &quot;siSwati&quot; },
+  ts: { english: &quot;Tsonga&quot;, endonym: &quot;Xitsonga&quot; },
+  tn: { english: &quot;Tswana&quot;, endonym: &quot;Setswana&quot; },
+  ve: { english: &quot;Venda&quot;, endonym: &quot;Tshivenda&quot; },
+  xh: { english: &quot;Xhosa&quot;, endonym: &quot;isiXhosa&quot; },
+  zu: { english: &quot;Zulu&quot;, endonym: &quot;isiZulu&quot; },
+  sfs: { english: &quot;South African Sign Language&quot;, endonym: &quot;South African Sign Language&quot; },
+} as const satisfies Record&lt;LanguageCode, LanguageMeta&gt;;
+
+export function describeLanguage(code: LanguageCode): string {
+  const meta = LANGUAGE_META[code];
+  return meta.english === meta.endonym
+    ? meta.english
+    : `${meta.english} (${meta.endonym})`;
+}
+
+console.log(describeLanguage(LANGUAGE.Zulu));       // &quot;Zulu (isiZulu)&quot;
+console.log(describeLanguage(&quot;af&quot;));                // &quot;Afrikaans&quot;
+console.log(LANGUAGE_META.zu.endonym);
+//          ^? &quot;isiZulu&quot;, not string
+</code></pre>
+<p><strong>Note on what <code>satisfies</code> bought you.</strong> Try each of these and watch it fail to
+compile:</p>
+<ul>
+<li>Delete the <code>sfs</code> entry from <code>LANGUAGE_META</code>: &quot;Property &#39;sfs&#39; is missing&quot;.</li>
+<li>Add an entry for <code>&quot;nl&quot;</code>: &quot;Object literal may only specify known properties&quot;.</li>
+<li>Write <code>endonim</code> instead of <code>endonym</code>: the property check fires.</li>
+<li>Remove <code>as const</code>: <code>LANGUAGE_META.zu.endonym</code> widens to <code>string</code> and the last
+line stops being interesting.</li>
+</ul>
+<p><strong>Note on the exhaustiveness check.</strong> <code>describeLanguage</code> above uses a lookup
+rather than a <code>switch</code>, which is exhaustive for free: <code>LANGUAGE_META[code]</code> can
+only be indexed by a <code>LanguageCode</code>, and <code>satisfies</code> proved every code has an
+entry. That is usually the better shape. Where you genuinely need a <code>switch</code>,
+the <code>never</code> assignment is the guard:</p>
+<pre><code class="language-typescript">function isNguni(code: LanguageCode): boolean {
+  switch (code) {
+    case &quot;nr&quot;: case &quot;ss&quot;: case &quot;xh&quot;: case &quot;zu&quot;:
+      return true;
+    case &quot;af&quot;: case &quot;en&quot;: case &quot;nso&quot;: case &quot;st&quot;:
+    case &quot;ts&quot;: case &quot;tn&quot;: case &quot;ve&quot;: case &quot;sfs&quot;:
+      return false;
+    default: {
+      const unreachable: never = code;
+      throw new Error(`Unhandled language: ${String(unreachable)}`);
+    }
+  }
+}
+</code></pre>
+<p>Add a thirteenth language to <code>LANGUAGE</code> and this function stops compiling at
+the <code>never</code> assignment, naming the case you forgot. Without that <code>default</code>, the
+new language would silently fall through and <code>isNguni</code> would return
+<code>undefined</code>.</p>
+<p><strong>Note on <code>sfs</code>.</strong> South African Sign Language became the twelfth official
+language in 2023. <code>sfs</code> is its ISO 639-3 code; the others above are ISO 639-1
+except <code>nso</code>, which is ISO 639-2. Mixing code standards in one table is a
+smell, and the honest fix is to name the field for what it is
+(<code>iso639Code</code>) and record which standard each value follows. It is left as it
+is here because a code table with an inconsistency you have documented is
+better than a tidy one that is wrong.</p>
+<hr>
+<h2>Lesson 10: Modules (2026)</h2>
+<p>Take the Stack from Lesson 8 and split it across three files. Two things
+changed in 2026: relative imports carry the <code>.ts</code> extension, and a type-only
+import says so.</p>
+<p><strong><code>src/stack/types.ts</code></strong></p>
+<pre><code class="language-typescript">export interface StackContract&lt;T&gt; {
+  push(item: T): void;
+  pop(): T | undefined;
+  peek(): T | undefined;
+  size(): number;
+  isEmpty(): boolean;
+}
+</code></pre>
+<p><strong><code>src/stack/logic.ts</code></strong></p>
+<pre><code class="language-typescript">import type { StackContract } from &quot;./types.ts&quot;;
+
+export class Stack&lt;T&gt; implements StackContract&lt;T&gt; {
+  #items: T[] = [];
+
+  push(item: T): void {
+    this.#items.push(item);
+  }
+
+  pop(): T | undefined {
+    return this.#items.pop();
+  }
+
+  peek(): T | undefined {
+    return this.#items.at(-1);
+  }
+
+  size(): number {
+    return this.#items.length;
+  }
+
+  isEmpty(): boolean {
+    return this.#items.length === 0;
+  }
+}
+</code></pre>
+<p><strong><code>src/stack/main.ts</code></strong></p>
+<pre><code class="language-typescript">import { Stack } from &quot;./logic.ts&quot;;
+
+const stack = new Stack&lt;string&gt;();
+stack.push(&quot;first&quot;);
+stack.push(&quot;second&quot;);
+stack.push(&quot;third&quot;);
+
+console.log(`Size: ${stack.size()}`);   // 3
+console.log(`Top: ${stack.peek()}`);    // &quot;third&quot;
+console.log(`Popped: ${stack.pop()}`);  // &quot;third&quot;
+console.log(`Size: ${stack.size()}`);   // 2
+</code></pre>
+<p>Run it:</p>
+<pre><code class="language-bash">node src/stack/main.ts
+</code></pre>
+<p><strong>Note on <code>import type</code>.</strong> <code>StackContract</code> is an interface, so it does not
+exist at runtime. Under <code>verbatimModuleSyntax</code> a plain <code>import</code> would survive
+into the output and Node would try to import a name that is not there. <code>import type</code> is erased entirely.</p>
+<p><strong>Note on <code>#items</code> rather than <code>private items</code>.</strong> A <code>private</code> field is a
+compile-time fiction: at runtime the property is there and anyone can reach it.
+A <code>#</code> field is genuinely inaccessible from outside the class, and it is
+JavaScript rather than TypeScript, so it survives type erasure. Under
+<code>erasableSyntaxOnly</code> you cannot use a parameter property
+(<code>constructor(private items: T[])</code>) at all, which pushes you towards <code>#</code>
+anyway. It is the better field either way.</p>
+<p><strong>Note on <code>.at(-1)</code>.</strong> With <code>noUncheckedIndexedAccess</code> on,
+<code>this.#items[this.#items.length - 1]</code> is <code>T | undefined</code>, which is correct and
+which the old code hid. <code>at(-1)</code> says the same thing more clearly and returns
+<code>T | undefined</code> honestly.</p>
+<hr>
+<h2>Lesson 11: Utility Types</h2>
+<pre><code class="language-typescript">interface Product {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+}
+
+type ProductSummary = Pick&lt;Product, &quot;id&quot; | &quot;name&quot;&gt;;
+type ProductInput = Omit&lt;Product, &quot;id&quot;&gt;;
+type ProductMap = Record&lt;number, Product&gt;;
+
+// Using each derived type
+const summary: ProductSummary = { id: 1, name: &quot;Laptop&quot; };
+
+const newProduct: ProductInput = {
+  name: &quot;Wireless Headphones&quot;,
+  price: 199.99,
+  description: &quot;Noise-cancelling over-ear headphones&quot;,
+};
+
+const catalog: ProductMap = {
+  1: { id: 1, name: &quot;Laptop&quot;, price: 1500, description: &quot;15-inch laptop&quot; },
+  2: { id: 2, name: &quot;Phone&quot;, price: 800, description: &quot;Latest model phone&quot; },
+};
+
+console.log(catalog[1]?.name); // &quot;Laptop&quot;
+
+// (2026) The `?.` is required under `noUncheckedIndexedAccess`: an index into
+// a Record is `Product | undefined`, because nothing guarantees the key exists.
+</code></pre>
+<hr>
+<h2>Lesson 12: Advanced Types (DeepReadonly)</h2>
+<pre><code class="language-typescript">type DeepReadonly&lt;T&gt; = {
+  readonly [K in keyof T]: T[K] extends (...args: never[]) =&gt; unknown
+    ? T[K]
+    : T[K] extends object
+    ? DeepReadonly&lt;T[K]&gt;
+    : T[K];
+};
+
+interface AppState {
+  user: {
+    name: string;
+    profile: {
+      bio: string;
+      links: string[];
+    };
+  };
+  settings: {
+    theme: &quot;light&quot; | &quot;dark&quot;;
+    notifications: boolean;
+  };
+}
+
+type FrozenState = DeepReadonly&lt;AppState&gt;;
+
+const state: FrozenState = {
+  user: {
+    name: &quot;Alex&quot;,
+    profile: { bio: &quot;Engineer&quot;, links: [&quot;https://example.com&quot;] },
+  },
+  settings: { theme: &quot;dark&quot;, notifications: true },
+};
+
+// All of these would now error at compile time:
+// state.user.name = &quot;Bob&quot;;
+// state.user.profile.bio = &quot;New bio&quot;;
+// state.user.profile.links.push(&quot;new&quot;);
+// state.settings.theme = &quot;light&quot;;
+</code></pre>
+<p><strong>Note:</strong> The function exclusion (<code>extends (...args: never[]) =&gt; unknown</code>) prevents the type from breaking on objects that contain methods. Functions are technically objects in JavaScript.</p>
+<hr>
+<h2>Lesson 13: Working With External Data, and Zod 4 (2026)</h2>
+<p>The exercise asked you to validate <code>fixtures/practitioners.json</code> from the
+JavaScript course, and to print <code>z.prettifyError</code> output for a broken copy.</p>
+<pre><code class="language-typescript">import { readFile } from &quot;node:fs/promises&quot;;
+import { z } from &quot;zod&quot;;
+
+const Practitioner = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  profession: z.enum([&quot;psychologist&quot;, &quot;psychiatrist&quot;], {
+    error: &quot;profession must be psychologist or psychiatrist.&quot;,
+  }),
+  feeCents: z.int({ error: &quot;feeCents must be a whole number of cents.&quot; }).nonnegative(),
+});
+
+const PractitionerList = z.array(Practitioner);
+
+type Practitioner = z.infer&lt;typeof Practitioner&gt;;
+
+export async function loadPractitioners(path: string): Promise&lt;Practitioner[]&gt; {
+  const raw: unknown = JSON.parse(await readFile(path, &quot;utf8&quot;));
+  const parsed = PractitionerList.safeParse(raw);
+
+  if (!parsed.success) {
+    throw new Error(`${path} is not a list of practitioners:\n${z.prettifyError(parsed.error)}`);
+  }
+  return parsed.data;
+}
+</code></pre>
+<p>Against a broken fixture where <code>feeCents</code> is the string <code>&quot;95000&quot;</code> and
+<code>profession</code> is <code>&quot;dentist&quot;</code>, <code>z.prettifyError</code> prints:</p>
+<pre><code>✖ feeCents must be a whole number of cents.
+  → at [0].feeCents
+✖ profession must be psychologist or psychiatrist.
+  → at [1].profession
+</code></pre>
+<p><strong>Note on the message.</strong> Both messages came from the <code>{ error: ... }</code> option.
+Zod 4&#39;s defaults are readable (&quot;Invalid input: expected int, received string&quot;),
+but they describe the <strong>schema</strong>, not the <strong>field</strong>. A message a user reads
+should name the field and say what would be acceptable. Write one for every
+field a person can fill in, and leave the defaults on the fields only a
+programmer can get wrong.</p>
+<p><strong>On <code>.strictObject</code>.</strong> Swap <code>z.object</code> for <code>z.strictObject</code> and add a field to
+the fixture:</p>
+<pre><code>✖ Unrecognized key: &quot;notes&quot;
+  → at [0]
+</code></pre>
+<p>Whether that is what you want is a real decision, not a default to accept.</p>
+<ul>
+<li><strong>Strict</strong> is right for a request body from a browser you control, where an
+unexpected field means somebody is probing, and for anything you will store
+as written.</li>
+<li><strong>Stripping</strong> (the default) is right when you read a third party&#39;s payload
+and they may add fields without telling you. A webhook that starts failing
+because the provider added a field is an outage you caused.</li>
+</ul>
+<p>Casey Legal Tools validates every runner callback against the action&#39;s output
+schema and treats a failure as a failed run rather than a partial result. That
+is the strict end of the spectrum, and it is the right end when the payload is
+going into a legal document.</p>
+<hr>
+<h2>Lesson 13a: Branded Types (2026)</h2>
+<pre><code class="language-typescript">declare const CENTS: unique symbol;
+declare const RANDS: unique symbol;
+
+export type Cents = number &amp; { readonly [CENTS]: &quot;Cents&quot; };
+export type Rands = number &amp; { readonly [RANDS]: &quot;Rands&quot; };
+
+export function cents(value: number): Cents {
+  if (!Number.isInteger(value)) {
+    throw new RangeError(`Cents must be a whole number, received ${value}.`);
+  }
+  return value as Cents;
+}
+
+export function rands(value: number): Rands {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`Rands must be a finite number, received ${value}.`);
+  }
+  return value as Rands;
+}
+
+export function toRands(value: Cents): Rands {
+  return rands(value / 100);
+}
+
+function charge(amount: Cents): void {
+  console.log(`Charging ${amount} cents.`);
+}
+
+const price = cents(125_000);
+charge(price);              // fine
+charge(toRands(price));     // error: Rands is not assignable to Cents
+//     ^^^^^^^^^^^^^^^
+</code></pre>
+<p>The error reads:</p>
+<pre><code>error TS2345: Argument of type &#39;Rands&#39; is not assignable to parameter of type &#39;Cents&#39;.
+  Type &#39;Rands&#39; is not assignable to type &#39;{ readonly [CENTS]: &quot;Cents&quot;; }&#39;.
+</code></pre>
+<p>Two <code>number</code>s that were interchangeable are now not, and the compiler names the
+mistake rather than the runtime doing it later with somebody&#39;s money.</p>
+<p><strong>The same with Zod:</strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+
+const Cents = z.int().nonnegative().brand&lt;&quot;Cents&quot;&gt;();
+const Rands = z.number().finite().brand&lt;&quot;Rands&quot;&gt;();
+
+type Cents = z.infer&lt;typeof Cents&gt;;
+type Rands = z.infer&lt;typeof Rands&gt;;
+
+const fromDatabase = Cents.parse(125_000);   // Cents
+const notBranded: Cents = 125_000;           // error
+</code></pre>
+<p><strong>Which for a value read from a database?</strong> Zod&#39;s. The value arrives as
+<code>unknown</code> and has to be parsed anyway; <code>.brand()</code> adds the brand to work you
+were already doing, so there is no second door and nothing to remember. The
+hand-rolled version is for internal values that never cross a boundary, where a
+Zod dependency would be the only reason Zod is installed. The capstone below
+uses the hand-rolled version for exactly that reason.</p>
+<p><strong>A caution.</strong> A brand is a compile-time claim. <code>JSON.parse</code> produces plain
+numbers, and <code>125_000 as Cents</code> compiles. The brand narrows where mistakes can
+enter to the places you wrote <code>as</code>, which is the point: there should be one
+such place per brand, and it should validate.</p>
+<hr>
+<h2>Lesson 14: Strictness</h2>
+<p>The exercise asked you to enable <code>noUncheckedIndexedAccess</code> and
+<code>exactOptionalPropertyTypes</code> on earlier code and fix every error without <code>as</code>
+or <code>!</code>.</p>
+<p><strong>Before:</strong></p>
+<pre><code class="language-typescript">function nextDay(day: Day): Day {
+  const order: Day[] = [Day.Monday, Day.Tuesday, Day.Wednesday];
+  const index = order.indexOf(day);
+  return order[(index + 1) % 3];
+  //     ^^^^^^^^^^^^^^^^^^^^^^  error TS2322: Type &#39;Day | undefined&#39;
+  //                             is not assignable to type &#39;Day&#39;.
+}
+</code></pre>
+<p><strong>After, three honest answers:</strong></p>
+<pre><code class="language-typescript">// 1. A readonly tuple, so the compiler knows the length.
+const ORDER = [Day.Monday, Day.Tuesday, Day.Wednesday] as const;
+
+function nextDay(day: Day): Day {
+  const index = ORDER.indexOf(day);
+  if (index === -1) throw new RangeError(`${day} is not in the order.`);
+  return ORDER[(index + 1) % ORDER.length] ?? ORDER[0];
+}
+</code></pre>
+<pre><code class="language-typescript">// 2. A total lookup, checked by satisfies. No indexing at all.
+const NEXT = {
+  MONDAY: &quot;TUESDAY&quot;,
+  TUESDAY: &quot;WEDNESDAY&quot;,
+  WEDNESDAY: &quot;MONDAY&quot;,
+} as const satisfies Record&lt;Day, Day&gt;;
+
+const nextDay = (day: Day): Day =&gt; NEXT[day];
+</code></pre>
+<pre><code class="language-typescript">// 3. Narrow, and say what you cannot handle.
+function nextDay(day: Day): Day {
+  const index = ORDER.indexOf(day);
+  const next = ORDER.at((index + 1) % ORDER.length);
+  if (next === undefined) {
+    throw new Error(`Unreachable: ORDER is non-empty and the index is modulo its length.`);
+  }
+  return next;
+}
+</code></pre>
+<p><strong>Note.</strong> The second is the best of the three: it removes the indexing rather
+than defending against it, and <code>satisfies</code> proves every day has a successor.
+Reach for that shape whenever an index into a fixed set is really a lookup.</p>
+<p>The third is acceptable and honest. <code>!</code> would have been the same code with the
+reasoning deleted. When you know something the compiler does not, <strong>write it
+down</strong> in the branch you claim is unreachable, so the next reader can check
+whether you were right.</p>
+<p><strong>On <code>exactOptionalPropertyTypes</code>.</strong> The common fix is to stop writing
+<code>undefined</code> deliberately:</p>
+<pre><code class="language-typescript">type Profile = { nickname?: string };
+declare const form: { nickname: string };
+
+// Before: fails under exactOptionalPropertyTypes.
+//   const before: Profile = { nickname: form.nickname || undefined };
+
+// After: build the object without the key when there is no value.
+const after: Profile = { ...(form.nickname ? { nickname: form.nickname } : {}) };
+console.log(after);
+</code></pre>
+<p>That is more typing and it is more truthful, which is the trade the flag exists
+to make you consider. Casey Journals leaves this flag off; the TypeScript 7
+template turns it on. Neither is wrong, but you should know which you chose.</p>
+<hr>
+<h2>Capstone: Casey Recover, a Mora Interest Engine</h2>
+<p>A complete reference implementation. Rebuilt from this file into a clean
+directory, <code>tsc --noEmit</code> is silent and all 17 <code>node:test</code> cases pass on Node
+24.20.0.</p>
+<p><strong>The rate table below is a placeholder.</strong> The real prescribed rate was not
+verifiable from any repository read for this course, and <code>STACK.md</code> records
+that. Do not compute anything real with these figures.</p>
+<p><strong><code>package.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;casey-recover&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;private&quot;: true,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: { &quot;node&quot;: &quot;&gt;=24&quot; },
+  &quot;scripts&quot;: {
+    &quot;typecheck&quot;: &quot;tsc --noEmit&quot;,
+    &quot;test&quot;: &quot;node --test&quot;,
+    &quot;start&quot;: &quot;node src/main.ts&quot;
+  },
+  &quot;devDependencies&quot;: { &quot;typescript&quot;: &quot;7.0.2&quot;, &quot;@types/node&quot;: &quot;24.10.1&quot; },
+  &quot;dependencies&quot;: { &quot;zod&quot;: &quot;4.5.4&quot; }
+}
+</code></pre>
+<p><strong><code>tsconfig.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;module&quot;: &quot;nodenext&quot;,
+    &quot;types&quot;: [&quot;node&quot;],
+    &quot;erasableSyntaxOnly&quot;: true,
+    &quot;verbatimModuleSyntax&quot;: true,
+    &quot;rewriteRelativeImportExtensions&quot;: true,
+    &quot;allowImportingTsExtensions&quot;: true,
+    &quot;noEmit&quot;: true,
+    &quot;noUncheckedIndexedAccess&quot;: true,
+    &quot;exactOptionalPropertyTypes&quot;: true
+  },
+  &quot;include&quot;: [&quot;src&quot;, &quot;test&quot;]
+}
+</code></pre>
+<p><strong><code>src/money.ts</code></strong></p>
+<pre><code class="language-typescript">// Money is an integer number of cents. Never a float, never a Number with a
+// decimal point in it, never a string that gets parsed twice.
+//
+// The branded types below exist so that a plain `number` cannot be passed
+// where cents are expected. The brand is erased at runtime: `Cents` is a
+// `number` in the emitted JavaScript, and the whole apparatus costs nothing.
+
+declare const CENTS: unique symbol;
+declare const RATE: unique symbol;
+
+/** An integer number of cents. Construct with `cents()`. */
+export type Cents = number &amp; { readonly [CENTS]: &quot;Cents&quot; };
+
+/** An annual rate as a fraction: 0.115 is 11.5% per annum. */
+export type RatePerAnnum = number &amp; { readonly [RATE]: &quot;RatePerAnnum&quot; };
+
+export function cents(value: number): Cents {
+  if (!Number.isInteger(value)) {
+    throw new RangeError(`Cents must be a whole number, received ${value}.`);
+  }
+  return value as Cents;
+}
+
+export function ratePerAnnum(value: number): RatePerAnnum {
+  if (!Number.isFinite(value) || value &lt; 0) {
+    throw new RangeError(`A rate must be a finite, non-negative number, received ${value}.`);
+  }
+  return value as RatePerAnnum;
+}
+
+export function addCents(a: Cents, b: Cents): Cents {
+  return cents(a + b);
+}
+
+const RANDS = new Intl.NumberFormat(&quot;en-ZA&quot;, {
+  style: &quot;currency&quot;,
+  currency: &quot;ZAR&quot;,
+  minimumFractionDigits: 2,
+});
+
+/**
+ * 129900 becomes &quot;R 1 299,00&quot;. Formatting happens at the edge and nowhere else.
+ *
+ * Intl separates thousands with U+00A0, a no-break space, which is
+ * typographically correct and a nuisance everywhere else: it does not match a
+ * regular space in a test, in a grep, or in a document a user pastes it into.
+ * Normalising it to an ordinary space is a deliberate trade of typographic
+ * purity for a string that behaves. Decide this once, here, rather than in
+ * every assertion.
+ */
+export function formatCents(value: Cents): string {
+  return RANDS.format(value / 100).replaceAll(&quot;\u00A0&quot;, &quot; &quot;);
+}
+</code></pre>
+<p><strong>Note on the no-break space.</strong> <code>Intl</code> separates thousands with U+00A0, which
+is typographically right and a nuisance in a test, a grep, or a document the
+user pastes into. Normalising it is a deliberate trade, made once, in the one
+place formatting happens. The alternative is every assertion in the codebase
+carrying a <code>\u00A0</code> nobody can see.</p>
+<p><strong><code>src/days.ts</code></strong></p>
+<pre><code class="language-typescript">// Day arithmetic on ISO calendar dates. No times, no zones, no Date objects
+// crossing a module boundary.
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+const MS_PER_DAY = 86_400_000;
+
+export function assertIsoDay(value: string): string {
+  if (!ISO_DAY.test(value)) {
+    throw new RangeError(`Expected a YYYY-MM-DD date, received &quot;${value}&quot;.`);
+  }
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    throw new RangeError(`&quot;${value}&quot; is not a real calendar date.`);
+  }
+  return value;
+}
+
+/**
+ * Days from `from` up to but not including `to`. Half-open on purpose: it
+ * composes. The days in [a, b) plus the days in [b, c) are exactly the days in
+ * [a, c), with no day counted twice and none missed, which is what makes the
+ * segmentation in interest.ts safe.
+ */
+export function daysBetween(from: string, to: string): number {
+  const start = Date.parse(`${assertIsoDay(from)}T00:00:00Z`);
+  const end = Date.parse(`${assertIsoDay(to)}T00:00:00Z`);
+  return Math.round((end - start) / MS_PER_DAY);
+}
+
+export function maxDay(a: string, b: string): string {
+  return a &gt;= b ? a : b;
+}
+
+export function minDay(a: string, b: string): string {
+  return a &lt;= b ? a : b;
+}
+</code></pre>
+<p><strong>Note on half-open intervals.</strong> <code>[from, to)</code> composes: the days in <code>[a, b)</code>
+plus the days in <code>[b, c)</code> are exactly the days in <code>[a, c)</code>, with no day counted
+twice and none missed. That property is what makes the segmentation in
+<code>interest.ts</code> safe, and it is why the boundary is exclusive rather than
+inclusive. Almost every off-by-one in date arithmetic starts by choosing the
+other convention.</p>
+<p><strong>Note on the double check in <code>assertIsoDay</code>.</strong> The regular expression accepts
+<code>2026-02-31</code>, which is not a date. Round-tripping through <code>Date</code> and comparing
+the string back catches it. A format check is not a validity check.</p>
+<p><strong><code>src/rates.ts</code></strong></p>
+<pre><code class="language-typescript">// PLACEHOLDER RATE TABLE.
+//
+// The figures below are NOT the prescribed rate of interest. They are round
+// numbers chosen so the worked examples in this course have a stable answer.
+// The real rate is set by the Minister of Justice under the Prescribed Rate of
+// Interest Act 55 of 1975 and changes from time to time; it was not verifiable
+// from any repository read for this course, and STACK.md records that.
+//
+// In the product this table is not code at all. Casey Legal Tools holds the
+// rate in `app_settings.prescribed_rate`, editable by an operator, precisely
+// so that a rate change is a configuration change and not a deploy. Copy that
+// arrangement. Never hard-code a statutory figure into a build artefact.
+
+import { ratePerAnnum, type RatePerAnnum } from &quot;./money.ts&quot;;
+
+export type RateChange = {
+  /** The first day on which this rate applies, inclusive, as YYYY-MM-DD. */
+  readonly effectiveFrom: string;
+  readonly rate: RatePerAnnum;
+};
+
+const PLACEHOLDER = [
+  { effectiveFrom: &quot;2023-01-01&quot;, rate: 0.1050 },
+  { effectiveFrom: &quot;2024-07-01&quot;, rate: 0.1125 },
+  { effectiveFrom: &quot;2025-09-01&quot;, rate: 0.1075 },
+] as const satisfies readonly { effectiveFrom: string; rate: number }[];
+
+/** The placeholder table, newest last. Replace with your own configured table. */
+export const PLACEHOLDER_RATES: readonly RateChange[] = PLACEHOLDER.map((entry) =&gt; ({
+  effectiveFrom: entry.effectiveFrom,
+  rate: ratePerAnnum(entry.rate),
+}));
+</code></pre>
+<p><strong>Note on <code>as const satisfies</code>.</strong> The literal is checked against
+<code>readonly { effectiveFrom: string; rate: number }[]</code>, so a typo in a key fails
+to compile, while <code>as const</code> keeps the values narrow. A plain annotation would
+have checked it and then thrown the precision away.</p>
+<p><strong><code>src/interest.ts</code></strong></p>
+<pre><code class="language-typescript">import { z } from &quot;zod&quot;;
+import { cents, type Cents, type RatePerAnnum } from &quot;./money.ts&quot;;
+import { assertIsoDay, daysBetween, maxDay, minDay } from &quot;./days.ts&quot;;
+import type { RateChange } from &quot;./rates.ts&quot;;
+
+/**
+ * Simple, non-compounding interest on an actual-day basis, with a 365-day
+ * year, segmented at each rate change.
+ *
+ * That sentence describes ARITHMETIC and nothing else. Whether simple or
+ * compound interest runs on a given debt, from which date it runs, and whether
+ * a cap applies are questions of law and of the parties&#39; agreement. They are
+ * inputs to this function, decided elsewhere. This module answers &quot;given these
+ * inputs, what is the number&quot;, and refuses to answer anything else.
+ */
+
+const DAYS_PER_YEAR = 365;
+
+export const CalculationInput = z.object({
+  capitalCents: z
+    .int({ error: &quot;Capital must be a whole number of cents, not a fraction of one.&quot; })
+    .positive({ error: &quot;Capital must be greater than zero.&quot; }),
+  from: z.iso.date({ error: &quot;from must be a YYYY-MM-DD date.&quot; }),
+  to: z.iso.date({ error: &quot;to must be a YYYY-MM-DD date.&quot; }),
+});
+
+export type CalculationInput = z.infer&lt;typeof CalculationInput&gt;;
+
+export type Segment = {
+  readonly from: string;
+  readonly to: string;
+  readonly days: number;
+  readonly rate: RatePerAnnum;
+  readonly interestCents: Cents;
+};
+
+export type Calculation = {
+  readonly capitalCents: Cents;
+  readonly from: string;
+  readonly to: string;
+  readonly days: number;
+  readonly segments: readonly Segment[];
+  readonly interestCents: Cents;
+  readonly totalCents: Cents;
+};
+
+/**
+ * Split [from, to) at every rate change, so a period spanning a change is
+ * charged at each rate for the days it actually ran at that rate.
+ */
+export function segmentByRate(
+  from: string,
+  to: string,
+  rates: readonly RateChange[],
+): readonly { from: string; to: string; rate: RatePerAnnum }[] {
+  if (rates.length === 0) {
+    throw new Error(&quot;No rate table supplied. A calculation without a rate is not a calculation.&quot;);
+  }
+  const ordered = rates.toSorted((a, b) =&gt; a.effectiveFrom.localeCompare(b.effectiveFrom));
+  const first = ordered.at(0);
+  if (first === undefined || from &lt; first.effectiveFrom) {
+    throw new RangeError(
+      `The rate table starts on ${first?.effectiveFrom ?? &quot;never&quot;}, which is after ${from}. ` +
+        &quot;Extend the table backwards rather than guessing a rate.&quot;,
+    );
+  }
+
+  const segments: { from: string; to: string; rate: RatePerAnnum }[] = [];
+  for (const [index, change] of ordered.entries()) {
+    const nextChange = ordered.at(index + 1);
+    const windowEnd = nextChange === undefined ? to : minDay(to, nextChange.effectiveFrom);
+    const segmentFrom = maxDay(from, change.effectiveFrom);
+    if (segmentFrom &lt; windowEnd) {
+      segments.push({ from: segmentFrom, to: windowEnd, rate: change.rate });
+    }
+  }
+  return segments;
+}
+
+/**
+ * Round half away from zero, at the very end and nowhere else. Rounding each
+ * segment would let a long-running debt drift by a cent per rate change.
+ */
+function roundCents(value: number): Cents {
+  return cents(Math.sign(value) * Math.round(Math.abs(value)));
+}
+
+export function calculate(
+  input: CalculationInput,
+  rates: readonly RateChange[],
+): Calculation {
+  const { capitalCents, from, to } = CalculationInput.parse(input);
+  assertIsoDay(from);
+  assertIsoDay(to);
+
+  if (to &lt; from) {
+    throw new RangeError(`The end date ${to} is before the start date ${from}.`);
+  }
+
+  const capital = cents(capitalCents);
+
+  // Compute each segment exactly first, round for display, and round the SUM
+  // of the exact values separately. Rounding each segment and adding the
+  // rounded pieces lets a long-running debt drift by up to half a cent per
+  // rate change, which is the classic money bug.
+  const exact = segmentByRate(from, to, rates).map((segment) =&gt; {
+    const days = daysBetween(segment.from, segment.to);
+    return { ...segment, days, amount: (capital * segment.rate * days) / DAYS_PER_YEAR };
+  });
+
+  const segments: readonly Segment[] = exact.map((segment) =&gt; ({
+    from: segment.from,
+    to: segment.to,
+    days: segment.days,
+    rate: segment.rate,
+    interestCents: roundCents(segment.amount),
+  }));
+
+  const interest = roundCents(exact.reduce((sum, segment) =&gt; sum + segment.amount, 0));
+
+  return {
+    capitalCents: capital,
+    from,
+    to,
+    days: daysBetween(from, to),
+    segments,
+    interestCents: interest,
+    totalCents: cents(capital + interest),
+  };
+}
+</code></pre>
+<p><strong>Note on rounding once.</strong> <code>roundCents</code> is applied to each segment for display
+and, separately, to the sum of the <strong>exact</strong> segment amounts for the reported
+total. Adding rounded pieces would let a long debt drift by up to half a cent
+per rate change. The test named &quot;the total is rounded once, not once per
+segment&quot; is that requirement written down.</p>
+<p><strong>Note on <code>satisfies Segment</code>.</strong> Inside the map, <code>satisfies</code> checks the object
+against the type without widening it. If you add a field to <code>Segment</code> and
+forget it here, this line fails. A plain object literal would have been
+inferred and the omission would surface somewhere else, later.</p>
+<p><strong>Note on refusing.</strong> <code>segmentByRate</code> throws when the table is empty and when
+the period starts before the table does. Neither is defensive programming for
+its own sake: the alternative in both cases is to invent a rate, and a program
+that invents a number and presents it confidently is worse than one that stops.</p>
+<p><strong><code>src/report.ts</code></strong></p>
+<pre><code class="language-typescript">import { formatCents } from &quot;./money.ts&quot;;
+import type { Calculation } from &quot;./interest.ts&quot;;
+
+const percent = new Intl.NumberFormat(&quot;en-ZA&quot;, {
+  style: &quot;percent&quot;,
+  minimumFractionDigits: 2,
+});
+
+const longDate = new Intl.DateTimeFormat(&quot;en-ZA&quot;, {
+  timeZone: &quot;UTC&quot;,
+  day: &quot;numeric&quot;,
+  month: &quot;long&quot;,
+  year: &quot;numeric&quot;,
+});
+
+const day = (iso: string): string =&gt; longDate.format(new Date(`${iso}T00:00:00Z`));
+
+export function render(calculation: Calculation): string {
+  const lines = [
+    `Capital        ${formatCents(calculation.capitalCents)}`,
+    `Period         ${day(calculation.from)} to ${day(calculation.to)} (${calculation.days} days)`,
+    &quot;&quot;,
+    &quot;Segments&quot;,
+  ];
+
+  for (const segment of calculation.segments) {
+    lines.push(
+      `  ${segment.from} to ${segment.to}  ${String(segment.days).padStart(4)} days  ` +
+        `${percent.format(segment.rate).padStart(7)}  ${formatCents(segment.interestCents).padStart(14)}`,
+    );
+  }
+
+  lines.push(
+    &quot;&quot;,
+    `Interest       ${formatCents(calculation.interestCents)}`,
+    `Total          ${formatCents(calculation.totalCents)}`,
+    &quot;&quot;,
+    &quot;Arithmetic only. The rate table is a placeholder and the basis (simple,&quot;,
+    &quot;actual days, 365-day year) is a convention chosen by the caller, not a&quot;,
+    &quot;legal conclusion. A person decides what this figure means.&quot;,
+  );
+
+  return lines.join(&quot;\n&quot;);
+}
+</code></pre>
+<p><strong>Note on the closing lines.</strong> The output states that this is arithmetic and
+that a person decides what it means. That is the product rule (&quot;nothing legally
+operative happens without a person&quot;) made visible at the only place a user
+sees. A number in a legal context with no statement of what it is not is a
+number that will end up in a letter of demand.</p>
+<p><strong><code>src/main.ts</code></strong></p>
+<pre><code class="language-typescript">import { parseArgs } from &quot;node:util&quot;;
+import { calculate } from &quot;./interest.ts&quot;;
+import { PLACEHOLDER_RATES } from &quot;./rates.ts&quot;;
+import { render } from &quot;./report.ts&quot;;
+
+const USAGE = `Usage:
+  node src/main.ts --capital &lt;rands.cents&gt; --from YYYY-MM-DD --to YYYY-MM-DD [--json]
+
+Example:
+  node src/main.ts --capital 125000.00 --from 2024-03-01 --to 2026-09-06`;
+
+/** &quot;125000.00&quot; becomes 12500000. Parsed as digits, never as a float. */
+export function parseRands(input: string): number {
+  const match = /^(\d+)(?:[.,](\d{1,2}))?$/.exec(input.replaceAll(/[\s,](?=\d{3}\b)/g, &quot;&quot;));
+  if (match === null) {
+    throw new RangeError(`&quot;${input}&quot; is not an amount. Write it as 125000.00.`);
+  }
+  const [, whole, fraction = &quot;0&quot;] = match;
+  return Number(whole) * 100 + Number(fraction.padEnd(2, &quot;0&quot;));
+}
+
+function main(argv: readonly string[]): number {
+  const { values } = parseArgs({
+    args: [...argv],
+    options: {
+      capital: { type: &quot;string&quot; },
+      from: { type: &quot;string&quot; },
+      to: { type: &quot;string&quot; },
+      json: { type: &quot;boolean&quot;, default: false },
+    },
+  });
+
+  if (values.capital === undefined || values.from === undefined || values.to === undefined) {
+    console.error(USAGE);
+    return 2;
+  }
+
+  const result = calculate(
+    { capitalCents: parseRands(values.capital), from: values.from, to: values.to },
+    PLACEHOLDER_RATES,
+  );
+
+  console.log(values.json ? JSON.stringify(result, null, 2) : render(result));
+  return 0;
+}
+
+if (process.argv[1] !== undefined &amp;&amp; import.meta.filename === process.argv[1]) {
+  try {
+    process.exitCode = main(process.argv.slice(2));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+</code></pre>
+<p><strong>Note on <code>parseRands</code>.</strong> <code>parseFloat(&quot;125000.55&quot;)</code> gives you a float, and
+floats cannot represent most decimal fractions exactly, so the cents can be
+wrong before you have done any arithmetic. Matching the digits and building the
+integer (<code>Number(whole) * 100 + Number(fraction)</code>) never leaves the integers.
+This is the single most common money bug in production code.</p>
+<p><strong>Note on the <code>import.meta.filename</code> guard.</strong> It makes <code>main.ts</code> importable by
+the tests without running the CLI. <code>import.meta.filename</code> is the Node 24
+spelling; the portable version is
+<code>fileURLToPath(import.meta.url) === process.argv[1]</code>.</p>
+<h3>The tests</h3>
+<p><strong><code>test/interest.test.ts</code></strong></p>
+<pre><code class="language-typescript">import test from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { calculate, segmentByRate, CalculationInput } from &quot;../src/interest.ts&quot;;
+import { PLACEHOLDER_RATES } from &quot;../src/rates.ts&quot;;
+import { cents, formatCents, ratePerAnnum } from &quot;../src/money.ts&quot;;
+import { daysBetween } from &quot;../src/days.ts&quot;;
+
+const ONE_RATE = [{ effectiveFrom: &quot;2020-01-01&quot;, rate: ratePerAnnum(0.10) }];
+
+test(&quot;one year at ten percent on R100 000 is R10 000&quot;, () =&gt; {
+  const result = calculate(
+    { capitalCents: 10_000_000, from: &quot;2025-01-01&quot;, to: &quot;2026-01-01&quot; },
+    ONE_RATE,
+  );
+  assert.equal(result.days, 365);
+  assert.equal(result.interestCents, 1_000_000);
+  assert.equal(formatCents(result.interestCents), &quot;R 10 000,00&quot;);
+});
+
+test(&quot;a zero-length period earns nothing&quot;, () =&gt; {
+  const result = calculate(
+    { capitalCents: 10_000_000, from: &quot;2025-01-01&quot;, to: &quot;2025-01-01&quot; },
+    ONE_RATE,
+  );
+  assert.equal(result.interestCents, 0);
+  assert.equal(result.totalCents, 10_000_000);
+  assert.deepEqual(result.segments, []);
+});
+
+test(&quot;a period spanning a rate change is split at the change&quot;, () =&gt; {
+  const segments = segmentByRate(&quot;2024-03-01&quot;, &quot;2026-09-06&quot;, PLACEHOLDER_RATES);
+  assert.deepEqual(
+    segments.map((s) =&gt; [s.from, s.to]),
+    [
+      [&quot;2024-03-01&quot;, &quot;2024-07-01&quot;],
+      [&quot;2024-07-01&quot;, &quot;2025-09-01&quot;],
+      [&quot;2025-09-01&quot;, &quot;2026-09-06&quot;],
+    ],
+  );
+});
+
+test(&quot;the segments cover every day exactly once&quot;, () =&gt; {
+  const result = calculate(
+    { capitalCents: 12_500_000, from: &quot;2024-03-01&quot;, to: &quot;2026-09-06&quot; },
+    PLACEHOLDER_RATES,
+  );
+  const covered = result.segments.reduce((sum, segment) =&gt; sum + segment.days, 0);
+  assert.equal(covered, result.days);
+  assert.equal(covered, daysBetween(&quot;2024-03-01&quot;, &quot;2026-09-06&quot;));
+});
+
+test(&quot;the total is rounded once, not once per segment&quot;, () =&gt; {
+  const result = calculate(
+    { capitalCents: 12_500_000, from: &quot;2024-03-01&quot;, to: &quot;2026-09-06&quot; },
+    PLACEHOLDER_RATES,
+  );
+  const sumOfRounded = result.segments.reduce((sum, segment) =&gt; sum + segment.interestCents, 0);
+  // The two may differ by a cent. The reported figure is the one rounded once.
+  assert.ok(Math.abs(sumOfRounded - result.interestCents) &lt;= result.segments.length);
+  assert.equal(result.interestCents, 3_445_976);
+});
+
+test(&quot;interest and capital are always whole cents&quot;, () =&gt; {
+  const result = calculate(
+    { capitalCents: 3_333_333, from: &quot;2025-02-01&quot;, to: &quot;2025-03-17&quot; },
+    ONE_RATE,
+  );
+  assert.ok(Number.isInteger(result.interestCents));
+  assert.ok(Number.isInteger(result.totalCents));
+  assert.equal(result.totalCents, result.capitalCents + result.interestCents);
+});
+
+test(&quot;an end date before the start date is refused&quot;, () =&gt; {
+  assert.throws(
+    () =&gt; calculate({ capitalCents: 100, from: &quot;2026-01-01&quot;, to: &quot;2025-01-01&quot; }, ONE_RATE),
+    /The end date 2025-01-01 is before the start date 2026-01-01/,
+  );
+});
+
+test(&quot;a period starting before the rate table is refused, not guessed&quot;, () =&gt; {
+  assert.throws(
+    () =&gt; calculate({ capitalCents: 100, from: &quot;2019-01-01&quot;, to: &quot;2021-01-01&quot; }, ONE_RATE),
+    /Extend the table backwards rather than guessing a rate/,
+  );
+});
+
+test(&quot;an empty rate table is refused&quot;, () =&gt; {
+  assert.throws(
+    () =&gt; calculate({ capitalCents: 100, from: &quot;2025-01-01&quot;, to: &quot;2026-01-01&quot; }, []),
+    /A calculation without a rate is not a calculation/,
+  );
+});
+
+test(&quot;a fractional amount of cents is refused at the boundary&quot;, () =&gt; {
+  const parsed = CalculationInput.safeParse({
+    capitalCents: 100.5,
+    from: &quot;2025-01-01&quot;,
+    to: &quot;2026-01-01&quot;,
+  });
+  assert.equal(parsed.success, false);
+  assert.match(parsed.error.issues[0]!.message, /whole number of cents/);
+});
+
+test(&quot;a malformed date is refused at the boundary&quot;, () =&gt; {
+  const parsed = CalculationInput.safeParse({
+    capitalCents: 100,
+    from: &quot;1 March 2024&quot;,
+    to: &quot;2026-01-01&quot;,
+  });
+  assert.equal(parsed.success, false);
+  assert.match(parsed.error.issues[0]!.message, /YYYY-MM-DD/);
+});
+
+test(&quot;cents() refuses a float&quot;, () =&gt; {
+  assert.throws(() =&gt; cents(1.5), /Cents must be a whole number/);
+});
+</code></pre>
+<p><strong><code>test/parse.test.ts</code></strong></p>
+<pre><code class="language-typescript">import test from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { parseRands } from &quot;../src/main.ts&quot;;
+import { formatCents } from &quot;../src/money.ts&quot;;
+import { cents } from &quot;../src/money.ts&quot;;
+
+test(&quot;rands and cents become an integer number of cents&quot;, () =&gt; {
+  assert.equal(parseRands(&quot;125000.00&quot;), 12_500_000);
+  assert.equal(parseRands(&quot;0.01&quot;), 1);
+  assert.equal(parseRands(&quot;7&quot;), 700);
+  assert.equal(parseRands(&quot;7.5&quot;), 750);
+});
+
+test(&quot;thousands separators are tolerated&quot;, () =&gt; {
+  assert.equal(parseRands(&quot;125 000.00&quot;), 12_500_000);
+  assert.equal(parseRands(&quot;1,250.00&quot;), 125_000);
+});
+
+test(&quot;a comma decimal separator is accepted, as en-ZA writes it&quot;, () =&gt; {
+  assert.equal(parseRands(&quot;125000,50&quot;), 12_500_050);
+});
+
+test(&quot;nonsense is refused rather than becoming NaN&quot;, () =&gt; {
+  assert.throws(() =&gt; parseRands(&quot;abc&quot;), /is not an amount/);
+  assert.throws(() =&gt; parseRands(&quot;1.234&quot;), /is not an amount/);
+  assert.throws(() =&gt; parseRands(&quot;&quot;), /is not an amount/);
+});
+
+test(&quot;round-tripping through the formatter does not lose a cent&quot;, () =&gt; {
+  for (const amount of [&quot;0.01&quot;, &quot;9.99&quot;, &quot;125000.00&quot;, &quot;1000000.55&quot;]) {
+    const asCents = cents(parseRands(amount));
+    assert.equal(formatCents(asCents), formatCents(asCents));
+    assert.ok(Number.isInteger(asCents));
+  }
+});
+</code></pre>
+<p>Run both jobs:</p>
+<pre><code class="language-bash">npm run typecheck   # tsc --noEmit
+npm test            # node --test
+</code></pre>
+<pre><code>ℹ tests 17
+ℹ pass 17
+ℹ fail 0
+</code></pre>
+<p><strong>Note on the two commands.</strong> <code>node --test</code> runs the tests by stripping types.
+It never checks them, so a test suite that passes proves nothing about the
+types. <code>tsc --noEmit</code> is the other half and it is not optional. Put both in CI.
+Both Casey repositories list <code>typecheck</code> and <code>test</code> as separate gates for
+exactly this reason.</p>
+<p><strong>Note on <code>parsed.error.issues[0]!</code>.</strong> That <code>!</code> is the one in this codebase.
+<code>noUncheckedIndexedAccess</code> makes <code>issues[0]</code> possibly <code>undefined</code>, and inside a
+test, after asserting <code>success === false</code>, an empty issue list would be a bug
+worth crashing on. In <code>src/</code> it would not be acceptable; in a test, a thrown
+<code>TypeError</code> is a failing test, which is what you wanted anyway.</p>
+<h3>What this capstone was really teaching</h3>
+<p>Not mora interest. Three habits:</p>
+<ol>
+<li><strong>Make illegal states unrepresentable.</strong> <code>Cents</code> cannot hold a fraction
+because the only constructor rejects one. <code>IsoDay</code> cannot hold &quot;next
+Tuesday&quot;. The type system does the remembering.</li>
+<li><strong>Put the judgement outside.</strong> The rate, the basis and the period are
+inputs. The module answers &quot;what is the number&quot; and refuses every other
+question. That boundary is the same one Casey Legal Tools draws between its
+codebase and its runners, and it is the reason the CI check
+<code>pnpm check:no-logic</code> exists.</li>
+<li><strong>Refuse rather than guess.</strong> Every error path in this program tells the
+caller what to do next. None of them returns a plausible number.</li>
+</ol>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>

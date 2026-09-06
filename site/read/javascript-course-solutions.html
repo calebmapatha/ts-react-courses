@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modern JavaScript: answers · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>Modern JavaScript Course: Exercise Solutions</h1>
+<p>Working solutions for every exercise in the modern JavaScript course. Each
+solution includes runnable code and a short note on the approach.</p>
+<p><strong>(2026)</strong> To run any solution, save it to a <code>.js</code> file in the project from
+Lesson 0 and execute it with <code>node your-file.js</code>. Every solution here was run
+on <strong>Node 24.20.0</strong> before publication. Solutions marked &quot;needs Node 24&quot; use
+<code>Promise.try</code>, <code>RegExp.escape</code> or <code>Error.isError</code>, which Node 22 does not have.</p>
+<hr>
+<h2>Lesson 1: countDown</h2>
+<pre><code class="language-javascript">const countDown = (start) =&gt; {
+  for (let i = start; i &gt;= 1; i--) {
+    console.log(i);
+  }
+};
+
+countDown(5);
+// 5
+// 4
+// 3
+// 2
+// 1
+</code></pre>
+<p>If you change <code>let i</code> to <code>const i</code>, you get an error: <code>Assignment to constant variable</code>. The loop tries to update <code>i</code> each iteration, which <code>const</code> forbids.</p>
+<hr>
+<h2>Lesson 2: formatUser</h2>
+<pre><code class="language-javascript">const formatUser = ({ name, email, role }) =&gt; `
+Name: ${name}
+Email: ${email}
+Role: ${role}
+`;
+
+console.log(formatUser({
+  name: &quot;Maria&quot;,
+  email: &quot;maria@example.com&quot;,
+  role: &quot;Engineer&quot;,
+}));
+</code></pre>
+<p><strong>Note:</strong> The leading and trailing newlines come from the template literal preserving whitespace exactly as written. That is often what you want for a printed message.</p>
+<hr>
+<h2>Lesson 3: Arrow function conversions</h2>
+<pre><code class="language-javascript">const isAdult = (person) =&gt; person.age &gt;= 18;
+
+const fullName = (user) =&gt; `${user.firstName} ${user.lastName}`;
+
+const logCurrentTime = () =&gt; console.log(new Date().toISOString());
+
+// Test
+console.log(isAdult({ age: 21 }));                            // true
+console.log(fullName({ firstName: &quot;Alex&quot;, lastName: &quot;Lee&quot; })); // &quot;Alex Lee&quot;
+logCurrentTime();
+</code></pre>
+<p><strong>Note:</strong> The single-expression form (no curly braces) implicitly returns. As soon as you need multiple statements, you have to use <code>{ ... }</code> and an explicit <code>return</code>.</p>
+<hr>
+<h2>Lesson 4: merge</h2>
+<pre><code class="language-javascript">const merge = (...objects) =&gt; {
+  return objects.reduce((acc, current) =&gt; ({ ...acc, ...current }), {});
+};
+
+const result = merge(
+  { a: 1, b: 2 },
+  { b: 3, c: 4 },
+  { d: 5 },
+);
+console.log(result); // { a: 1, b: 3, c: 4, d: 5 }
+</code></pre>
+<p><strong>Note:</strong> The <code>reduce</code> walks through every object and spreads it into the accumulator. Later objects override earlier ones because they are spread later. This is a one-line shallow merge.</p>
+<hr>
+<h2>Lesson 5: Destructuring users</h2>
+<pre><code class="language-javascript">const users = [
+  { id: 1, name: &quot;Alex&quot;, email: &quot;a@x.com&quot;, age: 30 },
+  { id: 2, name: &quot;Maria&quot;, email: &quot;m@x.com&quot;, age: 25 },
+];
+
+const summaries = users.map(({ name, email }) =&gt; ({ name, email }));
+
+console.log(summaries);
+// [{ name: &quot;Alex&quot;, email: &quot;a@x.com&quot; }, { name: &quot;Maria&quot;, email: &quot;m@x.com&quot; }]
+</code></pre>
+<p><strong>Note:</strong> The destructuring happens directly in the callback&#39;s parameter list. The arrow function returns an object literal, so the body is wrapped in parentheses to avoid being mistaken for a block.</p>
+<hr>
+<h2>Lesson 6: groupBy</h2>
+<pre><code class="language-javascript">const groupBy = (items, key) =&gt; {
+  return items.reduce((acc, item) =&gt; {
+    const groupKey = item[key];
+    return {
+      ...acc,
+      [groupKey]: [...(acc[groupKey] ?? []), item],
+    };
+  }, {});
+};
+
+const items = [
+  { type: &quot;fruit&quot;, name: &quot;apple&quot; },
+  { type: &quot;veg&quot;, name: &quot;carrot&quot; },
+  { type: &quot;fruit&quot;, name: &quot;banana&quot; },
+];
+
+console.log(groupBy(items, &quot;type&quot;));
+// {
+//   fruit: [{ type: &quot;fruit&quot;, name: &quot;apple&quot; }, { type: &quot;fruit&quot;, name: &quot;banana&quot; }],
+//   veg: [{ type: &quot;veg&quot;, name: &quot;carrot&quot; }]
+// }
+</code></pre>
+<p><strong>Note:</strong> The computed key <code>[groupKey]</code> lets us use the value of <code>item[key]</code> as the property name. The nullish coalescing handles the case where this is the first item in a group.</p>
+<hr>
+<h2>Lesson 7: Chained array methods</h2>
+<pre><code class="language-javascript">const orders = [
+  { item: &quot;book&quot;, price: 20, qty: 2 },
+  { item: &quot;pen&quot;, price: 3, qty: 5 },
+  { item: &quot;lamp&quot;, price: 50, qty: 1 },
+];
+
+const expensiveItems = orders
+  .filter((o) =&gt; o.price * o.qty &gt; 30)
+  .map((o) =&gt; o.item);
+
+console.log(expensiveItems); // [&quot;book&quot;, &quot;lamp&quot;]
+</code></pre>
+<p><strong>Note:</strong> Book total is 40, pen total is 15, lamp total is 50. Only book and lamp exceed 30.</p>
+<hr>
+<h2>Lesson 8: pick</h2>
+<pre><code class="language-javascript">const pick = (obj, keys) =&gt; {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) =&gt; keys.includes(key)),
+  );
+};
+
+console.log(pick({ a: 1, b: 2, c: 3 }, [&quot;a&quot;, &quot;c&quot;])); // { a: 1, c: 3 }
+console.log(pick({ x: 10, y: 20, z: 30 }, [&quot;y&quot;]));   // { y: 20 }
+</code></pre>
+<p><strong>Alternative using reduce:</strong></p>
+<pre><code class="language-javascript">const pick2 = (obj, keys) =&gt; {
+  return keys.reduce((acc, key) =&gt; {
+    if (key in obj) acc[key] = obj[key];
+    return acc;
+  }, {});
+};
+</code></pre>
+<p>Both are valid. The first reads more declaratively, the second is slightly faster for large objects.</p>
+<hr>
+<h2>Lesson 9: Optional chaining for cities</h2>
+<pre><code class="language-javascript">const users = [
+  { name: &quot;Alex&quot;, address: { city: &quot;Cape Town&quot; } },
+  { name: &quot;Maria&quot; },
+  { name: &quot;Jordan&quot;, address: {} },
+];
+
+users.forEach((user) =&gt; {
+  const city = user?.address?.city ?? &quot;Unknown&quot;;
+  console.log(`${user.name}: ${city}`);
+});
+
+// Alex: Cape Town
+// Maria: Unknown
+// Jordan: Unknown
+</code></pre>
+<p><strong>Note:</strong> The optional chain <code>user?.address?.city</code> short-circuits to <code>undefined</code> if any link is null or missing. The nullish coalescing then provides the fallback.</p>
+<hr>
+<h2>Lesson 10: Queue class</h2>
+<pre><code class="language-javascript">class Queue {
+  #items = [];
+
+  enqueue(item) {
+    this.#items.push(item);
+  }
+
+  dequeue() {
+    return this.#items.shift();
+  }
+
+  peek() {
+    return this.#items[0];
+  }
+
+  size() {
+    return this.#items.length;
+  }
+
+  isEmpty() {
+    return this.#items.length === 0;
+  }
+}
+
+// Test
+const queue = new Queue();
+queue.enqueue(&quot;first&quot;);
+queue.enqueue(&quot;second&quot;);
+queue.enqueue(&quot;third&quot;);
+
+console.log(queue.peek());     // &quot;first&quot;
+console.log(queue.size());     // 3
+console.log(queue.dequeue());  // &quot;first&quot;
+console.log(queue.size());     // 2
+</code></pre>
+<p><strong>Note:</strong> A queue is FIFO (first in, first out), unlike a stack which is LIFO. We add to the end with <code>push</code> and remove from the front with <code>shift</code>.</p>
+<hr>
+<h2>Lesson 11: Modules split</h2>
+<p><strong><code>math.js</code></strong></p>
+<pre><code class="language-javascript">export const add = (a, b) =&gt; a + b;
+export const subtract = (a, b) =&gt; a - b;
+</code></pre>
+<p><strong><code>string.js</code></strong></p>
+<pre><code class="language-javascript">export const capitalize = (s) =&gt; s.charAt(0).toUpperCase() + s.slice(1);
+export const reverse = (s) =&gt; [...s].reverse().join(&quot;&quot;);
+</code></pre>
+<p><strong><code>index.js</code></strong></p>
+<pre><code class="language-javascript">export * from &quot;./math.js&quot;;
+export * from &quot;./string.js&quot;;
+</code></pre>
+<p><strong><code>main.js</code></strong></p>
+<pre><code class="language-javascript">import { add, subtract, capitalize, reverse } from &quot;./index.js&quot;;
+
+console.log(add(2, 3));            // 5
+console.log(subtract(10, 4));      // 6
+console.log(capitalize(&quot;hello&quot;));  // &quot;Hello&quot;
+console.log(reverse(&quot;abcdef&quot;));    // &quot;fedcba&quot;
+</code></pre>
+<p>Run with <code>node main.js</code>.</p>
+<hr>
+<h2>Lesson 12: delay and Promise.all</h2>
+<pre><code class="language-javascript">const delay = (ms, value) =&gt; {
+  return new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; resolve(value), ms);
+  });
+};
+
+const start = Date.now();
+
+const results = await Promise.all([
+  delay(500, &quot;first&quot;),
+  delay(1000, &quot;second&quot;),
+  delay(750, &quot;third&quot;),
+]);
+
+const elapsed = Date.now() - start;
+
+console.log(results);          // [&quot;first&quot;, &quot;second&quot;, &quot;third&quot;]
+console.log(`Took ${elapsed}ms`); // Roughly 1000ms (the slowest)
+</code></pre>
+<p><strong>Note:</strong> Even though the three delays add up to 2250ms total, <code>Promise.all</code> runs them in parallel, so the total time is the duration of the slowest one. If we awaited them one by one in series instead, the total would be the sum.</p>
+<hr>
+<h2>Lesson 13: Promise chain to async/await</h2>
+<pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
+
+async function loadPractitioners() {
+  const url = new URL(&quot;./fixtures/practitioners.json&quot;, import.meta.url);
+  return JSON.parse(await readFile(url, &quot;utf8&quot;));
+}
+
+async function countPsychologists() {
+  try {
+    const list = await loadPractitioners();
+    const count = list.filter((p) =&gt; p.profession === &quot;psychologist&quot;).length;
+    console.log(`Found ${count} psychologists`);
+    return count;
+  } catch (error) {
+    console.error(&quot;Could not count psychologists:&quot;, error.message);
+    if (error.cause) console.error(&quot;  caused by:&quot;, error.cause.message);
+    return 0;
+  }
+}
+
+await countPsychologists(); // Found 2 psychologists
+</code></pre>
+<p><strong>Note:</strong> Each <code>.then</code> becomes an <code>await</code> and the whole chain goes inside one
+<code>try</code>. That is the point of the rewrite: with a chain, an error in step two is
+caught by a <code>.catch</code> bolted onto the end and you cannot easily tell which step
+failed. With <code>await</code>, the failing line is in the stack trace.</p>
+<p><strong>(2026)</strong> Note also what the <code>catch</code> does <strong>not</strong> do. It does not swallow the
+error. It logs the message and the <code>cause</code>, and it returns a value the caller
+can act on. An empty <code>catch {}</code> would have turned a missing fixture into a
+count of zero, which is a lie the caller cannot detect.</p>
+<hr>
+<h2>Lesson 14: cheapestByProfession</h2>
+<pre><code class="language-javascript">import practitioners from &quot;./fixtures/practitioners.json&quot; with { type: &quot;json&quot; };
+
+function cheapestByProfession(list) {
+  const grouped = Object.groupBy(list, (p) =&gt; p.profession);
+
+  return Object.fromEntries(
+    Object.entries(grouped).map(([profession, people]) =&gt; [
+      profession,
+      people.toSorted((a, b) =&gt; a.feeCents - b.feeCents).at(0).name,
+    ]),
+  );
+}
+
+console.log(cheapestByProfession(practitioners));
+// { psychologist: &quot;M. van Wyk&quot;, psychiatrist: &quot;A. Petersen&quot; }
+</code></pre>
+<p><strong>Note:</strong> <code>toSorted</code> rather than <code>sort</code>, because <code>sort</code> would reorder the array
+inside <code>grouped</code>, which is a view onto the imported fixture. A JSON import is
+shared across every module that imports it, so mutating it is a bug that
+appears somewhere else entirely.</p>
+<p>The same function over HTTP:</p>
+<pre><code class="language-javascript">async function getJSON(url) {
+  const response = await fetch(url, {
+    headers: { Accept: &quot;application/json&quot; },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+  }
+  return await response.json();
+}
+
+const overHttp = cheapestByProfession(
+  await getJSON(&quot;http://localhost:3100/practitioners&quot;),
+);
+console.log(overHttp);
+</code></pre>
+<p><strong>Which would you rather a test depend on?</strong> The first. The second needs a
+server running on port 3100, which means a test that fails tells you nothing
+about <code>cheapestByProfession</code>: it might be the function, the server, the port,
+or the network. Keep the network out of the tests for your own logic, and test
+the network separately, where a failure means what it says.</p>
+<hr>
+<h2>Lesson 15: Order counting with Map</h2>
+<pre><code class="language-javascript">const orders = [
+  { customerId: 1, total: 99 },
+  { customerId: 2, total: 50 },
+  { customerId: 1, total: 25 },
+  { customerId: 3, total: 75 },
+  { customerId: 1, total: 10 },
+  { customerId: 2, total: 30 },
+];
+
+const counts = new Map();
+
+for (const { customerId } of orders) {
+  counts.set(customerId, (counts.get(customerId) ?? 0) + 1);
+}
+
+console.log(counts);
+// Map(3) { 1 =&gt; 3, 2 =&gt; 2, 3 =&gt; 1 }
+
+// Convert to plain object if needed
+console.log(Object.fromEntries(counts));
+// { &quot;1&quot;: 3, &quot;2&quot;: 2, &quot;3&quot;: 1 }
+</code></pre>
+<p><strong>Note:</strong> Using <code>??</code> instead of <code>||</code> is important here because zero is a meaningful count. Although in this case the value is <code>undefined</code> for first encounters so both would work, building the habit of <code>??</code> for nullish defaults pays off.</p>
+<hr>
+<h2>Lesson 16: Fibonacci generator</h2>
+<pre><code class="language-javascript">function* fibonacci(limit) {
+  let a = 0;
+  let b = 1;
+
+  while (a &lt;= limit) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
+}
+
+for (const n of fibonacci(100)) {
+  console.log(n);
+}
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89
+</code></pre>
+<p><strong>Note:</strong> The destructuring swap <code>[a, b] = [b, a + b]</code> updates both variables atomically. Without it, you would need a temporary variable. The generator pauses at each <code>yield</code>, then resumes when the consumer asks for the next value.</p>
+<hr>
+<h2>Lesson 17: safeSearch (2026, needs Node 24)</h2>
+<pre><code class="language-javascript">function safeSearch(items, term) {
+  if (term === &quot;&quot;) return items;
+  const pattern = new RegExp(RegExp.escape(term), &quot;i&quot;);
+  return items.filter((item) =&gt; pattern.test(item.name));
+}
+
+const items = [
+  { name: &quot;a.b&quot; },
+  { name: &quot;axb&quot; },
+  { name: &quot;Contract (draft)&quot; },
+];
+
+console.log(safeSearch(items, &quot;a.b&quot;));  // [ { name: &quot;a.b&quot; } ]
+console.log(safeSearch(items, &quot;(&quot;));    // [ { name: &quot;Contract (draft)&quot; } ]
+</code></pre>
+<p><strong>Note:</strong> Without <code>RegExp.escape</code>, the term <code>&quot;a.b&quot;</code> becomes the pattern <code>a.b</code>,
+in which <code>.</code> matches any character, so <code>&quot;axb&quot;</code> matches too. The term <code>&quot;(&quot;</code>
+becomes an unterminated group and <code>new RegExp</code> throws, which in a web handler
+is a 500 caused by somebody typing a bracket into a search box.</p>
+<p><strong>A simpler answer exists.</strong> If you only need a case-insensitive substring
+match, do not build a regular expression at all:</p>
+<pre><code class="language-javascript">const safeSearch = (items, term) =&gt;
+  items.filter((item) =&gt; item.name.toLowerCase().includes(term.toLowerCase()));
+</code></pre>
+<p>That is the better solution for this problem. <code>RegExp.escape</code> is for when you
+genuinely need a pattern and part of it comes from outside. The general rule,
+which the workbook develops under injection, is that <strong>data must never become
+code</strong>, and the safest way to obey it is usually to avoid the code path
+entirely.</p>
+<hr>
+<h2>Lesson 18: nextWeekdaySlots (2026)</h2>
+<p><strong>With <code>Date</code>:</strong></p>
+<pre><code class="language-javascript">function nextWeekdaySlots(fromISO, count) {
+  const slots = [];
+  const cursor = new Date(`${fromISO}T00:00:00Z`);
+
+  while (slots.length &lt; count) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const weekday = cursor.getUTCDay(); // 0 Sunday, 6 Saturday
+    if (weekday !== 0 &amp;&amp; weekday !== 6) {
+      slots.push(cursor.toISOString().slice(0, 10));
+    }
+  }
+  return slots;
+}
+
+console.log(nextWeekdaySlots(&quot;2026-09-04&quot;, 3));
+// [ &quot;2026-09-07&quot;, &quot;2026-09-08&quot;, &quot;2026-09-09&quot; ]
+</code></pre>
+<p><strong>With Temporal</strong> (run with <code>node --harmony-temporal</code>):</p>
+<pre><code class="language-javascript">function nextWeekdaySlots(fromISO, count) {
+  const slots = [];
+  let cursor = Temporal.PlainDate.from(fromISO);
+
+  while (slots.length &lt; count) {
+    cursor = cursor.add({ days: 1 });
+    if (cursor.dayOfWeek &lt;= 5) {       // 1 Monday ... 7 Sunday
+      slots.push(cursor.toString());
+    }
+  }
+  return slots;
+}
+
+console.log(nextWeekdaySlots(&quot;2026-09-04&quot;, 3));
+// [ &quot;2026-09-07&quot;, &quot;2026-09-08&quot;, &quot;2026-09-09&quot; ]
+</code></pre>
+<p><strong>Note:</strong> The Temporal version is two lines shorter, but length is not the
+argument. Look at what each one has to be careful about.</p>
+<p>The <code>Date</code> version must use the UTC accessors throughout. If you write
+<code>setDate</code>, <code>getDay</code> and <code>toISOString</code> in the same function, you are mixing
+local time with UTC, and the result is correct in Johannesburg and wrong in
+Auckland. It also mutates <code>cursor</code> in place, so the loop only works because
+nothing else holds a reference to it.</p>
+<p>The Temporal version has no zone to mix up, because a <code>PlainDate</code> has no zone.
+<code>add</code> returns a new date rather than mutating. And <code>dayOfWeek</code> counts from
+Monday as ISO 8601 does, so &quot;weekday&quot; is <code>&lt;= 5</code> rather than two separate
+comparisons against zero and six.</p>
+<p><strong>(2026)</strong> Temporal is still behind a flag in Node 24. Until it ships, the
+<code>Date</code> version is what you write, and the discipline is: <strong>UTC accessors
+everywhere, format only at the edge, and one <code>Intl</code> formatter with an explicit
+<code>timeZone</code>.</strong></p>
+<hr>
+<h2>Capstone: A Tools CLI</h2>
+<p>A complete reference implementation, run and tested on Node 24.20.0. Twelve
+<code>node:test</code> cases pass; they are at the end of this section.</p>
+<p>Nothing here is a health record. The tools modelled are habits and daily tasks,
+which are the two parts of the product&#39;s Tools suite that carry no clinical
+data. Mood and check-in entries are health information under section 26 of the
+Protection of Personal Information Act, and they are deliberately absent from
+the fixtures, the store and the tests.</p>
+<p><strong><code>package.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;tools-cli&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: { &quot;node&quot;: &quot;&gt;=24&quot; },
+  &quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node src/main.js&quot;,
+    &quot;dev&quot;: &quot;node --watch src/main.js habits list&quot;,
+    &quot;test&quot;: &quot;node --test&quot;
+  }
+}
+</code></pre>
+<p><strong><code>fixtures/tools.seed.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;habits&quot;: [
+    { &quot;id&quot;: &quot;h1&quot;, &quot;name&quot;: &quot;Walk for twenty minutes&quot;, &quot;when&quot;: &quot;morning&quot;, &quot;cue&quot;: &quot;after I make coffee&quot;, &quot;createdAt&quot;: &quot;2026-08-10&quot; },
+    { &quot;id&quot;: &quot;h2&quot;, &quot;name&quot;: &quot;Read ten pages&quot;, &quot;when&quot;: &quot;evening&quot;, &quot;cue&quot;: &quot;after supper&quot;, &quot;createdAt&quot;: &quot;2026-07-01&quot; }
+  ],
+  &quot;ticks&quot;: [
+    { &quot;habitId&quot;: &quot;h1&quot;, &quot;day&quot;: &quot;2026-09-06&quot; },
+    { &quot;habitId&quot;: &quot;h2&quot;, &quot;day&quot;: &quot;2026-09-05&quot; },
+    { &quot;habitId&quot;: &quot;h2&quot;, &quot;day&quot;: &quot;2026-09-04&quot; }
+  ],
+  &quot;tasks&quot;: [
+    { &quot;id&quot;: &quot;t1&quot;, &quot;title&quot;: &quot;File the notice&quot;, &quot;list&quot;: &quot;today&quot;, &quot;due&quot;: &quot;2026-09-10&quot;, &quot;doneOn&quot;: &quot;2026-09-06&quot; },
+    { &quot;id&quot;: &quot;t2&quot;, &quot;title&quot;: &quot;Renew the licence&quot;, &quot;list&quot;: &quot;today&quot;, &quot;due&quot;: &quot;2026-09-30&quot;, &quot;doneOn&quot;: null },
+    { &quot;id&quot;: &quot;t3&quot;, &quot;title&quot;: &quot;Ring the printer&quot;, &quot;list&quot;: &quot;today&quot;, &quot;due&quot;: null, &quot;doneOn&quot;: null }
+  ]
+}
+</code></pre>
+<p><strong><code>src/dates.js</code></strong></p>
+<pre><code class="language-javascript">// Every date in this project is an ISO calendar day, &quot;YYYY-MM-DD&quot;, in South
+// African Standard Time. There is no time-of-day anywhere, so there is no
+// timezone arithmetic to get wrong.
+
+const ZONE = &quot;Africa/Johannesburg&quot;;
+
+const isoParts = new Intl.DateTimeFormat(&quot;en-CA&quot;, {
+  timeZone: ZONE,
+  year: &quot;numeric&quot;,
+  month: &quot;2-digit&quot;,
+  day: &quot;2-digit&quot;,
+});
+
+/** Today in Johannesburg, as &quot;YYYY-MM-DD&quot;. */
+export function today(now = new Date()) {
+  return isoParts.format(now);
+}
+
+/** The `count` most recent days ending today, newest first. */
+export function lastNDays(count, from = today()) {
+  const days = [];
+  const base = new Date(`${from}T00:00:00Z`);
+  for (let i = 0; i &lt; count; i++) {
+    const day = new Date(base);
+    day.setUTCDate(day.getUTCDate() - i);
+    days.push(day.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+const longDate = new Intl.DateTimeFormat(&quot;en-ZA&quot;, {
+  timeZone: &quot;UTC&quot;,
+  day: &quot;numeric&quot;,
+  month: &quot;long&quot;,
+  year: &quot;numeric&quot;,
+});
+
+/** &quot;2026-09-10&quot; becomes &quot;10 September 2026&quot;. */
+export function formatDay(iso) {
+  return longDate.format(new Date(`${iso}T00:00:00Z`));
+}
+</code></pre>
+<p><strong>Note:</strong> One formatter, one stated zone, defined once. <code>en-CA</code> is used for the
+ISO shape because that locale formats as <code>YYYY-MM-DD</code>; <code>en-ZA</code> is used for
+anything a person reads. Never build a date string by hand out of
+<code>getFullYear()</code> and friends.</p>
+<p><strong><code>src/storage.js</code></strong></p>
+<pre><code class="language-javascript">import { readFile, writeFile, rename, mkdir } from &quot;node:fs/promises&quot;;
+import { dirname } from &quot;node:path&quot;;
+import { fileURLToPath } from &quot;node:url&quot;;
+import seed from &quot;../fixtures/tools.seed.json&quot; with { type: &quot;json&quot; };
+
+const FILE = fileURLToPath(new URL(&quot;../data/tools.json&quot;, import.meta.url));
+
+const EMPTY = { habits: [], ticks: [], tasks: [] };
+
+/**
+ * Read the store. A missing file is the expected first run and seeds from the
+ * fixture. Anything else is re-thrown with its cause: losing the difference
+ * between &quot;no data yet&quot; and &quot;your data is unreadable&quot; is how people lose data.
+ */
+export async function load() {
+  try {
+    return { ...EMPTY, ...JSON.parse(await readFile(FILE, &quot;utf8&quot;)) };
+  } catch (error) {
+    if (error.code === &quot;ENOENT&quot;) return structuredClone(seed);
+    throw new Error(`Could not read ${FILE}`, { cause: error });
+  }
+}
+
+/**
+ * Write the store atomically. A partial write leaves unparseable JSON on disk;
+ * a rename inside one filesystem is a single directory operation, so a reader
+ * sees either the old file or the new one and never half of either.
+ */
+export async function save(state) {
+  await mkdir(dirname(FILE), { recursive: true });
+  const temporary = `${FILE}.${process.pid}.tmp`;
+  await writeFile(temporary, JSON.stringify(state, null, 2) + &quot;\n&quot;, &quot;utf8&quot;);
+  await rename(temporary, FILE);
+}
+</code></pre>
+<p><strong>Note on the atomic write:</strong> <code>writeFile</code> can be interrupted, and an
+interrupted write leaves half a JSON document on disk, which the next <code>load</code>
+cannot parse. Writing to a temporary file and then renaming makes the swap a
+single directory operation, so a reader sees the old file or the new one and
+never half of either. This is stretch goal three, and it is three lines.</p>
+<p><strong><code>src/habits.js</code></strong></p>
+<pre><code class="language-javascript">import { randomUUID } from &quot;node:crypto&quot;;
+import { today, lastNDays } from &quot;./dates.js&quot;;
+
+export const TIMES_OF_DAY = [&quot;morning&quot;, &quot;midday&quot;, &quot;evening&quot;];
+
+const MIN_HISTORY_DAYS = 5;
+const WINDOW_DAYS = 28;
+
+export function addHabit(state, { name, when = &quot;morning&quot;, cue = &quot;&quot; }) {
+  if (!TIMES_OF_DAY.includes(when)) {
+    throw new Error(`Unknown time of day &quot;${when}&quot;. Use one of: ${TIMES_OF_DAY.join(&quot;, &quot;)}.`);
+  }
+  const habit = { id: randomUUID(), name, when, cue, createdAt: today() };
+  return { ...state, habits: [...state.habits, habit] };
+}
+
+export function findHabit(state, name) {
+  const wanted = name.toLowerCase();
+  return state.habits.find((h) =&gt; h.name.toLowerCase() === wanted);
+}
+
+/** Ticking is idempotent: one habit, one day, one tick. */
+export function tickHabit(state, name, day = today()) {
+  const habit = findHabit(state, name);
+  if (!habit) throw new Error(`No habit called &quot;${name}&quot;.`);
+  const already = state.ticks.some((t) =&gt; t.habitId === habit.id &amp;&amp; t.day === day);
+  if (already) return state;
+  return { ...state, ticks: [...state.ticks, { habitId: habit.id, day }] };
+}
+
+/**
+ * Consistency over a rolling 28 days, never a streak. Missing one day does not
+ * materially affect habit formation (Lally et al., 2010), so a counter that
+ * resets to zero tells the user something untrue, and tells it to somebody who
+ * is already struggling.
+ */
+export function consistency(state, habit, day = today()) {
+  const window = new Set(lastNDays(WINDOW_DAYS, day));
+  const daysDone = new Set(
+    state.ticks.filter((t) =&gt; t.habitId === habit.id).map((t) =&gt; t.day),
+  );
+  const hits = daysDone.intersection(window);
+
+  const age = lastNDays(WINDOW_DAYS, day).filter((d) =&gt; d &gt;= habit.createdAt).length;
+  if (age &lt; MIN_HISTORY_DAYS) {
+    return { started: false, hits: hits.size, of: WINDOW_DAYS, label: &quot;Just started&quot; };
+  }
+  return { started: true, hits: hits.size, of: WINDOW_DAYS, label: `${hits.size} of ${WINDOW_DAYS} days` };
+}
+
+export function isDoneOn(state, habit, day = today()) {
+  return state.ticks.some((t) =&gt; t.habitId === habit.id &amp;&amp; t.day === day);
+}
+
+/**
+ * One gentle nudge when a habit was missed yesterday and is not done today.
+ * Never red, never a broken-streak graphic.
+ */
+export function needsNudge(state, habit, day = today()) {
+  const [current, previous] = lastNDays(2, day);
+  return !isDoneOn(state, habit, current) &amp;&amp; !isDoneOn(state, habit, previous);
+}
+
+/** Grouped by time of day, in the order a day runs. Empty groups are dropped. */
+export function groupByTimeOfDay(habits) {
+  const grouped = Object.groupBy(habits, (h) =&gt; h.when);
+  return TIMES_OF_DAY
+    .map((when) =&gt; [when, grouped[when] ?? []])
+    .filter(([, list]) =&gt; list.length &gt; 0);
+}
+
+/** The next habit not yet done today, in day order. Lazy: it stops at the first. */
+export function nextUp(state, day = today()) {
+  return groupByTimeOfDay(state.habits)
+    .values()
+    .flatMap(([, list]) =&gt; list)
+    .filter((habit) =&gt; !isDoneOn(state, habit, day))
+    .take(1)
+    .toArray()
+    .at(0);
+}
+</code></pre>
+<p><strong>Note on <code>consistency</code>:</strong> the intersection of &quot;days this habit was ticked&quot; and
+&quot;the last 28 days&quot; is one call, <code>daysDone.intersection(window)</code>, because both
+are <code>Set</code>s. Written with arrays and <code>filter</code>, it is a nested loop.</p>
+<p><strong>Note on <code>nextUp</code>:</strong> the chain uses iterator helpers and ends in <code>take(1)</code>, so
+it stops at the first habit that is not done. On a list of five habits that
+saves nothing measurable. It is written this way because it is the shape that
+keeps working when the list is long or the source is a stream, and because the
+alternative, <code>.flat().find(...)</code>, builds an intermediate array to throw away.</p>
+<p><strong><code>src/tasks.js</code></strong></p>
+<pre><code class="language-javascript">import { randomUUID } from &quot;node:crypto&quot;;
+import { today } from &quot;./dates.js&quot;;
+
+export const LISTS = [&quot;today&quot;, &quot;later&quot;];
+
+export function addTask(state, { title, list = &quot;today&quot;, due = null }) {
+  if (!LISTS.includes(list)) {
+    throw new Error(`Unknown list &quot;${list}&quot;. Use one of: ${LISTS.join(&quot;, &quot;)}.`);
+  }
+  const task = { id: randomUUID(), title, list, due, doneOn: null };
+  return { ...state, tasks: [...state.tasks, task] };
+}
+
+function replaceTask(state, index, next) {
+  return { ...state, tasks: state.tasks.with(index, next) };
+}
+
+export function tickTask(state, title, day = today()) {
+  const index = state.tasks.findIndex((t) =&gt; t.title.toLowerCase() === title.toLowerCase());
+  if (index === -1) throw new Error(`No task called &quot;${title}&quot;.`);
+  return replaceTask(state, index, { ...state.tasks[index], doneOn: day });
+}
+
+export function reopenTask(state, title) {
+  const index = state.tasks.findLastIndex((t) =&gt; t.title.toLowerCase() === title.toLowerCase());
+  if (index === -1) throw new Error(`No task called &quot;${title}&quot;.`);
+  return replaceTask(state, index, { ...state.tasks[index], doneOn: null });
+}
+
+/**
+ * Roll over: an unfinished task whose due date is today or earlier belongs
+ * under Today, whatever list it was parked in. It never falls silently into
+ * the backlog.
+ */
+export function rollover(tasks, day = today()) {
+  return tasks.map((task) =&gt; {
+    const overdue = task.doneOn === null &amp;&amp; task.due !== null &amp;&amp; task.due &lt;= day;
+    return overdue ? { ...task, list: &quot;today&quot; } : task;
+  });
+}
+
+export function forList(state, list, day = today()) {
+  return rollover(state.tasks, day)
+    .filter((task) =&gt; task.list === list)
+    .toSorted((a, b) =&gt; (a.due ?? &quot;9999-99-99&quot;).localeCompare(b.due ?? &quot;9999-99-99&quot;));
+}
+
+export function counts(tasks, day = today()) {
+  const done = tasks.filter((t) =&gt; t.doneOn === day).length;
+  return { done, of: tasks.length };
+}
+</code></pre>
+<p><strong>Note:</strong> every function returns a new state. <code>with</code> replaces one element,
+<code>toSorted</code> orders without mutating, and spread rebuilds the object. This is not
+ceremony: <code>rollover</code> is called on every render, and a version that mutated
+would gradually rewrite the stored <code>list</code> field of every overdue task, which is
+not what &quot;show it under Today&quot; means.</p>
+<p><strong><code>src/format.js</code></strong></p>
+<pre><code class="language-javascript">import { formatDay } from &quot;./dates.js&quot;;
+import { consistency, groupByTimeOfDay, isDoneOn, needsNudge } from &quot;./habits.js&quot;;
+import { counts } from &quot;./tasks.js&quot;;
+
+const box = (done) =&gt; (done ? &quot;[x]&quot; : &quot;[ ]&quot;);
+const pad = (text, width) =&gt; text.padEnd(width, &quot; &quot;);
+
+export function renderHabits(state, day) {
+  const lines = [&quot;Habits&quot;, &quot;&quot;];
+  for (const [when, habits] of groupByTimeOfDay(state.habits)) {
+    lines.push(when.at(0).toUpperCase() + when.slice(1));
+    for (const habit of habits) {
+      const done = isDoneOn(state, habit, day);
+      lines.push(
+        `  ${box(done)} ${pad(habit.name, 30)} ${pad(habit.cue, 24)} ${consistency(state, habit, day).label}`.trimEnd(),
+      );
+      if (needsNudge(state, habit, day)) {
+        lines.push(`      Missed yesterday. Doing it today is the whole trick.`);
+      }
+    }
+  }
+  if (state.habits.length === 0) lines.push(&quot;  Nothing yet. Add one with: habits add \&quot;name\&quot;&quot;);
+  return lines.join(&quot;\n&quot;);
+}
+
+export function renderTasks(tasks, list, day) {
+  const { done, of } = counts(tasks, day);
+  const lines = [`Tasks · ${list} · ${done} of ${of} done`, &quot;&quot;];
+  for (const task of tasks) {
+    const due = task.due === null ? &quot;&quot; : `due ${formatDay(task.due)}`;
+    lines.push(`  ${box(task.doneOn !== null)} ${pad(task.title, 30)} ${due}`.trimEnd());
+  }
+  if (tasks.length === 0) lines.push(&quot;  Nothing on this list.&quot;);
+  return lines.join(&quot;\n&quot;);
+}
+</code></pre>
+<p><strong>Note:</strong> all printing lives here and nowhere else. Every module above returns
+data. That separation is what makes <code>--json</code> a four-line change rather than a
+rewrite, and it is why the tests never have to parse output.</p>
+<p><strong><code>src/main.js</code></strong></p>
+<pre><code class="language-javascript">import { parseArgs } from &quot;node:util&quot;;
+import { load, save } from &quot;./storage.js&quot;;
+import { today } from &quot;./dates.js&quot;;
+import { addHabit, tickHabit, nextUp } from &quot;./habits.js&quot;;
+import { addTask, tickTask, reopenTask, forList } from &quot;./tasks.js&quot;;
+import { renderHabits, renderTasks } from &quot;./format.js&quot;;
+
+const USAGE = `Usage:
+  habits add &lt;name&gt; [--when morning|midday|evening] [--cue &quot;after I ...&quot;]
+  habits tick &lt;name&gt;
+  habits list
+  tasks  add &lt;title&gt; [--list today|later] [--due YYYY-MM-DD]
+  tasks  tick &lt;title&gt;
+  tasks  reopen &lt;title&gt;
+  tasks  list [--list today|later] [--json]`;
+
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    cue: { type: &quot;string&quot;, default: &quot;&quot; },
+    when: { type: &quot;string&quot;, default: &quot;morning&quot; },
+    due: { type: &quot;string&quot; },
+    list: { type: &quot;string&quot;, default: &quot;today&quot; },
+    json: { type: &quot;boolean&quot;, default: false },
+  },
+});
+
+const [group, command, ...rest] = positionals;
+const subject = rest.join(&quot; &quot;);
+const day = today();
+
+const handlers = {
+  &quot;habits add&quot;: (state) =&gt; addHabit(state, { name: subject, when: values.when, cue: values.cue }),
+  &quot;habits tick&quot;: (state) =&gt; tickHabit(state, subject, day),
+  &quot;tasks add&quot;: (state) =&gt; addTask(state, { title: subject, list: values.list, due: values.due ?? null }),
+  &quot;tasks tick&quot;: (state) =&gt; tickTask(state, subject, day),
+  &quot;tasks reopen&quot;: (state) =&gt; reopenTask(state, subject),
+};
+
+async function main() {
+  const key = `${group} ${command}`;
+  const state = await load();
+
+  if (key === &quot;habits list&quot;) {
+    console.log(renderHabits(state, day));
+    const next = nextUp(state, day);
+    if (next) console.log(`\nNext up: ${next.name}`);
+    return 0;
+  }
+
+  if (key === &quot;tasks list&quot;) {
+    const tasks = forList(state, values.list, day);
+    if (values.json) {
+      console.log(JSON.stringify(tasks, null, 2));
+      return 0;
+    }
+    console.log(renderTasks(tasks, values.list, day));
+    return 0;
+  }
+
+  const handler = handlers[key];
+  if (!handler) {
+    console.error(USAGE);
+    return 2;
+  }
+  if (subject === &quot;&quot;) {
+    console.error(`&quot;${key}&quot; needs a name. \n\n${USAGE}`);
+    return 2;
+  }
+
+  await save(handler(state));
+  console.log(`Done: ${key} &quot;${subject}&quot;`);
+  return 0;
+}
+
+process.exitCode = await main().catch((error) =&gt; {
+  console.error(error.message);
+  if (error.cause) console.error(&quot;  caused by:&quot;, error.cause.message);
+  return 1;
+});
+</code></pre>
+<p><strong>Note on <code>parseArgs</code>:</strong> it is in <code>node:util</code> and it handles <code>--flag value</code>,
+<code>--flag=value</code>, booleans and positionals. For a CLI of this size you do not
+need <code>commander</code> or <code>yargs</code>. One fewer dependency is one fewer thing that can
+be compromised in a supply chain attack, which is a point the workbook makes at
+length.</p>
+<p><strong>Note on <code>process.exitCode</code>:</strong> setting it rather than calling <code>process.exit()</code>
+lets pending output flush. <code>process.exit()</code> in the middle of a write truncates
+it, which produces the maddening bug where a script works when piped to a
+terminal and loses its last line when piped to a file.</p>
+<h3>The tests</h3>
+<p><strong><code>test/habits.test.js</code></strong></p>
+<pre><code class="language-javascript">import test from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { consistency, groupByTimeOfDay, needsNudge } from &quot;../src/habits.js&quot;;
+
+const habit = { id: &quot;h1&quot;, name: &quot;Walk&quot;, when: &quot;morning&quot;, cue: &quot;&quot;, createdAt: &quot;2026-01-01&quot; };
+
+function stateWithTicks(days) {
+  return { habits: [habit], ticks: days.map((day) =&gt; ({ habitId: &quot;h1&quot;, day })), tasks: [] };
+}
+
+test(&quot;consistency counts days inside the 28-day window&quot;, () =&gt; {
+  const state = stateWithTicks([&quot;2026-09-06&quot;, &quot;2026-09-05&quot;, &quot;2026-08-01&quot;]);
+  const result = consistency(state, habit, &quot;2026-09-06&quot;);
+  assert.equal(result.hits, 2, &quot;2026-08-01 is outside the window&quot;);
+  assert.equal(result.label, &quot;2 of 28 days&quot;);
+});
+
+test(&quot;a habit younger than five days says Just started&quot;, () =&gt; {
+  const fresh = { ...habit, createdAt: &quot;2026-09-04&quot; };
+  const state = { habits: [fresh], ticks: [{ habitId: &quot;h1&quot;, day: &quot;2026-09-06&quot; }], tasks: [] };
+  assert.equal(consistency(state, fresh, &quot;2026-09-06&quot;).label, &quot;Just started&quot;);
+});
+
+test(&quot;consistency never resets to zero after one miss&quot;, () =&gt; {
+  const state = stateWithTicks([&quot;2026-09-04&quot;, &quot;2026-09-03&quot;, &quot;2026-09-02&quot;]);
+  assert.equal(consistency(state, habit, &quot;2026-09-06&quot;).hits, 3);
+});
+
+test(&quot;the nudge fires only after two missed days&quot;, () =&gt; {
+  const yesterdayDone = stateWithTicks([&quot;2026-09-05&quot;]);
+  assert.equal(needsNudge(yesterdayDone, habit, &quot;2026-09-06&quot;), false);
+
+  const bothMissed = stateWithTicks([&quot;2026-09-01&quot;]);
+  assert.equal(needsNudge(bothMissed, habit, &quot;2026-09-06&quot;), true);
+});
+
+test(&quot;grouping drops empty times of day and keeps day order&quot;, () =&gt; {
+  const habits = [
+    { id: &quot;a&quot;, name: &quot;A&quot;, when: &quot;evening&quot;, cue: &quot;&quot;, createdAt: &quot;2026-01-01&quot; },
+    { id: &quot;b&quot;, name: &quot;B&quot;, when: &quot;morning&quot;, cue: &quot;&quot;, createdAt: &quot;2026-01-01&quot; },
+  ];
+  assert.deepEqual(groupByTimeOfDay(habits).map(([when]) =&gt; when), [&quot;morning&quot;, &quot;evening&quot;]);
+});
+</code></pre>
+<p><strong><code>test/tasks.test.js</code></strong></p>
+<pre><code class="language-javascript">import test from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { rollover, counts, tickTask, reopenTask } from &quot;../src/tasks.js&quot;;
+
+const tasks = [
+  { id: &quot;t1&quot;, title: &quot;Overdue&quot;, list: &quot;later&quot;, due: &quot;2026-09-01&quot;, doneOn: null },
+  { id: &quot;t2&quot;, title: &quot;Future&quot;, list: &quot;later&quot;, due: &quot;2026-12-01&quot;, doneOn: null },
+  { id: &quot;t3&quot;, title: &quot;Done and overdue&quot;, list: &quot;later&quot;, due: &quot;2026-09-01&quot;, doneOn: &quot;2026-09-02&quot; },
+];
+
+test(&quot;an unfinished overdue task rolls into today&quot;, () =&gt; {
+  const rolled = rollover(tasks, &quot;2026-09-06&quot;);
+  assert.equal(rolled.find((t) =&gt; t.id === &quot;t1&quot;).list, &quot;today&quot;);
+});
+
+test(&quot;a future task stays where it is&quot;, () =&gt; {
+  assert.equal(rollover(tasks, &quot;2026-09-06&quot;).find((t) =&gt; t.id === &quot;t2&quot;).list, &quot;later&quot;);
+});
+
+test(&quot;a finished task never rolls over&quot;, () =&gt; {
+  assert.equal(rollover(tasks, &quot;2026-09-06&quot;).find((t) =&gt; t.id === &quot;t3&quot;).list, &quot;later&quot;);
+});
+
+test(&quot;rollover does not mutate its input&quot;, () =&gt; {
+  rollover(tasks, &quot;2026-09-06&quot;);
+  assert.equal(tasks[0].list, &quot;later&quot;);
+});
+
+test(&quot;counts reports what was finished today, not in total&quot;, () =&gt; {
+  assert.deepEqual(counts(tasks, &quot;2026-09-02&quot;), { done: 1, of: 3 });
+  assert.deepEqual(counts(tasks, &quot;2026-09-06&quot;), { done: 0, of: 3 });
+});
+
+test(&quot;ticking then reopening returns the original task&quot;, () =&gt; {
+  const state = { habits: [], ticks: [], tasks };
+  const ticked = tickTask(state, &quot;Overdue&quot;, &quot;2026-09-06&quot;);
+  assert.equal(ticked.tasks[0].doneOn, &quot;2026-09-06&quot;);
+  assert.equal(reopenTask(ticked, &quot;Overdue&quot;).tasks[0].doneOn, null);
+});
+
+test(&quot;an unknown title is an error, not a silent no-op&quot;, () =&gt; {
+  const state = { habits: [], ticks: [], tasks };
+  assert.throws(() =&gt; tickTask(state, &quot;Nope&quot;), /No task called &quot;Nope&quot;/);
+});
+</code></pre>
+<p>Run them:</p>
+<pre><code class="language-bash">node --test
+</code></pre>
+<pre><code>ℹ tests 12
+ℹ pass 12
+ℹ fail 0
+</code></pre>
+<p><strong>Note on what is tested:</strong> the two functions with real logic, <code>consistency</code>
+and <code>rollover</code>, plus the error paths. Nothing tests <code>format.js</code>, because
+asserting on the exact spacing of output is a test that fails every time
+somebody adjusts a column and never fails when the logic is wrong. Test what
+can be wrong in an interesting way.</p>
+<p>Note especially the test named &quot;consistency never resets to zero after one
+miss&quot;. That test is the requirement. If somebody later &quot;fixes&quot; <code>consistency</code>
+into a streak counter, that test goes red and the review conversation happens.
+A rule that matters should have a test with its name on it.</p>
+<hr>
+<h2>Where the exercises came from</h2>
+<p>The habit rules in this capstone are copied from a real product&#39;s rules file,
+including the citation for why streaks were rejected. When you meet a
+requirement that seems oddly specific, it usually is: somebody decided it, for
+a reason, on a date. Finding out which is part of the job.</p>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>

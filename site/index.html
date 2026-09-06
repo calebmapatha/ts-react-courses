@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casey Learning Hub</title>
+<meta name="description" content="Three courses, a workbook and an interactive test on JavaScript, TypeScript, React, security, data protection and operations.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="./">Casey Learning Hub</a>
+    <nav>
+      <a href="./" aria-current="page">Hub</a>
+      <a href="./test.html">Test</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <h1>Casey Learning Hub</h1>
+  <p class="lede">
+    Three courses on modern JavaScript, TypeScript and React, a workbook on
+    everything that comes after the code compiles, and an interactive test.
+    Revised September 2026.
+  </p>
+
+  <section id="overall"></section>
+
+  <h2>Read</h2>
+  <div class="cards two" id="reading"></div>
+
+  <h2>Test yourself</h2>
+  <p class="small">
+    Seventy-six questions, half straightforward and half not. Many are
+    scenarios: a stolen laptop, a leaking paywall, a webhook that grants twice.
+    You get the reasoning after each answer, whether you were right or wrong.
+  </p>
+  <div id="scores"></div>
+  <div class="btns">
+    <a class="btn" href="./test.html">Start a mixed test</a>
+    <a class="btn ghost" href="./test.html#topics">Pick a topic</a>
+  </div>
+
+  <h2>Reference</h2>
+  <ul class="plain">
+    <li><a href="./read/stack.html">STACK.md</a> <span class="small">What the products actually run, and what could not be verified</span></li>
+    <li><a href="./read/readme.html">Repository README</a> <span class="small">The version baseline and how each claim was checked</span></li>
+  </ul>
+
+  <hr>
+
+  <h2>Progress</h2>
+  <p class="small">
+    Progress is kept in this browser only. Nothing is sent anywhere, there is
+    no account, and clearing your site data clears it.
+  </p>
+  <div class="btns">
+    <button class="btn ghost" id="reset">Reset all progress</button>
+  </div>
+
+  <footer class="foot">
+    <p>
+      Static site. No tracking, no cookies, no build step.
+      <a href="https://github.com/calebmapatha/ts-react-courses">Source</a>.
+    </p>
+  </footer>
+
+</main>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+<script>
+const READING = [
+  { id: "js",       title: "1. Modern JavaScript",     href: "read/javascript-course.html",   note: "ES2023 to ES2025, Node 24, a Tools CLI capstone", time: "14 to 20 h" },
+  { id: "ts",       title: "2. TypeScript",            href: "read/typescript-course.html",   note: "TypeScript 7 defaults, Zod 4, branded types",     time: "12 to 18 h" },
+  { id: "react",    title: "3. React with TypeScript", href: "read/react-typescript-course.html", note: "React 19, the App Router, a paywalled capstone", time: "18 to 24 h" },
+  { id: "workbook", title: "4. The Casey Workbook",    href: "read/workbook.html",            note: "Architecture, security, data protection, operations, payments, AI", time: "60 h" }
+];
+
+const SOLUTIONS = {
+  js: "read/javascript-course-solutions.html",
+  ts: "read/typescript-course-solutions.html",
+  react: "read/react-typescript-course-solutions.html",
+  workbook: "read/workbook-solutions.html"
+};
+
+function render() {
+  const p = Progress.all();
+
+  /* Reading cards */
+  const wrap = document.getElementById("reading");
+  setKids(wrap,...READING.map((item) => {
+    const done = Boolean(p.read[item.id]);
+    /* A div, not an anchor: an anchor inside an anchor is invalid HTML and
+       browsers disagree about which one wins the click. */
+    return el("div", { class: "card" },
+      el("h3", {}, el("a", { href: item.href, style: "text-decoration:none" }, item.title),
+        done ? el("span", { class: "tick", text: " \u2713" }) : null),
+      el("p", { text: item.note }),
+      el("div", { class: "meta" }, item.time, " \u00b7 ", done ? "read" : "not read",
+        " \u00b7 ", el("a", { href: SOLUTIONS[item.id] }, "answers"))
+    );
+  }));
+
+  /* Scores per topic */
+  const scores = document.getElementById("scores");
+  setKids(scores,...TOPICS.map((t) => {
+    const s = p.scores[t.id];
+    const row = el("div", { style: "margin-bottom:12px" },
+      el("div", { class: "statline" },
+        el("span", {}, el("a", { href: "test.html?topic=" + t.id, style: "text-decoration:none" }, t.name),
+          " ", el("span", { class: "small", text: t.blurb })),
+        s ? el("b", { text: s.pct + "%" })
+          : el("span", { class: "small", text: "not tried" })),
+      bar(s ? s.pct : 0));
+    return row;
+  }));
+
+  /* Overall */
+  const readCount = READING.filter((r) => p.read[r.id]).length;
+  const tested = TOPICS.filter((t) => p.scores[t.id]);
+  const avg = tested.length
+    ? Math.round(tested.reduce((sum, t) => sum + p.scores[t.id].pct, 0) / tested.length) : 0;
+  const overall = Math.round(((readCount / READING.length) * 50) + ((tested.length / TOPICS.length) * (avg / 100) * 50));
+
+  setKids(document.getElementById("overall"),
+    el("div", { style: "border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:8px" },
+      el("div", { class: "statline" },
+        el("span", { text: "Overall" }),
+        el("b", { text: overall + "%" })),
+      bar(overall),
+      el("p", { class: "small", style: "margin:10px 0 0" },
+        readCount + " of " + READING.length + " read · " +
+        tested.length + " of " + TOPICS.length + " topics tested" +
+        (tested.length ? " · " + avg + "% average" : ""))));
+}
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (confirm("Clear reading progress and every test score in this browser?")) {
+    Progress.reset();
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1868 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modern JavaScript · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>Modern JavaScript: A Practical Course</h1>
+<p>Revised for 2026. A foundational course for developers who want to be
+comfortable with modern JavaScript before tackling TypeScript and React. By the
+end you will know every modern feature you need to read and write professional
+code. Total time: roughly 12 to 18 hours with exercises.</p>
+<p>This course assumes you know basic programming concepts (variables, loops,
+functions, conditionals) but does not assume any JavaScript expertise.</p>
+<p>Material added or changed in the 2026 revision is marked <strong>(2026)</strong>. If you
+worked through an earlier version of this course, those markers are the diff.</p>
+<p><strong>Baseline (2026):</strong> Node.js 24 (Active LTS), ES modules only, no build step.
+Every sample in this course was run on Node 24.20.0 before publication. The
+version table lives in <code>STACK.md</code> at the root of this repository.</p>
+<hr>
+<h2>Lesson 0: Setup and Background</h2>
+<h3>What is JavaScript?</h3>
+<p>JavaScript is a programming language originally designed to run inside web
+browsers. It is now used everywhere: in browsers (frontend), on servers
+(Node.js), in desktop apps (Electron), on mobile (React Native), and inside
+native shells (Capacitor).</p>
+<blockquote>
+<p><strong>Background: What does &quot;ES2026&quot; mean?</strong></p>
+<p>ES stands for ECMAScript, which is the official specification that JavaScript
+implements. ES2015 (also called ES6) was a major upgrade in 2015 that added
+classes, modules, and arrow functions. Every year since has brought a smaller
+set of additions, named by year: ES2023 added <code>findLast</code> and the non-mutating
+array methods, ES2024 added <code>Object.groupBy</code> and <code>Promise.withResolvers</code>,
+ES2025 added iterator helpers, Set operations and <code>RegExp.escape</code>. When
+people say &quot;modern JavaScript&quot; they mean the language as it has existed since
+2015. This course teaches all of it, and marks anything newer than ES2022
+with <strong>(2026)</strong> so you know what an older runtime will not have.</p>
+</blockquote>
+<h3>What is Node.js?</h3>
+<p>Node.js is a runtime that lets you execute JavaScript outside the browser. You
+will use it to run scripts and install tools.</p>
+<p><strong>(2026)</strong> Install <strong>Node.js 24</strong>, the Active LTS line, from
+<a href="https://nodejs.org">https://nodejs.org</a>. Then verify:</p>
+<pre><code class="language-bash">node --version   # expect v24.x.x
+npm --version
+</code></pre>
+<blockquote>
+<p><strong>Background: Which Node version should I install?</strong></p>
+<p>Node ships a new major version every six months. Even-numbered versions
+become &quot;Active LTS&quot; (long term support) each October and are supported for
+about three years. Odd-numbered versions are for trying things out and are
+never LTS. As at September 2026, Node 24 is the Active LTS line, Node 22 is
+in maintenance until April 2027, and Node 20 reached end of life on 30 April
+2026. Node 26 becomes Active LTS at the end of October 2026. Install the
+Active LTS line unless a project tells you otherwise.</p>
+</blockquote>
+<p>Some samples in this course need Node 24 specifically. They are marked. If you
+are on Node 22, <code>Promise.try</code>, <code>RegExp.escape</code> and <code>Error.isError</code> will be
+<code>undefined</code> and those samples will fail.</p>
+<blockquote>
+<p><strong>Background: What is npm?</strong></p>
+<p>npm stands for Node Package Manager. It is bundled with Node.js. It does two
+main things: it installs third-party libraries (called &quot;packages&quot;) into your
+project, and it tracks which versions you are using in a file called
+<code>package.json</code>. Other package managers do the same job. Casey Journals uses
+pnpm, which is stricter about which packages a file may import; Mentisflow
+uses npm. The commands differ, the idea does not.</p>
+</blockquote>
+<h3>Setting up a project</h3>
+<p>Create a folder and initialise it:</p>
+<pre><code class="language-bash">mkdir js-course
+cd js-course
+npm init -y
+</code></pre>
+<blockquote>
+<p><strong>Background: What just happened?</strong></p>
+<p>The <code>npm init -y</code> command created a <code>package.json</code> file. This is a manifest
+that describes your project: its name, version, dependencies, and scripts.
+The <code>-y</code> flag accepts all defaults. You can open <code>package.json</code> in any editor
+to see what is in it.</p>
+</blockquote>
+<p><strong>(2026)</strong> Add <code>&quot;type&quot;: &quot;module&quot;</code> to your <code>package.json</code>. This course is ES
+modules only. There is no CommonJS anywhere in it.</p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;js-course&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;src/main.js&quot;,
+  &quot;engines&quot;: { &quot;node&quot;: &quot;&gt;=24&quot; },
+  &quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node src/main.js&quot;,
+    &quot;dev&quot;: &quot;node --watch src/main.js&quot;
+  }
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What does <code>&quot;type&quot;: &quot;module&quot;</code> do, and why only modules?</strong></p>
+<p>JavaScript has two module systems. The older one is CommonJS (<code>require</code> and
+<code>module.exports</code>). The newer one is ES Modules (<code>import</code> and <code>export</code>).
+Setting <code>&quot;type&quot;: &quot;module&quot;</code> tells Node.js to treat <code>.js</code> files as ES Modules.</p>
+<p>Earlier versions of this course taught both. This one teaches only ES
+modules, because that is what every tool now assumes. Vite, Vitest, ESLint 9
+flat config, and Node itself all default to modules. Both Casey Journals
+(<code>packages/core/package.json</code>) and Mentisflow (<code>mentisflow/package.json</code>)
+declare <code>&quot;type&quot;: &quot;module&quot;</code>. You will still meet CommonJS in old packages, and
+<code>import</code> can load them, but you should not write it.</p>
+</blockquote>
+<h3>The <code>node:</code> prefix (2026)</h3>
+<p>When you import something built into Node, prefix it with <code>node:</code>.</p>
+<pre><code class="language-javascript">import { readFile, writeFile } from &quot;node:fs/promises&quot;;
+import { join } from &quot;node:path&quot;;
+import { parseArgs } from &quot;node:util&quot;;
+import test from &quot;node:test&quot;;
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why the prefix?</strong></p>
+<p>Without it, <code>import &quot;fs&quot;</code> is ambiguous: Node has to check whether a package
+called <code>fs</code> exists in <code>node_modules</code> first. Someone could publish one. The
+<code>node:</code> prefix says &quot;the built-in, always&quot; and cannot be shadowed by any
+package. It is faster to resolve and it is safer. Some newer built-ins, such
+as <code>node:test</code> and <code>node:sqlite</code>, are <em>only</em> importable with the prefix. Use
+it everywhere.</p>
+</blockquote>
+<h3>Running your code (2026)</h3>
+<p>Create <code>src/main.js</code>:</p>
+<pre><code class="language-javascript">console.log(&quot;Hello, JavaScript.&quot;);
+</code></pre>
+<p>Run it:</p>
+<pre><code class="language-bash">node src/main.js
+</code></pre>
+<p>Three flags are worth learning now.</p>
+<pre><code class="language-bash"># Restart automatically when a file changes. No nodemon needed.
+node --watch src/main.js
+
+# Run a script from package.json without npm in the middle.
+node --run dev
+
+# Load a .env file into process.env without the dotenv package.
+node --env-file=.env src/main.js
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What replaced the tools I have read about?</strong></p>
+<p>Tutorials written before 2024 tell you to install <code>nodemon</code> for reloading and
+<code>dotenv</code> for environment variables. Node does both itself now. <code>node --watch</code>
+replaces <code>nodemon</code>. <code>--env-file</code> replaces <code>dotenv</code> for the common case. And
+as you will see in the TypeScript course, <code>node file.ts</code> replaces <code>ts-node</code>.
+Fewer dependencies is not a style preference. Every package you do not
+install is a package that cannot be compromised, which is a point the
+workbook returns to under supply chain security.</p>
+</blockquote>
+<p><strong>Never put a real secret in a file you commit.</strong> A <code>.env</code> file belongs in
+<code>.gitignore</code>. Both Casey products keep an <code>.env.example</code> with empty values
+committed and the real <code>.env</code> ignored. Copy that habit from the first day.</p>
+<p>If you see <code>Hello, JavaScript.</code>, you are ready.</p>
+<hr>
+<h2>Lesson 1: let, const, and Block Scope</h2>
+<p>Modern JavaScript has three ways to declare variables: <code>var</code>, <code>let</code>, and <code>const</code>. You should almost never use <code>var</code>.</p>
+<pre><code class="language-javascript">// const: cannot be reassigned (use this by default)
+const name = &quot;Alex&quot;;
+// name = &quot;Bob&quot;; // Error: Assignment to constant variable
+
+// let: can be reassigned (use only when you need to change it)
+let count = 0;
+count = count + 1; // OK
+
+// var: avoid in modern code
+var oldStyle = &quot;do not use this&quot;;
+</code></pre>
+<blockquote>
+<p><strong>Background: Why avoid <code>var</code>?</strong></p>
+<p>The <code>var</code> keyword has surprising behavior around scoping that causes bugs. Variables declared with <code>var</code> are scoped to the entire enclosing function, regardless of where they are declared. Variables declared with <code>let</code> and <code>const</code> are scoped to the nearest <code>{ ... }</code> block, which matches what most developers expect.</p>
+</blockquote>
+<p>Block scope example:</p>
+<pre><code class="language-javascript">if (true) {
+  const message = &quot;Inside the block&quot;;
+  console.log(message); // works
+}
+// console.log(message); // Error: message is not defined
+
+// Loops create a new scope per iteration with let
+for (let i = 0; i &lt; 3; i++) {
+  setTimeout(() =&gt; console.log(i), 100);
+}
+// Logs: 0, 1, 2 (each iteration captured its own i)
+</code></pre>
+<p><code>const</code> prevents reassignment but not mutation:</p>
+<pre><code class="language-javascript">const list = [1, 2, 3];
+list.push(4);    // Allowed: the variable still points to the same array
+console.log(list); // [1, 2, 3, 4]
+// list = [];    // Error: cannot reassign the variable itself
+</code></pre>
+<p><strong>Default rule of thumb:</strong> Use <code>const</code> everywhere. Switch to <code>let</code> only when you actually need to reassign.</p>
+<p><strong>Exercise:</strong> Write a function <code>countDown(start)</code> that uses <code>let</code> to count from <code>start</code> down to 1, logging each number. Try changing <code>let</code> to <code>const</code> and see what error you get.</p>
+<hr>
+<h2>Lesson 2: Template Literals</h2>
+<p>Template literals use backticks instead of quotes and let you embed expressions:</p>
+<pre><code class="language-javascript">const name = &quot;Maria&quot;;
+const age = 30;
+
+// Old way
+const oldGreeting = &quot;Hello, &quot; + name + &quot;. You are &quot; + age + &quot; years old.&quot;;
+
+// Modern way
+const greeting = `Hello, ${name}. You are ${age} years old.`;
+
+console.log(greeting);
+</code></pre>
+<p>Multi-line strings without escape characters:</p>
+<pre><code class="language-javascript">const message = `
+Dear ${name},
+
+Thank you for signing up.
+
+Best regards,
+The Team
+`;
+</code></pre>
+<p>You can put any expression inside <code>${...}</code>:</p>
+<pre><code class="language-javascript">const a = 5;
+const b = 3;
+console.log(`${a} + ${b} = ${a + b}`);   // &quot;5 + 3 = 8&quot;
+console.log(`Even: ${a % 2 === 0}`);     // &quot;Even: false&quot;
+</code></pre>
+<p><strong>Exercise:</strong> Write a function <code>formatUser({ name, email, role })</code> that returns a multi-line string introducing the user. Use template literals and call it with a sample object.</p>
+<hr>
+<h2>Lesson 3: Arrow Functions</h2>
+<p>Arrow functions are a shorter syntax for writing functions:</p>
+<pre><code class="language-javascript">// Traditional function
+function double(n) {
+  return n * 2;
+}
+
+// Arrow function (full)
+const double2 = (n) =&gt; {
+  return n * 2;
+};
+
+// Arrow function (concise: implicit return for single expression)
+const double3 = (n) =&gt; n * 2;
+
+// Multiple parameters
+const add = (a, b) =&gt; a + b;
+
+// No parameters: empty parentheses required
+const greet = () =&gt; &quot;Hello&quot;;
+
+// Returning an object literal: wrap in parentheses
+const makeUser = (name) =&gt; ({ name, createdAt: new Date() });
+</code></pre>
+<blockquote>
+<p><strong>Background: What is the difference between arrow functions and regular functions?</strong></p>
+<p>Two big differences. First, arrow functions have shorter syntax. Second, they handle the <code>this</code> keyword differently. Inside a regular function, <code>this</code> depends on how the function is called. Inside an arrow function, <code>this</code> is inherited from the surrounding code. For now, treat arrow functions as the default and reach for regular functions only when you need methods on a class or when something specifically requires <code>this</code> to bind dynamically.</p>
+</blockquote>
+<p>Common use with array methods:</p>
+<pre><code class="language-javascript">const numbers = [1, 2, 3, 4, 5];
+
+// Pass arrow functions as callbacks
+const doubled = numbers.map((n) =&gt; n * 2);
+const evens = numbers.filter((n) =&gt; n % 2 === 0);
+const sum = numbers.reduce((total, n) =&gt; total + n, 0);
+
+console.log(doubled); // [2, 4, 6, 8, 10]
+console.log(evens);   // [2, 4]
+console.log(sum);     // 15
+</code></pre>
+<p><strong>Exercise:</strong> Convert these traditional functions to arrow functions:</p>
+<pre><code class="language-javascript">function isAdult(person) {
+  return person.age &gt;= 18;
+}
+
+function fullName(user) {
+  return user.firstName + &quot; &quot; + user.lastName;
+}
+
+function logCurrentTime() {
+  console.log(new Date().toISOString());
+}
+</code></pre>
+<hr>
+<h2>Lesson 4: Default, Rest, and Spread</h2>
+<h3>Default parameters</h3>
+<pre><code class="language-javascript">const greet = (name = &quot;stranger&quot;, greeting = &quot;Hello&quot;) =&gt; {
+  return `${greeting}, ${name}!`;
+};
+
+console.log(greet());                    // &quot;Hello, stranger!&quot;
+console.log(greet(&quot;Maria&quot;));             // &quot;Hello, Maria!&quot;
+console.log(greet(&quot;Maria&quot;, &quot;Welcome&quot;));  // &quot;Welcome, Maria!&quot;
+</code></pre>
+<h3>Rest parameters</h3>
+<p>The <code>...</code> operator collects remaining arguments into an array:</p>
+<pre><code class="language-javascript">const sum = (...numbers) =&gt; {
+  return numbers.reduce((total, n) =&gt; total + n, 0);
+};
+
+console.log(sum(1, 2, 3));        // 6
+console.log(sum(1, 2, 3, 4, 5));  // 15
+
+// Combined with regular parameters
+const logWithPrefix = (prefix, ...messages) =&gt; {
+  messages.forEach((m) =&gt; console.log(`[${prefix}] ${m}`));
+};
+
+logWithPrefix(&quot;INFO&quot;, &quot;Server started&quot;, &quot;Connected to DB&quot;);
+</code></pre>
+<h3>Spread operator</h3>
+<p>The same <code>...</code> operator unpacks an array or object into individual elements:</p>
+<pre><code class="language-javascript">// Arrays
+const first = [1, 2, 3];
+const second = [4, 5, 6];
+const combined = [...first, ...second];   // [1, 2, 3, 4, 5, 6]
+const copy = [...first];                   // [1, 2, 3] (independent copy)
+
+// Adding elements
+const withExtras = [0, ...first, 4];       // [0, 1, 2, 3, 4]
+
+// Passing array elements as arguments
+const numbers = [3, 1, 4, 1, 5];
+console.log(Math.max(...numbers));         // 5
+
+// Objects (ES2018)
+const baseConfig = { timeout: 5000, retries: 3 };
+const customConfig = { ...baseConfig, retries: 5, debug: true };
+// { timeout: 5000, retries: 5, debug: true }
+</code></pre>
+<blockquote>
+<p><strong>Background: Why use spread instead of methods like <code>concat</code> or <code>Object.assign</code>?</strong></p>
+<p>Spread syntax is shorter, immediately readable, and creates a shallow copy. The phrase &quot;shallow copy&quot; means it copies the top level only. If your object contains nested objects, those nested objects are still shared. For most purposes, that is what you want.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Write a function <code>merge(...objects)</code> that takes any number of objects and returns a single object with all properties combined (later objects override earlier ones). Use rest and spread.</p>
+<hr>
+<h2>Lesson 5: Destructuring</h2>
+<p>Destructuring extracts values from arrays or objects into named variables.</p>
+<h3>Array destructuring</h3>
+<pre><code class="language-javascript">const point = [10, 20];
+const [x, y] = point;
+console.log(x, y); // 10 20
+
+// Skipping elements
+const [first, , third] = [1, 2, 3];
+
+// With defaults
+const [a = 1, b = 2] = [10];
+console.log(a, b); // 10 2
+
+// Rest in destructuring
+const [head, ...tail] = [1, 2, 3, 4];
+console.log(head); // 1
+console.log(tail); // [2, 3, 4]
+
+// Swapping variables
+let p = 1, q = 2;
+[p, q] = [q, p];
+console.log(p, q); // 2 1
+</code></pre>
+<h3>Object destructuring</h3>
+<pre><code class="language-javascript">const user = {
+  name: &quot;Alex&quot;,
+  age: 30,
+  email: &quot;alex@example.com&quot;,
+};
+
+// Pull out properties by name
+const { name, age } = user;
+console.log(name, age); // &quot;Alex&quot; 30
+
+// Rename while destructuring
+const { name: userName, email: userEmail } = user;
+console.log(userName); // &quot;Alex&quot;
+
+// Defaults
+const { role = &quot;user&quot;, age: years } = user;
+console.log(role, years); // &quot;user&quot; 30
+
+// Nested destructuring
+const order = {
+  id: 1,
+  customer: { name: &quot;Maria&quot;, address: { city: &quot;Cape Town&quot; } },
+};
+const {
+  customer: {
+    address: { city },
+  },
+} = order;
+console.log(city); // &quot;Cape Town&quot;
+</code></pre>
+<h3>Destructuring in function parameters</h3>
+<p>This is one of the most useful patterns:</p>
+<pre><code class="language-javascript">// Without destructuring
+const printUserOld = (user) =&gt; {
+  console.log(`${user.name} (${user.age})`);
+};
+
+// With destructuring
+const printUser = ({ name, age }) =&gt; {
+  console.log(`${name} (${age})`);
+};
+
+printUser({ name: &quot;Jordan&quot;, age: 25 });
+
+// With defaults and rest
+const setup = ({ host = &quot;localhost&quot;, port = 3000, ...rest }) =&gt; {
+  console.log(`Connecting to ${host}:${port}`);
+  console.log(&quot;Other options:&quot;, rest);
+};
+
+setup({ port: 8080, debug: true, retries: 3 });
+</code></pre>
+<p><strong>Exercise:</strong> Given an array of users, destructure inside a callback to extract just the <code>name</code> and <code>email</code> of each:</p>
+<pre><code class="language-javascript">const users = [
+  { id: 1, name: &quot;Alex&quot;, email: &quot;a@x.com&quot;, age: 30 },
+  { id: 2, name: &quot;Maria&quot;, email: &quot;m@x.com&quot;, age: 25 },
+];
+
+// Use map and destructuring to produce:
+// [{ name: &quot;Alex&quot;, email: &quot;a@x.com&quot; }, { name: &quot;Maria&quot;, email: &quot;m@x.com&quot; }]
+</code></pre>
+<hr>
+<h2>Lesson 6: Object Enhancements</h2>
+<h3>Property shorthand</h3>
+<p>When the variable name matches the property name, you can omit the value:</p>
+<pre><code class="language-javascript">const name = &quot;Sam&quot;;
+const age = 28;
+
+// Old way
+const userOld = { name: name, age: age };
+
+// Shorthand
+const user = { name, age };
+</code></pre>
+<h3>Method shorthand</h3>
+<pre><code class="language-javascript">// Old
+const oldCounter = {
+  count: 0,
+  increment: function () {
+    this.count += 1;
+  },
+};
+
+// Shorthand
+const counter = {
+  count: 0,
+  increment() {
+    this.count += 1;
+  },
+};
+</code></pre>
+<h3>Computed property names</h3>
+<p>Use a variable as a property key with square brackets:</p>
+<pre><code class="language-javascript">const key = &quot;score&quot;;
+const value = 100;
+
+const result = { [key]: value };
+console.log(result); // { score: 100 }
+
+// Useful for dynamic keys
+const buildField = (name, value) =&gt; ({ [name]: value, [`${name}_at`]: new Date() });
+console.log(buildField(&quot;created&quot;, true));
+// { created: true, created_at: &lt;date&gt; }
+</code></pre>
+<p><strong>Exercise:</strong> Write a function <code>groupBy(items, key)</code> that returns an object grouping items by the value of the specified key. Use computed property names.</p>
+<pre><code class="language-javascript">const items = [
+  { type: &quot;fruit&quot;, name: &quot;apple&quot; },
+  { type: &quot;veg&quot;, name: &quot;carrot&quot; },
+  { type: &quot;fruit&quot;, name: &quot;banana&quot; },
+];
+// groupBy(items, &quot;type&quot;) should return:
+// { fruit: [...], veg: [...] }
+</code></pre>
+<hr>
+<h2>Lesson 7: Array Methods</h2>
+<p>Modern JavaScript has powerful built-in array methods. Knowing them well replaces most loops.</p>
+<h3>map: transform every element</h3>
+<pre><code class="language-javascript">const numbers = [1, 2, 3, 4];
+const squared = numbers.map((n) =&gt; n * n);
+console.log(squared); // [1, 4, 9, 16]
+
+// On objects
+const users = [
+  { name: &quot;Alex&quot;, age: 30 },
+  { name: &quot;Maria&quot;, age: 25 },
+];
+const names = users.map((u) =&gt; u.name); // [&quot;Alex&quot;, &quot;Maria&quot;]
+</code></pre>
+<h3>filter: keep elements that match a condition</h3>
+<pre><code class="language-javascript">const numbers = [1, 2, 3, 4, 5];
+const evens = numbers.filter((n) =&gt; n % 2 === 0);
+console.log(evens); // [2, 4]
+</code></pre>
+<h3>reduce: combine elements into a single value</h3>
+<pre><code class="language-javascript">const numbers = [1, 2, 3, 4];
+
+// Sum
+const total = numbers.reduce((acc, n) =&gt; acc + n, 0);
+
+// Build an object
+const counts = [&quot;a&quot;, &quot;b&quot;, &quot;a&quot;, &quot;c&quot;, &quot;b&quot;, &quot;a&quot;].reduce((acc, letter) =&gt; {
+  acc[letter] = (acc[letter] || 0) + 1;
+  return acc;
+}, {});
+console.log(counts); // { a: 3, b: 2, c: 1 }
+</code></pre>
+<blockquote>
+<p><strong>Background: How does <code>reduce</code> work?</strong></p>
+<p><code>reduce</code> walks through the array, carrying an &quot;accumulator&quot; value forward. The first argument is a function <code>(acc, currentItem) =&gt; newAcc</code>. The second argument is the initial value of the accumulator. After visiting every element, <code>reduce</code> returns the final accumulator. It is the most flexible array method because you can build anything with it.</p>
+</blockquote>
+<h3>find: get the first matching element</h3>
+<pre><code class="language-javascript">const users = [
+  { id: 1, name: &quot;Alex&quot; },
+  { id: 2, name: &quot;Maria&quot; },
+];
+const user = users.find((u) =&gt; u.id === 2);
+console.log(user); // { id: 2, name: &quot;Maria&quot; }
+</code></pre>
+<h3>some and every: boolean checks</h3>
+<pre><code class="language-javascript">const ages = [22, 18, 30, 16];
+console.log(ages.some((a) =&gt; a &lt; 18));    // true (at least one)
+console.log(ages.every((a) =&gt; a &gt;= 18));  // false (not all)
+</code></pre>
+<h3>includes: check for a value</h3>
+<pre><code class="language-javascript">const tags = [&quot;javascript&quot;, &quot;typescript&quot;, &quot;react&quot;];
+console.log(tags.includes(&quot;react&quot;));    // true
+console.log(tags.includes(&quot;python&quot;));   // false
+</code></pre>
+<h3>flat and flatMap</h3>
+<pre><code class="language-javascript">const nested = [[1, 2], [3, 4], [5]];
+console.log(nested.flat()); // [1, 2, 3, 4, 5]
+
+const sentences = [&quot;hello world&quot;, &quot;foo bar&quot;];
+const words = sentences.flatMap((s) =&gt; s.split(&quot; &quot;));
+console.log(words); // [&quot;hello&quot;, &quot;world&quot;, &quot;foo&quot;, &quot;bar&quot;]
+</code></pre>
+<h3>at, findLast, and findLastIndex (2026)</h3>
+<p><code>at</code> accepts a negative index, so the last element no longer needs
+<code>arr[arr.length - 1]</code>.</p>
+<pre><code class="language-javascript">const scores = [10, 20, 30, 40];
+console.log(scores.at(-1)); // 40
+console.log(scores.at(0));  // 10
+console.log(&quot;habit&quot;.at(-1)); // &quot;t&quot; (strings have it too)
+</code></pre>
+<p><code>findLast</code> and <code>findLastIndex</code> search from the end. They are the mirror of
+<code>find</code> and <code>findIndex</code>.</p>
+<pre><code class="language-javascript">const entries = [
+  { day: &quot;2026-09-01&quot;, done: true },
+  { day: &quot;2026-09-02&quot;, done: false },
+  { day: &quot;2026-09-03&quot;, done: true },
+];
+
+const lastDone = entries.findLast((e) =&gt; e.done);
+console.log(lastDone.day); // &quot;2026-09-03&quot;
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why does <code>findLast</code> matter?</strong></p>
+<p>The old way was <code>[...arr].reverse().find(...)</code>, which copies the whole array
+and then throws the copy away. <code>findLast</code> walks backwards and stops at the
+first match. For a habit history or an audit log, where the interesting row is
+almost always near the end, this is the difference between reading three rows
+and reading three thousand.</p>
+</blockquote>
+<h3>toSorted, toReversed, toSpliced, and with (2026)</h3>
+<p><code>sort</code>, <code>reverse</code> and <code>splice</code> change the array in place. That is a frequent
+source of bugs, especially in React, where mutating state that another
+component is reading produces a screen that does not update. Four methods do
+the same jobs and return a new array instead.</p>
+<pre><code class="language-javascript">const habits = [&quot;Walk&quot;, &quot;Read&quot;, &quot;Stretch&quot;];
+
+const sorted = habits.toSorted();          // [&quot;Read&quot;, &quot;Stretch&quot;, &quot;Walk&quot;]
+const reversed = habits.toReversed();      // [&quot;Stretch&quot;, &quot;Read&quot;, &quot;Walk&quot;]
+const replaced = habits.with(1, &quot;Journal&quot;); // [&quot;Walk&quot;, &quot;Journal&quot;, &quot;Stretch&quot;]
+const removed = habits.toSpliced(0, 1);    // [&quot;Read&quot;, &quot;Stretch&quot;]
+
+console.log(habits); // [&quot;Walk&quot;, &quot;Read&quot;, &quot;Stretch&quot;], untouched
+</code></pre>
+<p><code>toSorted</code> takes the same comparator as <code>sort</code>:</p>
+<pre><code class="language-javascript">const orders = [
+  { item: &quot;book&quot;, cents: 24999 },
+  { item: &quot;pen&quot;, cents: 3500 },
+  { item: &quot;lamp&quot;, cents: 129900 },
+];
+
+const cheapestFirst = orders.toSorted((a, b) =&gt; a.cents - b.cents);
+console.log(cheapestFirst.map((o) =&gt; o.item)); // [&quot;pen&quot;, &quot;book&quot;, &quot;lamp&quot;]
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why are the amounts integers?</strong></p>
+<p><code>129900</code> is one thousand two hundred and ninety nine rand, held as cents.
+Money is never stored as a floating point number, because <code>0.1 + 0.2</code> is not
+<code>0.3</code> in any language that uses IEEE 754 doubles, JavaScript included. Store
+an integer number of the smallest unit and format only at the edge:</p>
+<pre><code class="language-javascript">const rands = new Intl.NumberFormat(&quot;en-ZA&quot;, {
+  style: &quot;currency&quot;,
+  currency: &quot;ZAR&quot;,
+});
+console.log(rands.format(129900 / 100)); // &quot;R 1 299,00&quot;
+</code></pre>
+<p>This course uses integer cents everywhere from here on. So does every
+production codebase worth reading.</p>
+</blockquote>
+<h3>Chaining</h3>
+<p>Methods return arrays, so you can chain them:</p>
+<pre><code class="language-javascript">const orders = [
+  { item: &quot;book&quot;, price: 20, qty: 2 },
+  { item: &quot;pen&quot;, price: 3, qty: 5 },
+  { item: &quot;lamp&quot;, price: 50, qty: 1 },
+];
+
+const totalAboveTen = orders
+  .filter((o) =&gt; o.price &gt; 10)
+  .map((o) =&gt; o.price * o.qty)
+  .reduce((sum, n) =&gt; sum + n, 0);
+
+console.log(totalAboveTen); // 90
+</code></pre>
+<p><strong>Exercise:</strong> Given the orders array above, write a single chained expression that returns the names of items where total cost (price times qty) exceeds 30.</p>
+<hr>
+<h2>Lesson 8: Object Methods</h2>
+<pre><code class="language-javascript">const user = { name: &quot;Alex&quot;, age: 30, email: &quot;a@x.com&quot; };
+
+// Object.keys: array of keys
+console.log(Object.keys(user));       // [&quot;name&quot;, &quot;age&quot;, &quot;email&quot;]
+
+// Object.values: array of values
+console.log(Object.values(user));     // [&quot;Alex&quot;, 30, &quot;a@x.com&quot;]
+
+// Object.entries: array of [key, value] pairs
+console.log(Object.entries(user));
+// [[&quot;name&quot;, &quot;Alex&quot;], [&quot;age&quot;, 30], [&quot;email&quot;, &quot;a@x.com&quot;]]
+
+// Iterate with for...of and destructuring
+for (const [key, value] of Object.entries(user)) {
+  console.log(`${key}: ${value}`);
+}
+
+// Object.fromEntries: build an object from pairs (the inverse)
+const pairs = [[&quot;a&quot;, 1], [&quot;b&quot;, 2]];
+console.log(Object.fromEntries(pairs)); // { a: 1, b: 2 }
+</code></pre>
+<p>A common pattern: transform an object by mapping its entries.</p>
+<pre><code class="language-javascript">const prices = { apple: 10, banana: 20, cherry: 30 };
+
+// Apply 10% discount to every value
+const discounted = Object.fromEntries(
+  Object.entries(prices).map(([key, value]) =&gt; [key, value * 0.9]),
+);
+
+console.log(discounted); // { apple: 9, banana: 18, cherry: 27 }
+</code></pre>
+<h3>Object.groupBy and Map.groupBy (2026)</h3>
+<p>Grouping a list by some key used to be a <code>reduce</code> with an accumulator. It is
+now one call.</p>
+<pre><code class="language-javascript">const tasks = [
+  { title: &quot;File the notice&quot;, list: &quot;today&quot; },
+  { title: &quot;Draft the letter&quot;, list: &quot;today&quot; },
+  { title: &quot;Renew the licence&quot;, list: &quot;later&quot; },
+];
+
+const byList = Object.groupBy(tasks, (task) =&gt; task.list);
+
+console.log(Object.keys(byList));   // [&quot;today&quot;, &quot;later&quot;]
+console.log(byList.today.length);   // 2
+console.log(byList.nothing);        // undefined
+</code></pre>
+<p><code>Object.groupBy</code> returns a null-prototype object, so keys such as
+<code>&quot;constructor&quot;</code> or <code>&quot;toString&quot;</code> are safe. Keys are always coerced to strings.</p>
+<p>When you need keys that are not strings, use <code>Map.groupBy</code>:</p>
+<pre><code class="language-javascript">const done = Map.groupBy(tasks, (task) =&gt; task.list === &quot;today&quot;);
+console.log(done.get(true).length);  // 2
+console.log(done.get(false).length); // 1
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Is this really better than <code>reduce</code>?</strong></p>
+<p>Compare the two:</p>
+<pre><code class="language-javascript">// Before
+const byList = tasks.reduce((acc, task) =&gt; {
+  (acc[task.list] ??= []).push(task);
+  return acc;
+}, {});
+
+// After
+const byList = Object.groupBy(tasks, (task) =&gt; task.list);
+</code></pre>
+<p>The second version says what it does. The first version says how. When you
+read code six months later, &quot;what&quot; is the one you want. That is the whole
+argument for every method on this page.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Write a function <code>pick(obj, keys)</code> that returns a new object containing only the specified keys.</p>
+<pre><code class="language-javascript">pick({ a: 1, b: 2, c: 3 }, [&quot;a&quot;, &quot;c&quot;]); // { a: 1, c: 3 }
+</code></pre>
+<hr>
+<h2>Lesson 9: Optional Chaining and Nullish Coalescing</h2>
+<h3>Optional chaining: <code>?.</code></h3>
+<p>Safely access a deeply nested property that might not exist:</p>
+<pre><code class="language-javascript">const user = {
+  name: &quot;Alex&quot;,
+  address: { city: &quot;Cape Town&quot; },
+};
+
+// Old way
+const country = user.address &amp;&amp; user.address.country;
+
+// Modern way
+const countryNew = user?.address?.country;
+console.log(countryNew); // undefined (no error)
+
+// Works with method calls
+const result = user?.getName?.();
+
+// Works with array indexes
+const firstFriend = user?.friends?.[0];
+</code></pre>
+<h3>Nullish coalescing: <code>??</code></h3>
+<p>Provide a fallback only when the value is <code>null</code> or <code>undefined</code>:</p>
+<pre><code class="language-javascript">const userInput = null;
+const value = userInput ?? &quot;default&quot;;
+console.log(value); // &quot;default&quot;
+
+// Compare with the older || operator
+const count = 0;
+console.log(count || 10);  // 10 (because 0 is falsy)
+console.log(count ?? 10);  // 0  (because 0 is not nullish)
+</code></pre>
+<blockquote>
+<p><strong>Background: When should I use <code>??</code> instead of <code>||</code>?</strong></p>
+<p>Use <code>??</code> when you only want to substitute for <code>null</code> or <code>undefined</code>. Use <code>||</code> when you want to substitute for any falsy value (including <code>0</code>, <code>&quot;&quot;</code>, and <code>false</code>). For values where zero or empty string are valid, <code>??</code> is the safer choice.</p>
+</blockquote>
+<p>Combine both:</p>
+<pre><code class="language-javascript">const config = {
+  display: { theme: null },
+};
+
+const theme = config?.display?.theme ?? &quot;light&quot;;
+console.log(theme); // &quot;light&quot;
+</code></pre>
+<p><strong>Exercise:</strong> Given an array of users with optional address data, write code that lists each user&#39;s city, defaulting to &quot;Unknown&quot; when the city is missing or the address is missing.</p>
+<pre><code class="language-javascript">const users = [
+  { name: &quot;Alex&quot;, address: { city: &quot;Cape Town&quot; } },
+  { name: &quot;Maria&quot; },
+  { name: &quot;Jordan&quot;, address: {} },
+];
+</code></pre>
+<hr>
+<h2>Lesson 10: Classes</h2>
+<p>Classes give you a clean syntax for creating objects with shared methods.</p>
+<pre><code class="language-javascript">class Person {
+  constructor(name, age) {
+    this.name = name;
+    this.age = age;
+  }
+
+  greet() {
+    return `Hi, I am ${this.name}`;
+  }
+
+  // Static methods belong to the class itself, not instances
+  static fromString(text) {
+    const [name, age] = text.split(&quot;,&quot;);
+    return new Person(name, Number(age));
+  }
+}
+
+const alex = new Person(&quot;Alex&quot;, 30);
+console.log(alex.greet()); // &quot;Hi, I am Alex&quot;
+
+const maria = Person.fromString(&quot;Maria,25&quot;);
+console.log(maria.greet()); // &quot;Hi, I am Maria&quot;
+</code></pre>
+<h3>Inheritance with <code>extends</code></h3>
+<pre><code class="language-javascript">class Employee extends Person {
+  constructor(name, age, role) {
+    super(name, age); // Call the parent constructor
+    this.role = role;
+  }
+
+  greet() {
+    // Override the parent method
+    return `${super.greet()}, and I work as a ${this.role}`;
+  }
+}
+
+const dev = new Employee(&quot;Sam&quot;, 28, &quot;developer&quot;);
+console.log(dev.greet()); // &quot;Hi, I am Sam, and I work as a developer&quot;
+</code></pre>
+<h3>Private fields with <code>#</code></h3>
+<pre><code class="language-javascript">class BankAccount {
+  #balance = 0; // Private: cannot be accessed outside the class
+
+  deposit(amount) {
+    if (amount &gt; 0) this.#balance += amount;
+  }
+
+  getBalance() {
+    return this.#balance;
+  }
+}
+
+const account = new BankAccount();
+account.deposit(100);
+console.log(account.getBalance()); // 100
+// console.log(account.#balance); // Error: private field
+</code></pre>
+<h3>Getters and setters</h3>
+<pre><code class="language-javascript">class Temperature {
+  #celsius = 0;
+
+  get celsius() {
+    return this.#celsius;
+  }
+
+  set celsius(value) {
+    if (value &lt; -273.15) throw new Error(&quot;Below absolute zero&quot;);
+    this.#celsius = value;
+  }
+
+  get fahrenheit() {
+    return this.#celsius * 9 / 5 + 32;
+  }
+}
+
+const t = new Temperature();
+t.celsius = 25;
+console.log(t.celsius);     // 25
+console.log(t.fahrenheit);  // 77
+</code></pre>
+<p><strong>Exercise:</strong> Build a <code>Queue</code> class with <code>enqueue</code>, <code>dequeue</code>, <code>peek</code>, and <code>size</code> methods. Internally use a private field for the array.</p>
+<hr>
+<h2>Lesson 11: Modules</h2>
+<p>Modules let you split code across files. Each file is a module, and you control what is shared.</p>
+<h3>Named exports</h3>
+<pre><code class="language-javascript">// math.js
+export const PI = 3.14159;
+
+export function add(a, b) {
+  return a + b;
+}
+
+export function multiply(a, b) {
+  return a * b;
+}
+</code></pre>
+<pre><code class="language-javascript">// main.js
+import { PI, add, multiply } from &quot;./math.js&quot;;
+
+console.log(add(1, 2));     // 3
+console.log(multiply(2, 3)); // 6
+console.log(PI);             // 3.14159
+</code></pre>
+<h3>Default exports</h3>
+<p>Each file can have one default export:</p>
+<pre><code class="language-javascript">// logger.js
+export default function log(message) {
+  console.log(`[${new Date().toISOString()}] ${message}`);
+}
+</code></pre>
+<pre><code class="language-javascript">// main.js
+import log from &quot;./logger.js&quot;; // No braces for default imports
+
+log(&quot;Hello&quot;);
+</code></pre>
+<h3>Mixing default and named</h3>
+<pre><code class="language-javascript">// user.js
+export default class User { /* ... */ }
+export const MAX_AGE = 150;
+export function isAdult(user) { /* ... */ }
+</code></pre>
+<pre><code class="language-javascript">// main.js
+import User, { MAX_AGE, isAdult } from &quot;./user.js&quot;;
+</code></pre>
+<h3>Namespace import</h3>
+<pre><code class="language-javascript">import * as math from &quot;./math.js&quot;;
+
+console.log(math.add(1, 2));
+console.log(math.PI);
+</code></pre>
+<h3>Re-exports (barrel files)</h3>
+<pre><code class="language-javascript">// index.js
+export * from &quot;./math.js&quot;;
+export * from &quot;./user.js&quot;;
+export { default as log } from &quot;./logger.js&quot;;
+</code></pre>
+<blockquote>
+<p><strong>Background: Why do imports include <code>.js</code> extensions?</strong></p>
+<p>When you set <code>&quot;type&quot;: &quot;module&quot;</code> in <code>package.json</code>, Node.js follows the official ES Modules specification, which requires file extensions. Bundlers like Vite and Webpack often let you skip the extension, but native Node.js does not. When in doubt, include the extension.</p>
+</blockquote>
+<h3>Import attributes (2026)</h3>
+<p>You can import a JSON file directly, provided you state the type.</p>
+<pre><code class="language-javascript">import fixtures from &quot;./fixtures/habits.json&quot; with { type: &quot;json&quot; };
+
+console.log(fixtures.length);
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why the <code>with { type: &quot;json&quot; }</code>?</strong></p>
+<p>A module specifier such as <code>&quot;./habits.json&quot;</code> says where to fetch something,
+not what it is. Without a declared type, a server could answer that request
+with JavaScript, and the importer would execute it. The attribute makes the
+expectation explicit: if the resource is not JSON, the import fails rather
+than running. It is a security boundary, not a formality, which is why it is
+mandatory rather than optional.</p>
+<p>The older syntax was <code>assert { type: &quot;json&quot; }</code>. That spelling is deprecated.
+Write <code>with</code>.</p>
+</blockquote>
+<p>A JSON import is frozen and read-only in effect: treat it as a fixture, not as
+mutable state. If you need to change the data, copy it first with
+<code>structuredClone(fixtures)</code>.</p>
+<p><strong>Exercise:</strong> Split a project into three files: <code>math.js</code> exporting <code>add</code> and <code>subtract</code>, <code>string.js</code> exporting <code>capitalize</code> and <code>reverse</code>, and <code>index.js</code> re-exporting everything. Test it from a <code>main.js</code>.</p>
+<hr>
+<h2>Lesson 12: Promises</h2>
+<p>A Promise represents a value that will be available later. It is JavaScript&#39;s main tool for asynchronous operations: network calls, timers, file I/O.</p>
+<blockquote>
+<p><strong>Background: What does &quot;asynchronous&quot; mean?</strong></p>
+<p>JavaScript runs code one statement at a time. But some operations take time (loading a file, calling an API) and we do not want to freeze the program waiting. Asynchronous code lets you start an operation and continue with other work, then react when the operation finishes. A Promise is the object that represents that &quot;I will tell you when I am done&quot; contract.</p>
+</blockquote>
+<h3>Creating and using Promises</h3>
+<p>A Promise has three states: pending, fulfilled (resolved), or rejected.</p>
+<pre><code class="language-javascript">const wait = (ms) =&gt;
+  new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; resolve(`Waited ${ms}ms`), ms);
+  });
+
+wait(1000).then((result) =&gt; console.log(result));
+</code></pre>
+<h3>Chaining with <code>.then</code> and <code>.catch</code></h3>
+<pre><code class="language-javascript">const fetchUser = (id) =&gt;
+  new Promise((resolve, reject) =&gt; {
+    setTimeout(() =&gt; {
+      if (id &lt; 0) reject(new Error(&quot;Invalid id&quot;));
+      else resolve({ id, name: &quot;Alex&quot; });
+    }, 100);
+  });
+
+fetchUser(1)
+  .then((user) =&gt; {
+    console.log(&quot;Got user:&quot;, user);
+    return user.id * 2;
+  })
+  .then((doubledId) =&gt; {
+    console.log(&quot;Doubled id:&quot;, doubledId);
+  })
+  .catch((error) =&gt; {
+    console.error(&quot;Failed:&quot;, error.message);
+  })
+  .finally(() =&gt; {
+    console.log(&quot;Done (runs whether success or failure)&quot;);
+  });
+</code></pre>
+<h3>Promise.all: wait for all</h3>
+<pre><code class="language-javascript">const promise1 = Promise.resolve(1);
+const promise2 = Promise.resolve(2);
+const promise3 = Promise.resolve(3);
+
+Promise.all([promise1, promise2, promise3]).then((values) =&gt; {
+  console.log(values); // [1, 2, 3]
+});
+
+// If ANY promise rejects, the whole thing rejects
+Promise.all([Promise.resolve(1), Promise.reject(new Error(&quot;oops&quot;))])
+  .catch((err) =&gt; console.error(err.message)); // &quot;oops&quot;
+</code></pre>
+<h3>Promise.allSettled: wait for all, get all results</h3>
+<pre><code class="language-javascript">Promise.allSettled([
+  Promise.resolve(&quot;first&quot;),
+  Promise.reject(new Error(&quot;second failed&quot;)),
+  Promise.resolve(&quot;third&quot;),
+]).then((results) =&gt; {
+  results.forEach((result) =&gt; {
+    if (result.status === &quot;fulfilled&quot;) console.log(&quot;OK:&quot;, result.value);
+    else console.log(&quot;ERR:&quot;, result.reason.message);
+  });
+});
+</code></pre>
+<h3>Promise.race: first to finish wins</h3>
+<pre><code class="language-javascript">const timeout = (ms) =&gt; new Promise((_, reject) =&gt; setTimeout(() =&gt; reject(new Error(&quot;timeout&quot;)), ms));
+const fetchData = () =&gt; new Promise((resolve) =&gt; setTimeout(() =&gt; resolve(&quot;data&quot;), 2000));
+
+Promise.race([fetchData(), timeout(1000)])
+  .then((data) =&gt; console.log(data))
+  .catch((err) =&gt; console.error(err.message)); // &quot;timeout&quot;
+</code></pre>
+<h3>Promise.withResolvers (2026)</h3>
+<p>Sometimes you need a Promise whose <code>resolve</code> and <code>reject</code> are called from
+somewhere else entirely: an event listener, a callback API, a message handler.
+The old pattern leaked the two functions out of the executor by hand.</p>
+<pre><code class="language-javascript">// Before
+let resolve, reject;
+const promise = new Promise((res, rej) =&gt; {
+  resolve = res;
+  reject = rej;
+});
+</code></pre>
+<p><code>Promise.withResolvers()</code> returns all three together.</p>
+<pre><code class="language-javascript">const { promise, resolve, reject } = Promise.withResolvers();
+
+// Somewhere else, later:
+setTimeout(() =&gt; resolve(&quot;done&quot;), 100);
+
+console.log(await promise); // &quot;done&quot;
+</code></pre>
+<p>A realistic use: turning a one-shot event into something you can <code>await</code>.</p>
+<pre><code class="language-javascript">function once(emitter, eventName) {
+  const { promise, resolve } = Promise.withResolvers();
+  emitter.once(eventName, resolve);
+  return promise;
+}
+</code></pre>
+<h3>Promise.try (2026, needs Node 24)</h3>
+<p><code>Promise.try(fn)</code> runs <code>fn</code> and always gives you a Promise back, whether <code>fn</code>
+is synchronous, asynchronous, or throws immediately.</p>
+<pre><code class="language-javascript">function parseConfig(text) {
+  return JSON.parse(text); // throws synchronously on bad input
+}
+
+// Without Promise.try, the throw escapes the chain:
+// parseConfig(&quot;{&quot;).then(...).catch(...)  &lt;- TypeError, .then of undefined
+
+const result = await Promise.try(() =&gt; parseConfig(&quot;{&quot;))
+  .catch((error) =&gt; ({ error: error.message }));
+
+console.log(result); // { error: &quot;Expected property name or &#39;}&#39; ...&quot; }
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why is a synchronous throw a problem?</strong></p>
+<p>A function that is &quot;sometimes async&quot; is one of the classic sources of
+unhandled errors. If it returns a Promise, <code>.catch</code> handles the failure. If
+it throws before returning, <code>.catch</code> never runs, because there is no Promise
+to attach to. <code>Promise.try</code> removes the &quot;sometimes&quot; and gives you one shape.
+When you write a plugin system, an adapter, or anything that calls code you
+did not write, wrap the call in <code>Promise.try</code>.</p>
+</blockquote>
+<h3>Array.fromAsync (2026)</h3>
+<p><code>Array.from</code> collects an iterable into an array. <code>Array.fromAsync</code> does the
+same for an async iterable, and awaits each value.</p>
+<pre><code class="language-javascript">async function* pages(total) {
+  for (let n = 1; n &lt;= total; n++) {
+    yield { page: n };
+  }
+}
+
+const all = await Array.fromAsync(pages(3));
+console.log(all); // [{ page: 1 }, { page: 2 }, { page: 3 }]
+
+// It also awaits an array of promises, one at a time
+const settled = await Array.fromAsync([
+  Promise.resolve(&quot;a&quot;),
+  Promise.resolve(&quot;b&quot;),
+]);
+console.log(settled); // [&quot;a&quot;, &quot;b&quot;]
+</code></pre>
+<p>Note the difference from <code>Promise.all</code>: <code>Array.fromAsync</code> awaits <strong>in
+sequence</strong>. Use <code>Promise.all</code> when the work is independent and should overlap,
+and <code>Array.fromAsync</code> when you are draining a stream or paging an API in order.</p>
+<p><strong>Exercise:</strong> Write a function <code>delay(ms, value)</code> that returns a Promise resolving to <code>value</code> after <code>ms</code> milliseconds. Use it with <code>Promise.all</code> to wait for three different delays in parallel.</p>
+<hr>
+<h2>Lesson 13: async/await</h2>
+<p><code>async</code> and <code>await</code> are syntactic sugar over Promises. They let you write asynchronous code that reads like synchronous code.</p>
+<p><strong>(2026)</strong> The examples in this lesson read from disk rather than from a
+network, so that every one of them runs on your machine with nothing installed
+and nobody else&#39;s server involved. Lesson 14 explains why that is the default
+and shows the same shapes over HTTP.</p>
+<p>Create <code>fixtures/practitioners.json</code>:</p>
+<pre><code class="language-json">[
+  { &quot;id&quot;: &quot;p1&quot;, &quot;name&quot;: &quot;T. Nkosi&quot;, &quot;profession&quot;: &quot;psychologist&quot;, &quot;feeCents&quot;: 95000 },
+  { &quot;id&quot;: &quot;p2&quot;, &quot;name&quot;: &quot;A. Petersen&quot;, &quot;profession&quot;: &quot;psychiatrist&quot;, &quot;feeCents&quot;: 180000 },
+  { &quot;id&quot;: &quot;p3&quot;, &quot;name&quot;: &quot;M. van Wyk&quot;, &quot;profession&quot;: &quot;psychologist&quot;, &quot;feeCents&quot;: 72000 }
+]
+</code></pre>
+<pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
+
+// A function declared async always returns a Promise
+async function loadPractitioners() {
+  // await pauses until the Promise resolves
+  const url = new URL(&quot;./fixtures/practitioners.json&quot;, import.meta.url);
+  const text = await readFile(url, &quot;utf8&quot;);
+  return JSON.parse(text);
+}
+
+// Calling it returns a Promise
+loadPractitioners().then((list) =&gt; console.log(list.length)); // 3
+</code></pre>
+<h3>try/catch with async/await</h3>
+<p>Error handling looks like normal synchronous code:</p>
+<pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
+
+async function loadFixture(name) {
+  try {
+    const url = new URL(`./fixtures/${name}.json`, import.meta.url);
+    return JSON.parse(await readFile(url, &quot;utf8&quot;));
+  } catch (error) {
+    // Keep the original. See Lesson 17 on Error cause.
+    throw new Error(`Could not load fixture &quot;${name}&quot;`, { cause: error });
+  }
+}
+
+const missing = await loadFixture(&quot;does-not-exist&quot;).catch((error) =&gt; {
+  console.error(error.message);          // Could not load fixture &quot;does-not-exist&quot;
+  console.error(error.cause.code);       // ENOENT
+  return null;
+});
+</code></pre>
+<h3>Sequential vs parallel</h3>
+<p>This is a common mistake. Compare:</p>
+<pre><code class="language-javascript">const wait = (ms, value) =&gt; new Promise((resolve) =&gt; setTimeout(() =&gt; resolve(value), ms));
+
+// Sequential: each await waits for the previous one
+async function loadAllSequential() {
+  const a = await wait(100, &quot;a&quot;); // wait
+  const b = await wait(100, &quot;b&quot;); // wait
+  const c = await wait(100, &quot;c&quot;); // wait
+  return [a, b, c];
+  // Total time: sum of all three, about 300ms
+}
+
+// Parallel: start all three, then await
+async function loadAllParallel() {
+  return await Promise.all([
+    wait(100, &quot;a&quot;),
+    wait(100, &quot;b&quot;),
+    wait(100, &quot;c&quot;),
+  ]);
+  // Total time: the slowest of the three, about 100ms
+}
+
+console.time(&quot;sequential&quot;);
+await loadAllSequential();
+console.timeEnd(&quot;sequential&quot;); // sequential: ~300ms
+
+console.time(&quot;parallel&quot;);
+await loadAllParallel();
+console.timeEnd(&quot;parallel&quot;);   // parallel: ~100ms
+</code></pre>
+<p>Use parallel whenever the operations do not depend on each other.</p>
+<h3>Top-level await (in modules)</h3>
+<p>Inside a module (file with <code>&quot;type&quot;: &quot;module&quot;</code>), you can use <code>await</code> outside of an async function:</p>
+<pre><code class="language-javascript">// This works at the top level of a module file
+import { readFile } from &quot;node:fs/promises&quot;;
+
+const url = new URL(&quot;./fixtures/practitioners.json&quot;, import.meta.url);
+const practitioners = JSON.parse(await readFile(url, &quot;utf8&quot;));
+
+console.log(practitioners.at(0).name); // &quot;T. Nkosi&quot;
+</code></pre>
+<p>Top-level <code>await</code> blocks the module&#39;s importers until it settles. That is fine
+for a script and for reading configuration at startup. It is a poor idea in a
+library, where every consumer then pays your latency at import time.</p>
+<p><strong>Exercise:</strong> Convert this Promise chain to use async/await with proper error handling:</p>
+<pre><code class="language-javascript">loadPractitioners()
+  .then((list) =&gt; list.filter((p) =&gt; p.profession === &quot;psychologist&quot;))
+  .then((psychologists) =&gt; psychologists.length)
+  .then((count) =&gt; console.log(`Found ${count} psychologists`))
+  .catch((error) =&gt; console.error(error));
+</code></pre>
+<hr>
+<h2>Lesson 14: Fetch, HTTP, and Local Fixtures</h2>
+<p><code>fetch</code> is the built-in way to make HTTP requests. It returns a Promise. It is
+the same function in the browser and in Node.</p>
+<h3>A rule before the syntax (2026)</h3>
+<p><strong>Do not point a learning exercise at somebody else&#39;s server.</strong> Earlier
+versions of this course used a public placeholder API for every example. That
+is a bad habit for three reasons. The endpoint can disappear, and then the
+course is broken. It makes your tests depend on a network you do not control,
+so a red test tells you nothing. And it sends traffic to a service that never
+agreed to host a course.</p>
+<p>So: <strong>fixtures on disk by default, a real request only where a real request is
+the point.</strong> This is not only a teaching convenience. Both Casey products test
+against fixtures for the same reasons, and Casey Legal Tools ships a mock
+runner that returns fixture results so every feature can be built and verified
+without calling a provider at all.</p>
+<h3>Reading a fixture</h3>
+<p>Create <code>fixtures/practitioners.json</code>:</p>
+<pre><code class="language-json">[
+  { &quot;id&quot;: &quot;p1&quot;, &quot;name&quot;: &quot;T. Nkosi&quot;, &quot;profession&quot;: &quot;psychologist&quot;, &quot;feeCents&quot;: 95000 },
+  { &quot;id&quot;: &quot;p2&quot;, &quot;name&quot;: &quot;A. Petersen&quot;, &quot;profession&quot;: &quot;psychiatrist&quot;, &quot;feeCents&quot;: 180000 },
+  { &quot;id&quot;: &quot;p3&quot;, &quot;name&quot;: &quot;M. van Wyk&quot;, &quot;profession&quot;: &quot;psychologist&quot;, &quot;feeCents&quot;: 72000 }
+]
+</code></pre>
+<p>Two ways to load it. The first reads it at runtime, so the file can change
+between runs:</p>
+<pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
+
+const text = await readFile(new URL(&quot;./fixtures/practitioners.json&quot;, import.meta.url), &quot;utf8&quot;);
+const practitioners = JSON.parse(text);
+
+console.log(practitioners.length); // 3
+</code></pre>
+<p>The second imports it as a module, which is faster and checked once at load
+time:</p>
+<pre><code class="language-javascript">import practitioners from &quot;./fixtures/practitioners.json&quot; with { type: &quot;json&quot; };
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why <code>new URL(..., import.meta.url)</code>?</strong></p>
+<p>A bare relative path such as <code>&quot;./fixtures/practitioners.json&quot;</code> is resolved
+against the <strong>working directory</strong>, which is wherever the user happened to be
+when they typed <code>node</code>. <code>import.meta.url</code> is the URL of the current module,
+so resolving against it gives you a path relative to the <strong>file</strong>, which is
+what you meant. In CommonJS this was <code>__dirname</code>; in modules it is this. Get
+into the habit now, because the bug it prevents only shows up when someone
+runs your script from a different folder.</p>
+</blockquote>
+<h3>GET request</h3>
+<p>When you do need the network, the shape is this:</p>
+<pre><code class="language-javascript">async function getJSON(url) {
+  const response = await fetch(url, {
+    headers: { Accept: &quot;application/json&quot; },
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+  }
+
+  return await response.json();
+}
+</code></pre>
+<blockquote>
+<p><strong>Background: Why two awaits?</strong></p>
+<p>The first await (<code>await fetch(...)</code>) waits for the HTTP response headers to
+arrive. The second (<code>await response.json()</code>) waits for the body to be
+downloaded and parsed as JSON. They are separate steps because in some cases,
+such as streaming a large download, you want to handle them differently.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background (2026): What is <code>AbortSignal.timeout</code>?</strong></p>
+<p><code>fetch</code> waits forever by default. A request that never answers will hold your
+process open until something else kills it. <code>AbortSignal.timeout(5000)</code>
+aborts after five seconds and rejects with a <code>TimeoutError</code>. Always set one
+on a call to a service you do not control. <code>AbortSignal.any([...])</code> combines
+a timeout with a user-initiated cancellation.</p>
+</blockquote>
+<h3>POST request</h3>
+<pre><code class="language-javascript">async function createBookingRequest(baseUrl, body) {
+  const response = await fetch(new URL(&quot;/booking-requests&quot;, baseUrl), {
+    method: &quot;POST&quot;,
+    headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`HTTP ${response.status}: ${detail}`);
+  }
+
+  return await response.json();
+}
+</code></pre>
+<p>PUT, PATCH and DELETE work the same way. Only <code>method</code> changes.</p>
+<h3>A real server, on your own machine (2026)</h3>
+<p>If you want to practise against HTTP without depending on anyone, serve the
+fixture yourself. Node has a server built in.</p>
+<pre><code class="language-javascript">// server.js
+import { createServer } from &quot;node:http&quot;;
+import practitioners from &quot;./fixtures/practitioners.json&quot; with { type: &quot;json&quot; };
+
+const server = createServer((request, response) =&gt; {
+  if (request.method === &quot;GET&quot; &amp;&amp; request.url === &quot;/practitioners&quot;) {
+    response.writeHead(200, { &quot;Content-Type&quot;: &quot;application/json&quot; });
+    response.end(JSON.stringify(practitioners));
+    return;
+  }
+  response.writeHead(404, { &quot;Content-Type&quot;: &quot;application/json&quot; });
+  response.end(JSON.stringify({ error: &quot;Not found&quot; }));
+});
+
+server.listen(3100, () =&gt; console.log(&quot;Fixture server on http://localhost:3100&quot;));
+</code></pre>
+<p>Run it with <code>node --watch server.js</code> in one terminal and call it from another:</p>
+<pre><code class="language-javascript">const practitioners = await getJSON(&quot;http://localhost:3100/practitioners&quot;);
+console.log(practitioners.at(0).name); // &quot;T. Nkosi&quot;
+</code></pre>
+<h3>Handling errors honestly</h3>
+<pre><code class="language-javascript">async function safeGetJSON(url) {
+  try {
+    return { ok: true, data: await getJSON(url) };
+  } catch (error) {
+    if (error.name === &quot;TimeoutError&quot;) {
+      return { ok: false, reason: &quot;timeout&quot;, detail: `${url} did not answer in time` };
+    }
+    if (error instanceof TypeError) {
+      return { ok: false, reason: &quot;network&quot;, detail: error.message };
+    }
+    return { ok: false, reason: &quot;http&quot;, detail: error.message };
+  }
+}
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): Why return a result instead of throwing?</strong></p>
+<p>Both are defensible. The rule that is not defensible is swallowing the error:
+an empty <code>catch {}</code> turns a failure into silence, and silence is the hardest
+bug there is. Casey Journals states this as a ground rule (&quot;An empty <code>catch</code>
+is a bug. Record the last failure detail somewhere a human can read it&quot;) and
+Casey Legal Tools records a <code>last_error</code> on every run for the same reason.
+Whichever style you pick, the detail must survive.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Using the <code>fixtures/practitioners.json</code> above, write
+<code>cheapestByProfession(practitioners)</code> that returns an object mapping each
+profession to the name of its cheapest practitioner. Use <code>Object.groupBy</code> and
+<code>toSorted</code>. Then write the same function against the fixture server, fetching
+the list over HTTP, and note which of the two you would rather have a test
+depend on.</p>
+<hr>
+<h2>Lesson 15: Map and Set</h2>
+<h3>Map: a key-value store</h3>
+<p><code>Map</code> is like an object but with two key advantages: keys can be any type (not just strings), and the order is guaranteed.</p>
+<pre><code class="language-javascript">const userScores = new Map();
+
+userScores.set(&quot;alex&quot;, 100);
+userScores.set(&quot;maria&quot;, 85);
+userScores.set(&quot;jordan&quot;, 92);
+
+console.log(userScores.get(&quot;alex&quot;));     // 100
+console.log(userScores.has(&quot;sam&quot;));      // false
+console.log(userScores.size);            // 3
+
+userScores.delete(&quot;maria&quot;);
+
+// Iterate
+for (const [name, score] of userScores) {
+  console.log(`${name}: ${score}`);
+}
+
+// Build from pairs
+const fromPairs = new Map([[&quot;a&quot;, 1], [&quot;b&quot;, 2]]);
+</code></pre>
+<h3>Set: a unique value collection</h3>
+<pre><code class="language-javascript">const tags = new Set();
+tags.add(&quot;javascript&quot;);
+tags.add(&quot;typescript&quot;);
+tags.add(&quot;javascript&quot;); // Duplicate ignored
+
+console.log(tags.size);           // 2
+console.log(tags.has(&quot;react&quot;));    // false
+
+// Common pattern: deduplicate an array
+const numbers = [1, 2, 2, 3, 3, 3, 4];
+const unique = [...new Set(numbers)];
+console.log(unique); // [1, 2, 3, 4]
+
+// Iterate
+for (const tag of tags) {
+  console.log(tag);
+}
+</code></pre>
+<h3>Set operations (2026)</h3>
+<p>A <code>Set</code> now does the arithmetic you would expect of a set. Seven methods, all
+of which take any set-like argument and none of which mutate.</p>
+<pre><code class="language-javascript">const assigned = new Set([&quot;walk&quot;, &quot;read&quot;, &quot;stretch&quot;]);
+const doneToday = new Set([&quot;read&quot;, &quot;journal&quot;]);
+
+console.log([...assigned.intersection(doneToday)]);  // [&quot;read&quot;]
+console.log([...assigned.difference(doneToday)]);    // [&quot;walk&quot;, &quot;stretch&quot;]
+console.log([...assigned.union(doneToday)]);
+// [&quot;walk&quot;, &quot;read&quot;, &quot;stretch&quot;, &quot;journal&quot;]
+console.log([...assigned.symmetricDifference(doneToday)]);
+// [&quot;walk&quot;, &quot;stretch&quot;, &quot;journal&quot;]
+
+console.log(assigned.isSubsetOf(doneToday));   // false
+console.log(assigned.isSupersetOf(new Set([&quot;walk&quot;])));  // true
+console.log(assigned.isDisjointFrom(new Set([&quot;swim&quot;]))); // true
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): What is the practical use?</strong></p>
+<p>Permission checks and reconciliation. &quot;Which habits were assigned but not
+done&quot; is <code>assigned.difference(doneToday)</code>. &quot;Does this user hold every role
+this page requires&quot; is <code>userRoles.isSupersetOf(requiredRoles)</code>. Written with
+arrays and <code>filter</code>, both of those are quadratic and easy to get subtly
+wrong. Written with sets, they are one call and linear.</p>
+<p>A caution that matters: these are <strong>set</strong> operations, not permission
+decisions. Deciding what a user may see happens on the server, in Firestore
+rules or a row-level security policy. A <code>Set</code> in the browser decides what to
+draw. The workbook has a part on exactly this distinction.</p>
+</blockquote>
+<blockquote>
+<p><strong>Background: When to use Map vs object, and Set vs array?</strong></p>
+<p>Use a <code>Map</code> when you need keys that are not strings, when you frequently add and remove keys, or when iteration order matters. Use a regular object for a fixed structure where keys are known. Use a <code>Set</code> when you need uniqueness or fast &quot;is this in here?&quot; checks. Use an array when order and indexed access matter, or when items can repeat.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Given an array of orders, use a <code>Map</code> to count how many orders each customer made. Each order looks like <code>{ customerId: 1, total: 99 }</code>.</p>
+<hr>
+<h2>Lesson 16: Iterators and for...of</h2>
+<p>The <code>for...of</code> loop iterates over the values of any iterable (arrays, strings, Maps, Sets, and more).</p>
+<pre><code class="language-javascript">// Arrays
+for (const item of [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]) {
+  console.log(item);
+}
+
+// Strings
+for (const char of &quot;hello&quot;) {
+  console.log(char);
+}
+
+// Maps
+const scores = new Map([[&quot;alex&quot;, 100], [&quot;maria&quot;, 85]]);
+for (const [name, score] of scores) {
+  console.log(`${name}: ${score}`);
+}
+
+// Object.entries gives you an iterable
+const user = { name: &quot;Alex&quot;, age: 30 };
+for (const [key, value] of Object.entries(user)) {
+  console.log(`${key}: ${value}`);
+}
+</code></pre>
+<h3>entries, keys, values on arrays</h3>
+<pre><code class="language-javascript">const items = [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;];
+
+for (const [index, value] of items.entries()) {
+  console.log(`${index}: ${value}`);
+}
+</code></pre>
+<h3>Generator functions (briefly)</h3>
+<p>A generator is a function that can pause and resume. You will rarely write one yourself, but it is useful to recognize them.</p>
+<pre><code class="language-javascript">function* range(start, end) {
+  for (let i = start; i &lt; end; i++) {
+    yield i;
+  }
+}
+
+for (const n of range(1, 5)) {
+  console.log(n); // 1, 2, 3, 4
+}
+</code></pre>
+<p>The <code>*</code> after <code>function</code> makes it a generator. The <code>yield</code> keyword produces the next value. Generators are mostly used by libraries to build custom iterables.</p>
+<h3>Iterator helpers (2026)</h3>
+<p>Generators and other iterators now carry the same methods arrays have. The
+difference is that they are <strong>lazy</strong>: nothing is computed until something pulls
+a value, and <code>take</code> stops the source.</p>
+<pre><code class="language-javascript">function* naturals() {
+  let n = 1;
+  while (true) yield n++;
+}
+
+const firstFiveSquares = naturals()
+  .map((n) =&gt; n * n)
+  .take(5)
+  .toArray();
+
+console.log(firstFiveSquares); // [1, 4, 9, 16, 25]
+</code></pre>
+<p>The full set: <code>map</code>, <code>filter</code>, <code>take</code>, <code>drop</code>, <code>flatMap</code>, <code>reduce</code>, <code>toArray</code>,
+<code>forEach</code>, <code>some</code>, <code>every</code>, <code>find</code>.</p>
+<pre><code class="language-javascript">const evens = naturals().filter((n) =&gt; n % 2 === 0);
+console.log(evens.take(3).toArray()); // [2, 4, 6]
+
+console.log(naturals().drop(10).take(2).toArray()); // [11, 12]
+console.log(naturals().find((n) =&gt; n % 7 === 0));   // 7
+</code></pre>
+<p>They work on anything iterable, not just generators:</p>
+<pre><code class="language-javascript">const scores = new Map([[&quot;alex&quot;, 100], [&quot;maria&quot;, 85], [&quot;jordan&quot;, 92]]);
+
+const topName = scores
+  .entries()
+  .filter(([, score]) =&gt; score &gt; 90)
+  .map(([name]) =&gt; name)
+  .toArray();
+
+console.log(topName); // [&quot;alex&quot;, &quot;jordan&quot;]
+</code></pre>
+<blockquote>
+<p><strong>Background (2026): When is lazy better?</strong></p>
+<p><code>naturals().map(...).take(5)</code> computes five squares. Writing the same thing
+with an array is impossible, because <code>naturals()</code> never ends and
+<code>[...naturals()]</code> would hang.</p>
+<p>For a finite array that already sits in memory, array methods are usually
+faster: they are heavily optimised and involve no iterator protocol. Reach
+for helpers when the source is infinite, expensive, or streamed, and when you
+only want the first few results. Reach for array methods otherwise.</p>
+</blockquote>
+<p><strong>Exercise:</strong> Write a generator function <code>fibonacci(limit)</code> that yields Fibonacci numbers until they exceed <code>limit</code>. Iterate it with <code>for...of</code>.</p>
+<hr>
+<h2>Lesson 17: The Smaller 2026 Additions</h2>
+<p>Four additions that do not need a lesson each, but that you will meet.</p>
+<h3>RegExp.escape (2026, needs Node 24)</h3>
+<p>Building a regular expression out of user input without escaping it is an
+injection bug. <code>RegExp.escape</code> fixes that.</p>
+<pre><code class="language-javascript">function highlight(text, term) {
+  const pattern = new RegExp(RegExp.escape(term), &quot;gi&quot;);
+  return text.replace(pattern, (match) =&gt; `[${match}]`);
+}
+
+console.log(highlight(&quot;Rate: R1,200.00 per hour&quot;, &quot;R1,200.00&quot;));
+// &quot;Rate: [R1,200.00] per hour&quot;
+</code></pre>
+<p>Without the escape, <code>&quot;R1,200.00&quot;</code> would be a pattern in which <code>.</code> matches any
+character, and a search term such as <code>&quot;(&quot;</code> would throw a syntax error and take
+the request down with it.</p>
+<blockquote>
+<p><strong>Background (2026): Is this really a security issue?</strong></p>
+<p>Yes, and it has a name: regular expression denial of service. An attacker who
+can put text into a pattern can craft input that takes exponential time to
+match, and one request then occupies a CPU for minutes. The workbook covers
+the general rule under injection: <strong>data must never become code</strong>. A search
+box that becomes a regular expression, a string that becomes SQL and a
+document that becomes an instruction to a model are the same bug wearing
+three hats.</p>
+</blockquote>
+<h3>Error.isError (2026, needs Node 24)</h3>
+<pre><code class="language-javascript">try {
+  JSON.parse(&quot;{&quot;);
+} catch (thrown) {
+  if (Error.isError(thrown)) {
+    console.error(thrown.name, thrown.message);
+  } else {
+    console.error(&quot;Something non-Error was thrown:&quot;, thrown);
+  }
+}
+</code></pre>
+<p><code>instanceof Error</code> fails when the error crossed a boundary: a worker thread, a
+different realm, a structured clone. <code>Error.isError</code> asks what the value
+actually is. In a <code>catch</code> block, prefer it.</p>
+<h3>Error cause</h3>
+<p>Available since ES2022 and under-used. When you re-throw, keep the original.</p>
+<pre><code class="language-javascript">import { readFile } from &quot;node:fs/promises&quot;;
+
+async function loadHabits(path) {
+  try {
+    return JSON.parse(await readFile(path, &quot;utf8&quot;));
+  } catch (error) {
+    throw new Error(`Could not load habits from ${path}`, { cause: error });
+  }
+}
+</code></pre>
+<p>The caller sees your message; the log sees the whole chain. Losing the cause is
+one of the two ways people destroy a stack trace. The other is the empty
+<code>catch</code>.</p>
+<h3>structuredClone</h3>
+<p>A deep copy, built in, no library and no <code>JSON.parse(JSON.stringify(x))</code>.</p>
+<pre><code class="language-javascript">const original = { name: &quot;Walk&quot;, history: new Map([[&quot;2026-09-01&quot;, true]]) };
+const copy = structuredClone(original);
+
+copy.history.set(&quot;2026-09-02&quot;, true);
+console.log(original.history.size); // 1
+</code></pre>
+<p>It handles <code>Map</code>, <code>Set</code>, <code>Date</code>, <code>ArrayBuffer</code> and cycles, which the JSON trick
+does not. It cannot clone functions, DOM nodes or class identity: a clone of a
+class instance comes back as a plain object.</p>
+<p><strong>Exercise:</strong> Write <code>safeSearch(items, term)</code> that filters a list of objects by
+a case-insensitive match on <code>name</code>, using <code>RegExp.escape</code>. Prove it with the
+term <code>&quot;a.b&quot;</code> that it matches the literal string <code>&quot;a.b&quot;</code> and not <code>&quot;axb&quot;</code>.</p>
+<hr>
+<h2>Lesson 18: Temporal, a Preview (2026)</h2>
+<p><code>Date</code> has been the worst part of JavaScript since 1995. It is mutable, it
+counts months from zero, it parses inconsistently, and it has no concept of a
+date without a time or a time without a zone. <strong>Temporal</strong> replaces it.</p>
+<h3>Status, honestly</h3>
+<p>At the time of writing, Temporal is <strong>not on by default in Node 24</strong>. It is
+present behind a flag:</p>
+<pre><code class="language-bash">node --harmony-temporal your-script.js
+</code></pre>
+<p>Browser support is partial. For production today you still use <code>Date</code>, or a
+library such as <code>date-fns</code> (which is what Mentisflow does: see <code>date-fns</code> in
+<code>mentisflow/package.json</code>). This lesson is a preview so that you recognise
+Temporal when it lands and so you understand what problem it solves.</p>
+<h3>The types</h3>
+<p>Temporal splits apart what <code>Date</code> conflated.</p>
+<pre><code class="language-javascript">// node --harmony-temporal
+
+const today = Temporal.Now.plainDateISO();
+console.log(today.toString()); // &quot;2026-09-06&quot;, a date with no time and no zone
+
+const time = Temporal.PlainTime.from(&quot;14:00&quot;);
+const appointment = today.toPlainDateTime(time);
+console.log(appointment.toString()); // &quot;2026-09-06T14:00:00&quot;
+
+const inJohannesburg = appointment.toZonedDateTime(&quot;Africa/Johannesburg&quot;);
+console.log(inJohannesburg.toString());
+// &quot;2026-09-06T14:00:00+02:00[Africa/Johannesburg]&quot;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What it is</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Temporal.PlainDate</code></td>
+<td>A calendar date, no time, no zone</td>
+<td>A person&#39;s date of birth</td>
+</tr>
+<tr>
+<td><code>Temporal.PlainTime</code></td>
+<td>A wall-clock time</td>
+<td>&quot;The practice opens at 08:00&quot;</td>
+</tr>
+<tr>
+<td><code>Temporal.PlainDateTime</code></td>
+<td>Both, still no zone</td>
+<td>A form&#39;s raw input</td>
+</tr>
+<tr>
+<td><code>Temporal.ZonedDateTime</code></td>
+<td>An exact instant in a named zone</td>
+<td>A confirmed appointment</td>
+</tr>
+<tr>
+<td><code>Temporal.Instant</code></td>
+<td>A point on the timeline, no calendar</td>
+<td>A log timestamp</td>
+</tr>
+<tr>
+<td><code>Temporal.Duration</code></td>
+<td>A length of time</td>
+<td>&quot;Fifty minutes&quot;</td>
+</tr>
+</tbody></table>
+<h3>Arithmetic that does not lie</h3>
+<pre><code class="language-javascript">const start = Temporal.PlainDate.from(&quot;2026-01-31&quot;);
+console.log(start.add({ months: 1 }).toString()); // &quot;2026-02-28&quot;
+
+const consultation = Temporal.Duration.from({ minutes: 50 });
+const ends = Temporal.PlainTime.from(&quot;14:00&quot;).add(consultation);
+console.log(ends.toString()); // &quot;14:50:00&quot;
+
+const a = Temporal.PlainDate.from(&quot;2026-09-06&quot;);
+const b = Temporal.PlainDate.from(&quot;2026-12-25&quot;);
+console.log(a.until(b, { largestUnit: &quot;day&quot; }).days); // 110
+</code></pre>
+<p>Every object is immutable. <code>add</code> returns a new one, exactly like <code>toSorted</code>.</p>
+<blockquote>
+<p><strong>Background (2026): Why does this matter for a South African product?</strong></p>
+<p><code>Africa/Johannesburg</code> is UTC+02:00 and does not observe daylight saving, so
+local arithmetic is easy here. The moment a practitioner in Cape Town books a
+patient who is travelling in London, it is not. <code>ZonedDateTime</code> carries the
+zone identifier with the instant, so &quot;14:00 in Johannesburg&quot; survives being
+stored, sent and read somewhere else. A <code>Date</code> cannot express that: it is an
+instant and nothing more, and the zone is whatever the reading machine
+happens to be set to.</p>
+<p>Mentisflow sidesteps the whole problem by formatting every patient-facing
+date through one function, <code>utils/dateUtils.formatAppointmentWhen</code>, which
+always renders South African Standard Time and says so: &quot;29 July 2026 14:00
+(SAST)&quot;. That is the pattern to copy until Temporal ships: <strong>one formatter,
+one stated zone, never a bare <code>toLocaleString</code></strong>.</p>
+</blockquote>
+<h3>What to do today</h3>
+<pre><code class="language-javascript">// Format for South African users, with the zone named.
+const formatter = new Intl.DateTimeFormat(&quot;en-ZA&quot;, {
+  dateStyle: &quot;long&quot;,
+  timeStyle: &quot;short&quot;,
+  timeZone: &quot;Africa/Johannesburg&quot;,
+});
+
+console.log(formatter.format(new Date(&quot;2026-07-29T12:00:00Z&quot;)));
+// &quot;29 July 2026 at 14:00&quot;
+</code></pre>
+<p>Store instants in UTC as ISO 8601 strings. Format at the edge, with an explicit
+<code>timeZone</code>. Never do date arithmetic by adding milliseconds.</p>
+<p><strong>Exercise:</strong> Write <code>nextWeekdaySlots(fromISO, count)</code> returning the next
+<code>count</code> weekday dates as <code>YYYY-MM-DD</code> strings, skipping Saturday and Sunday.
+Write it once with <code>Date</code> and once with Temporal under <code>--harmony-temporal</code>.
+Compare the two for length and for how obviously correct each one is.</p>
+<hr>
+<h2>Capstone Project: A Tools CLI</h2>
+<p>Mentisflow, the mental health product beside this repository, ships a suite it
+calls Tools: a daily check-in, a mood tracker, habits, and a sticky-note task
+board. You are going to build a command-line version of the two tools that
+carry no clinical data: <strong>habits</strong> and <strong>daily tasks</strong>.</p>
+<h3>Why those two, and not mood</h3>
+<p>Mood entries and check-ins in a mental health product are <strong>health
+information</strong>, which South Africa&#39;s Protection of Personal Information Act
+treats as special personal information under section 26. It attracts extra
+duties and it does not belong in a teaching exercise, a fixture file, a test,
+or a repository. Habits and tasks in this capstone are deliberately generic:
+&quot;Walk for twenty minutes&quot;, &quot;File the notice&quot;. Nothing in your fixtures should
+be a real person&#39;s health, identity number, or contact details.</p>
+<p>This is the first design constraint of the project, and it is the kind you will
+meet constantly in real work: <strong>the interesting question is often what not to
+store.</strong></p>
+<h3>Requirements</h3>
+<p><strong>Habits.</strong></p>
+<ul>
+<li>Add a habit with a name, a time of day (<code>morning</code>, <code>midday</code>, <code>evening</code>), and
+a <strong>cue</strong>: the &quot;when X&quot; half of a plan, such as &quot;after I make coffee&quot;.</li>
+<li>Tick a habit as done for a given day.</li>
+<li>Show consistency as <strong>days done out of the last 28</strong>, never as a streak.</li>
+<li>Under five days of history, print &quot;Just started&quot; rather than a fraction.</li>
+<li>Group the list by time of day, in the order a day runs. Do not print an empty
+group.</li>
+</ul>
+<p><strong>Tasks.</strong></p>
+<ul>
+<li>Add a task with a title, a list (<code>today</code>, <code>later</code>), and an optional due date.</li>
+<li>Tick a task as done. Reopen a done task.</li>
+<li>Roll over: any unfinished task whose scheduled date is today or earlier
+appears under Today.</li>
+<li>Show &quot;n of m done today&quot;.</li>
+</ul>
+<p><strong>Both.</strong></p>
+<ul>
+<li>Persist to <code>data/tools.json</code>. Load it on startup. Create it if missing.</li>
+<li>Ship <code>fixtures/tools.seed.json</code> so a fresh checkout has something to look at.</li>
+<li>Split the code across modules. No file over about 150 lines.</li>
+<li>No third-party dependencies at all.</li>
+</ul>
+<h3>Why &quot;consistency, not streaks&quot;</h3>
+<p>This requirement is copied from the product, and the reason is on the record in
+its <code>CLAUDE.md</code>: Lally and colleagues (2010) found that missing a single
+opportunity did not materially affect habit formation, so a counter that resets
+to zero tells the user something that is not true, and tells it to people who
+are already struggling. A habit missed yesterday and not yet done today gets
+one gentle nudge, never a red broken-streak graphic.</p>
+<p>You are being asked to build the humane version on purpose. Requirements come
+from somewhere. Ask where.</p>
+<h3>Suggested structure</h3>
+<pre><code>tools-cli/
+  package.json
+  data/tools.json           (written at runtime, gitignored)
+  fixtures/tools.seed.json  (committed)
+  src/
+    main.js        entry point: parse argv, dispatch
+    storage.js     load and save data/tools.json
+    habits.js      add, tick, consistency, grouping
+    tasks.js       add, tick, reopen, rollover, counts
+    format.js      all the printing, including Intl
+    dates.js       today(), lastNDays(), isWeekend()
+</code></pre>
+<h3>Sample <code>package.json</code></h3>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;tools-cli&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: { &quot;node&quot;: &quot;&gt;=24&quot; },
+  &quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node src/main.js&quot;,
+    &quot;dev&quot;: &quot;node --watch src/main.js habits list&quot;,
+    &quot;test&quot;: &quot;node --test&quot;
+  }
+}
+</code></pre>
+<h3>Sample <code>storage.js</code></h3>
+<pre><code class="language-javascript">import { readFile, writeFile, mkdir } from &quot;node:fs/promises&quot;;
+import { dirname } from &quot;node:path&quot;;
+import { fileURLToPath } from &quot;node:url&quot;;
+
+const FILE = fileURLToPath(new URL(&quot;../data/tools.json&quot;, import.meta.url));
+
+const EMPTY = { habits: [], ticks: [], tasks: [] };
+
+export async function load() {
+  try {
+    return { ...EMPTY, ...JSON.parse(await readFile(FILE, &quot;utf8&quot;)) };
+  } catch (error) {
+    if (error.code === &quot;ENOENT&quot;) return structuredClone(EMPTY);
+    throw new Error(`Could not read ${FILE}`, { cause: error });
+  }
+}
+
+export async function save(state) {
+  await mkdir(dirname(FILE), { recursive: true });
+  await writeFile(FILE, JSON.stringify(state, null, 2) + &quot;\n&quot;, &quot;utf8&quot;);
+}
+</code></pre>
+<p>Note what this does <strong>not</strong> do: it does not catch every error and return
+<code>EMPTY</code>. A missing file is expected and handled. A permissions error or a
+corrupt file is not, so it is re-thrown with its cause attached. Losing the
+difference between &quot;no data yet&quot; and &quot;your data is unreadable&quot; is how people
+lose data.</p>
+<h3>Parsing arguments (2026)</h3>
+<p>Use <code>node:util</code>&#39;s <code>parseArgs</code>. No <code>commander</code>, no <code>yargs</code>.</p>
+<pre><code class="language-javascript">import { parseArgs } from &quot;node:util&quot;;
+
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    cue: { type: &quot;string&quot; },
+    when: { type: &quot;string&quot;, default: &quot;morning&quot; },
+    due: { type: &quot;string&quot; },
+    list: { type: &quot;string&quot;, default: &quot;today&quot; },
+    json: { type: &quot;boolean&quot;, default: false },
+  },
+});
+
+const [group, command, ...rest] = positionals;
+</code></pre>
+<h3>Sample CLI usage</h3>
+<pre><code class="language-bash">node src/main.js habits add &quot;Walk for twenty minutes&quot; --when morning --cue &quot;after I make coffee&quot;
+node src/main.js habits tick &quot;Walk for twenty minutes&quot;
+node src/main.js habits list
+
+node src/main.js tasks add &quot;File the notice&quot; --list today --due 2026-09-10
+node src/main.js tasks tick &quot;File the notice&quot;
+node src/main.js tasks list
+node src/main.js tasks list --json
+</code></pre>
+<h3>Expected output</h3>
+<pre><code>Habits
+
+Morning
+  [x] Walk for twenty minutes      after I make coffee      Just started
+Evening
+  [ ] Read ten pages               after supper             19 of 28 days
+
+Tasks · today · 1 of 3 done
+
+  [x] File the notice              due 10 September 2026
+  [ ] Renew the licence            due 30 September 2026
+  [ ] Ring the printer
+</code></pre>
+<h3>Features you must use</h3>
+<p>Tick these off as you go. Every one is in this course.</p>
+<ul>
+<li><input disabled="" type="checkbox"> ES modules with the <code>node:</code> prefix on every built-in</li>
+<li><input disabled="" type="checkbox"> <code>Object.groupBy</code> for grouping habits by time of day</li>
+<li><input disabled="" type="checkbox"> <code>toSorted</code> and <code>with</code> instead of <code>sort</code> and index assignment</li>
+<li><input disabled="" type="checkbox"> <code>at(-1)</code> for the most recent entry</li>
+<li><input disabled="" type="checkbox"> <code>findLast</code> for the last tick of a habit</li>
+<li><input disabled="" type="checkbox"> A <code>Set</code> and at least one set operation for done versus assigned</li>
+<li><input disabled="" type="checkbox"> Iterator helpers with <code>take</code> for the &quot;next up&quot; line</li>
+<li><input disabled="" type="checkbox"> <code>Promise.withResolvers</code> or <code>Promise.try</code> somewhere the shape earns it</li>
+<li><input disabled="" type="checkbox"> Optional chaining and <code>??</code> for absent fields</li>
+<li><input disabled="" type="checkbox"> <code>structuredClone</code> rather than a JSON round trip</li>
+<li><input disabled="" type="checkbox"> <code>Intl.DateTimeFormat(&quot;en-ZA&quot;, ...)</code> for every date shown</li>
+<li><input disabled="" type="checkbox"> <code>Error</code> with <code>cause</code> on every re-throw</li>
+<li><input disabled="" type="checkbox"> An import attribute for the seed fixture</li>
+<li><input disabled="" type="checkbox"> <code>node --test</code> covering <code>consistency()</code> and <code>rollover()</code></li>
+</ul>
+<h3>Stretch goals</h3>
+<ol>
+<li>Add <code>--json</code> to every list command so the output can be piped.</li>
+<li>Add a <code>tools export</code> command that writes a fixture the tests can read, and a
+<code>tools import</code> that reads one back.</li>
+<li>Write the whole thing so that <code>data/tools.json</code> is never partially written:
+write to a temporary file and rename. Explain in a comment why a rename is
+atomic and a write is not.</li>
+</ol>
+<p>When you finish you will have used arrow functions, destructuring, modules,
+async/await, classes if you want them, <code>Map</code> and <code>Set</code>, optional chaining,
+spread, template literals, and every 2026 addition in this course, on a problem
+with a real shape.</p>
+<hr>
+<h2>Where to Go Next</h2>
+<p>Once you finish this course, you are ready for the TypeScript course in this
+same series. Every concept you learned here will continue to apply: TypeScript
+adds types on top of modern JavaScript without changing how the language works.</p>
+<p>After TypeScript, take the React with TypeScript course to learn modern
+frontend development.</p>
+<p><strong>(2026)</strong> After all three, work through
+<a href="workbook.html"><code>../casey-workbook/workbook.md</code></a>. The courses
+teach the language. The workbook teaches what a professional does with it:
+trust boundaries, security standards, data protection engineering, operations,
+payments, and building alongside AI coding agents.</p>
+<h3>Recommended reading</h3>
+<ul>
+<li>&quot;Eloquent JavaScript&quot; by Marijn Haverbeke (free online at eloquentjavascript.net)</li>
+<li>The TC39 proposals list at github.com/tc39/proposals, for what is coming next</li>
+<li>The Node.js API documentation at nodejs.org/api, which is the reference for every <code>node:</code> module in this course</li>
+<li>The MDN JavaScript Guide at developer.mozilla.org</li>
+<li>&quot;You Do not Know JS Yet&quot; by Kyle Simpson (free on GitHub)</li>
+</ul>
+<p>Good luck.</p>
+
+<label class="done"><input type="checkbox" id="done"> Mark <b>&nbsp;Modern JavaScript&nbsp;</b> as read</label>
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+<script src="../app.js"></script><script>
+const box = document.getElementById("done");
+box.checked = Progress.isRead("js");
+box.addEventListener("change", () => Progress.setRead("js", box.checked));
+</script>
+</body>
+</html>

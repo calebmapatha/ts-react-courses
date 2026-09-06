@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STACK · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>STACK.md: what the Casey products actually run</h1>
+<p>Recorded 6 September 2026 by reading the three product repositories that sit
+beside this one. Nothing here is inferred from a product name, a README claim
+alone, or general knowledge. Every row names the file the fact came from. Where
+a fact could not be verified from the repository, the row says so and the
+courses that depend on it carry a marked placeholder.</p>
+<p>Repositories read, at the commit checked out on 6 September 2026:</p>
+<table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Path</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mentisflow</td>
+<td><code>../Mentisflow</code></td>
+<td>Live product. Full application code.</td>
+</tr>
+<tr>
+<td>Casey Journals</td>
+<td><code>../casey-journals</code></td>
+<td>Early build. Monorepo scaffold plus two shared packages; Phase 0 in progress.</td>
+</tr>
+<tr>
+<td>Casey Legal Tools</td>
+<td><code>../casey-legal-tools</code></td>
+<td>Documentation only. No application code in the tree yet.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>1. One-table summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Mentisflow</th>
+<th>Verified from</th>
+<th>Casey Journals</th>
+<th>Verified from</th>
+<th>Casey Legal Tools</th>
+<th>Verified from</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Product</td>
+<td>Mental health booking and wellbeing, South Africa</td>
+<td><code>README.md</code> line 3</td>
+<td>Legal publishing: writing, podcasts, video</td>
+<td><code>README.md</code>, <code>CLAUDE.md</code> line 3</td>
+<td>AI legal work platform for South African practice</td>
+<td><code>README.md</code>, <code>CLAUDE.md</code> line 3</td>
+</tr>
+<tr>
+<td>Repository shape</td>
+<td>Single repo: <code>mentisflow/</code> web app, <code>functions/</code> Cloud Functions, rules at root</td>
+<td><code>find</code> on the tree; <code>firebase.json</code></td>
+<td>Turborepo plus pnpm workspaces: <code>apps/web</code>, <code>apps/mobile</code>, <code>packages/*</code></td>
+<td><code>pnpm-workspace.yaml</code>, <code>turbo.json</code>, <code>package.json</code></td>
+<td>Planned Turborepo plus pnpm; not yet on disk</td>
+<td><code>docs/engineering/ARCHITECTURE.md</code> &quot;Shape&quot;; no <code>package.json</code> exists</td>
+</tr>
+<tr>
+<td>Package manager</td>
+<td>npm</td>
+<td><code>mentisflow/package-lock.json</code></td>
+<td>pnpm 10.34.5</td>
+<td><code>package.json</code> <code>packageManager</code></td>
+<td>pnpm (planned)</td>
+<td><code>README.md</code> stack table</td>
+</tr>
+<tr>
+<td>Node</td>
+<td>20 for Cloud Functions; CI uses Node 20</td>
+<td><code>functions/package.json</code> <code>engines.node</code>, <code>.github/workflows/ci.yml</code></td>
+<td><code>&gt;=22</code> declared; CI runs Node 24</td>
+<td><code>package.json</code> <code>engines</code>, <code>.github/workflows/ci.yml</code> <code>node-version: 24</code></td>
+<td>Not verifiable: no manifest exists</td>
+<td>not applicable</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>JavaScript with JSDoc, checked by <code>tsc</code> in <code>checkJs</code> opt-in mode. No TypeScript migration.</td>
+<td><code>mentisflow/jsconfig.json</code> header comment; <code>&quot;typecheck&quot;: &quot;tsc -p jsconfig.json&quot;</code></td>
+<td>TypeScript 5.9.3, strict</td>
+<td><code>packages/tsconfig/base.json</code>, every <code>package.json</code></td>
+<td>TypeScript (planned)</td>
+<td><code>docs/engineering/CONVENTIONS.md</code>, <code>README.md</code></td>
+</tr>
+<tr>
+<td>Web framework</td>
+<td>React 19.2.4 on Vite 8.0.4, single page app</td>
+<td><code>mentisflow/package.json</code></td>
+<td>Next.js 16.3.4, App Router, React 19.2.3</td>
+<td><code>apps/web/package.json</code>, <code>apps/web/app/layout.tsx</code></td>
+<td>Next.js App Router (planned)</td>
+<td><code>README.md</code> stack table, <code>docs/engineering/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>React Router DOM 7.14.1</td>
+<td><code>mentisflow/package.json</code></td>
+<td>Next.js App Router file routing with <code>typedRoutes: true</code></td>
+<td><code>apps/web/next.config.ts</code></td>
+<td>Next.js App Router (planned)</td>
+<td><code>docs/engineering/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Styling</td>
+<td>Tailwind CSS 3.4.19, Framer Motion 12, self-hosted Geist Sans and Fraunces</td>
+<td><code>mentisflow/package.json</code>, <code>mentisflow/tailwind.config.js</code>, <code>CLAUDE.md</code> design rules</td>
+<td>Tailwind CSS 3.4.19 plus <code>@casey/tokens</code></td>
+<td><code>apps/web/package.json</code>, <code>packages/tokens</code></td>
+<td>Tailwind plus shadcn/ui primitives, <code>packages/tokens</code> (planned)</td>
+<td><code>README.md</code> stack table</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Firebase: Auth, Firestore, Storage; Cloud Functions v2 in <code>europe-west1</code></td>
+<td><code>mentisflow/src/lib/firebase.js</code>, <code>functions/index.js</code>, <code>CLAUDE.md</code></td>
+<td>Supabase: Postgres with row-level security, Auth, Edge Functions, pg_cron, pgmq</td>
+<td><code>README.md</code> stack table, <code>packages/core/package.json</code> (<code>@supabase/supabase-js</code> 2.115.0)</td>
+<td>Supabase, same list plus pgmq job queue (planned)</td>
+<td><code>README.md</code> stack table</td>
+</tr>
+<tr>
+<td>Backend SDK version</td>
+<td><code>firebase</code> 12.12.0 (web), <code>firebase-admin</code> 13.10.0, <code>firebase-functions</code> 7.2.5</td>
+<td><code>mentisflow/package.json</code>, <code>functions/package.json</code></td>
+<td><code>@supabase/supabase-js</code> 2.115.0</td>
+<td><code>packages/core/package.json</code></td>
+<td>Not verifiable: no manifest exists</td>
+<td>not applicable</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Firebase Auth: email and password, Google, Apple. App Check with reCAPTCHA v3 on web and App Attest or Play Integrity on native.</td>
+<td><code>mentisflow/src/context/AuthContext.jsx</code>, <code>mentisflow/src/lib/firebase.js</code>, <code>mentisflow/.env.example</code></td>
+<td>Supabase Auth. Task 0.3 open. TOTP MFA cited as a requirement of the operator model.</td>
+<td><code>docs/STATUS.md</code> task 0.3, <code>README.md</code> stack table</td>
+<td>Supabase Auth: password with breach check, Google and Microsoft OAuth, TOTP mandatory by organisation policy, SAML for Enterprise, no SMS</td>
+<td><code>docs/decisions/0008-auth.md</code>, <code>README.md</code> stack table</td>
+</tr>
+<tr>
+<td>Authorisation boundary</td>
+<td>Firestore Security Rules and Storage Rules, 1043 and 139 lines, tested against the emulator</td>
+<td><code>firestore.rules</code>, <code>storage.rules</code>, <code>mentisflow/tests-rules/*.test.js</code></td>
+<td>Postgres row-level security, deny by default</td>
+<td><code>README.md</code> stack table, <code>CLAUDE.md</code> &quot;Migrations are code&quot;</td>
+<td>Postgres row-level security through <code>has_org_role</code>; every customer table carries <code>org_id</code></td>
+<td><code>CLAUDE.md</code> &quot;Tenancy is enforced in the database&quot;, <code>docs/decisions/0011-tenancy.md</code></td>
+</tr>
+<tr>
+<td>Payments</td>
+<td>PayFast, sandbox or live, server-side only. Not live at the time of reading: paid plans activate in demo mode without a charge.</td>
+<td><code>functions/.env.example</code>, <code>functions/src/billing.js</code>, <code>README.md</code> &quot;Current status&quot;</td>
+<td>Paystack behind a provider-neutral billing module</td>
+<td><code>docs/decisions/0001-payment-provider.md</code>, <code>apps/web/.env.example</code> <code>NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY</code></td>
+<td>Paystack behind a <code>BillingProvider</code> interface</td>
+<td><code>docs/decisions/0002-payment-provider.md</code></td>
+</tr>
+<tr>
+<td>Hosting</td>
+<td>Vercel for the web app; Firebase for functions, rules and indexes</td>
+<td><code>mentisflow/vercel.json</code>, <code>.github/workflows/deploy-firebase.yml</code> header</td>
+<td>Vercel</td>
+<td><code>apps/web/vercel.json</code>, <code>README.md</code> stack table</td>
+<td>Vercel for web, Cloudflare for edge and R2 (planned)</td>
+<td><code>docs/engineering/ARCHITECTURE.md</code> &quot;Hosts&quot;</td>
+</tr>
+<tr>
+<td>Mobile shell</td>
+<td>Capacitor 8.5.0, iOS and Android, one web bundle live-updated through Capgo</td>
+<td><code>mentisflow/capacitor.config.ts</code>, <code>mentisflow/package.json</code>, <code>.github/workflows/mobile-deploy.yml</code></td>
+<td>Expo SDK 57, Expo Router 57, React Native 0.86.3, NativeWind 4.2.6, EAS</td>
+<td><code>apps/mobile/package.json</code></td>
+<td>Expo, Phase 4, not started</td>
+<td><code>docs/decisions/0016-web-primary-mobile-later.md</code></td>
+</tr>
+<tr>
+<td>PWA</td>
+<td><code>vite-plugin-pwa</code> 1.2.0 with Workbox; disabled in the mobile build</td>
+<td><code>mentisflow/vite.config.js</code></td>
+<td>Not present</td>
+<td>No PWA dependency in <code>apps/web/package.json</code></td>
+<td>Not applicable</td>
+<td>not applicable</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Vitest 4.1.8; <code>@firebase/rules-unit-testing</code> 5.0.1 for rules tests against the emulator</td>
+<td><code>mentisflow/package.json</code>, <code>mentisflow/vitest.rules.config.js</code></td>
+<td>Vitest 4.1.11, <code>@testing-library/react</code> 16.3.3, jsdom 27.4.0; <code>node --test</code> for scripts; <code>pnpm test:rls</code> for policy tests</td>
+<td><code>apps/web/package.json</code>, <code>apps/web/vitest.config.mts</code>, root <code>package.json</code> scripts</td>
+<td>Vitest plus RLS tests plus <code>pnpm check:no-logic</code> (planned)</td>
+<td><code>CLAUDE.md</code> &quot;Verification gates&quot;</td>
+</tr>
+<tr>
+<td>Linting</td>
+<td>ESLint 9.39.4 flat config, React plugins, Prettier 3.9.6</td>
+<td><code>mentisflow/eslint.config.js</code>, <code>mentisflow/package.json</code></td>
+<td>ESLint 9.39.5 flat config via <code>@casey/eslint-config</code>, <code>typescript-eslint</code> 8.69.0, Prettier 3.9.6</td>
+<td><code>packages/eslint-config/package.json</code></td>
+<td>Same shape (planned)</td>
+<td><code>docs/engineering/CONVENTIONS.md</code></td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions: <code>ci.yml</code> (web, mobile, config), <code>deploy-firebase.yml</code>, <code>mobile-deploy.yml</code>, <code>android-release.yml</code>, <code>ios-build.yml</code></td>
+<td><code>.github/workflows/</code></td>
+<td>GitHub Actions: <code>ci.yml</code> running typecheck, lint, test, build, <code>check:config</code>; <code>status.yml</code> generating <code>docs/STATUS.md</code>. Actions pinned to commit SHAs.</td>
+<td><code>.github/workflows/ci.yml</code></td>
+<td>Not verifiable: no workflow files exist</td>
+<td>not applicable</td>
+</tr>
+<tr>
+<td>Compliance code</td>
+<td>POPIA throughout: consent records at signup, an account deletion grace period, a 90-day sign-in log with no stored IP address, a server-written <code>adminLogs</code> audit trail, a client-side encrypted vault</td>
+<td><code>docs/POPIA-CHECKLIST.md</code>, <code>functions/src/signIns.js</code>, <code>functions/src/deletion.js</code>, <code>functions/src/patientIdentity.js</code>, <code>mentisflow/src/utils/vault.js</code></td>
+<td>POPIA applies; consent provenance carried on imported subscribers; server-side paywall metering; AI crawler refusal list</td>
+<td><code>CLAUDE.md</code>, <code>docs/decisions/0003</code>, <code>0013</code>, <code>0014</code></td>
+<td>POPIA and legal privilege as design constraints; break-glass grants for operator content access; documented section 72 residency basis</td>
+<td><code>docs/decisions/0007-data-residency.md</code>, <code>0018-operator-content-access.md</code></td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>AES-256-GCM in the browser, key from PBKDF2-SHA-256 at 310 000 iterations, ciphertext only in Firestore and Storage</td>
+<td><code>mentisflow/src/utils/vault.js</code> lines 1 to 46</td>
+<td>Encryption functions cited as porting from the predecessor; not in the tree yet</td>
+<td><code>README.md</code> stack table (Backend row)</td>
+<td><code>encrypt_field</code> named for console-entered secrets</td>
+<td><code>docs/engineering/AI-PIPELINE.md</code> section 3</td>
+</tr>
+<tr>
+<td>AI usage in product</td>
+<td>None found in the application code</td>
+<td>No AI SDK in <code>mentisflow/package.json</code></td>
+<td>Anthropic API for summaries; Cloudflare Workers AI Whisper for transcripts, each behind an adapter</td>
+<td><code>README.md</code> stack table, <code>docs/decisions/0011-transcription.md</code></td>
+<td><code>WorkflowRunner</code> interface with n8n, Anthropic and OpenAI adapters; no prompts in the repository</td>
+<td><code>docs/engineering/AI-PIPELINE.md</code>, <code>docs/decisions/0006-legal-logic-in-runners.md</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. What could not be verified</h2>
+<p>These are stated as unknown rather than guessed. Anywhere a course or the
+workbook needs one of them, the text carries a <code>PLACEHOLDER</code> marker.</p>
+<table>
+<thead>
+<tr>
+<th>Unverified</th>
+<th>Why</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The Firestore and Cloud Storage region for Mentisflow</td>
+<td><code>CLAUDE.md</code> says the region &quot;must be verified in the console&quot;. A repository cannot show a console setting. <code>functions/index.js</code> fixes only the Cloud Functions region, <code>europe-west1</code>.</td>
+<td>Workbook Part 8, residency and cross-border transfer</td>
+</tr>
+<tr>
+<td>Whether Mentisflow&#39;s PayFast integration has ever completed a live charge</td>
+<td><code>README.md</code> states payments run in demo mode; <code>functions/.env.example</code> defaults <code>PAYFAST_MODE=sandbox</code>. <code>docs/SUBSCRIPTIONS.md</code> records behaviours that &quot;cannot be verified until the gateway is live&quot;.</td>
+<td>Workbook Part 9, payments and entitlements</td>
+</tr>
+<tr>
+<td>The Casey Journals database schema</td>
+<td><code>supabase/</code> does not exist in the tree. Task 0.2 is open and labelled <code>owner-review</code>.</td>
+<td>Workbook Part 6, data modelling; Part 7, row-level security</td>
+</tr>
+<tr>
+<td>Any Casey Legal Tools source file</td>
+<td>The repository holds <code>docs/</code>, <code>scripts/</code>, <code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>IMPLEMENTATION_PLAN.md</code> and <code>README.md</code> only. Every stack fact for it is a plan, not an implementation.</td>
+<td>TypeScript course capstone; workbook Parts 4 to 9</td>
+</tr>
+<tr>
+<td>The exact prescribed rate of interest used by <code>moraInterest</code></td>
+<td><code>docs/engineering/LEGACY-CODEBASE.md</code> says the constant seeds <code>app_settings.prescribed_rate</code> and is operator-editable. The prototype repository was not read.</td>
+<td>TypeScript course capstone</td>
+</tr>
+<tr>
+<td>Runtime versions in production for any product</td>
+<td>Manifests give the declared range, not what a deployed process runs.</td>
+<td>Every &quot;current version&quot; claim below is npm registry data, not production data</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Version baseline</h2>
+<p>Read from the npm registry <code>dist-tags</code> and <code>time</code> fields, and from
+<code>nodejs.org/dist/index.json</code> and the Node release schedule, on <strong>6 September
+2026</strong>. The &quot;published&quot; column is the publish date of the version named in
+&quot;Current stable&quot;.</p>
+<table>
+<thead>
+<tr>
+<th>Package or runtime</th>
+<th>Current stable</th>
+<th>Published</th>
+<th>What the products pin</th>
+<th>Notable change that affects course code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Node.js (Active LTS)</td>
+<td><strong>24.20.0</strong> (&quot;Krypton&quot;)</td>
+<td>2026-08-26</td>
+<td>Functions 20; Casey Journals CI 24</td>
+<td>Runs <code>.ts</code> files directly by type stripping, on by default (<code>process.features.typescript === &#39;strip&#39;</code> on 24.20.0). <code>node --run</code> executes a <code>package.json</code> script. <code>node --watch</code> restarts on change. <code>--env-file</code> loads a dotenv file. Node 20 reached end of life on 2026-04-30.</td>
+</tr>
+<tr>
+<td>Node.js (Current)</td>
+<td>26.8.1</td>
+<td>2026-08-26</td>
+<td>none</td>
+<td>Becomes Active LTS on 2026-10-28. Do not teach against it yet.</td>
+</tr>
+<tr>
+<td>Node.js (Maintenance)</td>
+<td>22.23.2 (&quot;Jod&quot;)</td>
+<td>2026-07-28</td>
+<td>none declared</td>
+<td>Maintenance since 2025-10-21, end of life 2027-04-30.</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td><strong>7.0.2</strong></td>
+<td>2026-07-08</td>
+<td>Mentisflow <code>^7.0.2</code>; Casey Journals <code>5.9.3</code></td>
+<td>The compiler is a native Go port. <code>strict</code> is on by default. <code>target</code> defaults to <code>esnext</code>, <code>module</code> to <code>esnext</code>, <code>moduleResolution</code> to <code>bundler</code>, <code>types</code> to <code>[]</code>. <code>target: &quot;es5&quot;</code>, <code>moduleResolution: &quot;node&quot;</code>, <code>baseUrl</code>, <code>importsNotUsedAsValues</code>, <code>preserveValueImports</code>, <code>keyofStringsOnly</code>, <code>suppressImplicitAnyIndexErrors</code>, <code>noImplicitUseStrict</code>, <code>out</code> and <code>charset</code> are gone. All verified by running <code>tsc</code> 7.0.2 locally; see section 4.</td>
+</tr>
+<tr>
+<td>TypeScript 6</td>
+<td><code>6.0.0-beta</code> on the <code>beta</code> tag</td>
+<td>not applicable</td>
+<td>none</td>
+<td>The deprecation release. What 6 warned about, 7 errors on. Named here because upgrade guidance points through it.</td>
+</tr>
+<tr>
+<td>React</td>
+<td><strong>19.2.8</strong></td>
+<td>2026-07-21</td>
+<td>Mentisflow <code>^19.2.4</code>; Casey Journals <code>19.2.3</code></td>
+<td><code>ref</code> is an ordinary prop on function components; <code>forwardRef</code> is no longer needed. <code>use()</code> reads a promise or context during render. Actions: <code>useActionState</code>, <code>useOptimistic</code>, <code>useFormStatus</code>. <code>useSyncExternalStore</code> for external stores. <code>useEffectEvent</code> and <code>&lt;Activity&gt;</code> are in the 19.2 line. React Compiler is a separate package.</td>
+</tr>
+<tr>
+<td>React DOM</td>
+<td>19.2.8</td>
+<td>2026-07-21</td>
+<td>same as React</td>
+<td>not applicable</td>
+</tr>
+<tr>
+<td>Vite</td>
+<td><strong>8.2.2</strong></td>
+<td>2026-08-20</td>
+<td>Mentisflow <code>^8.0.4</code></td>
+<td>Rolldown is the bundler. <code>vitest/config</code> remains the import path for Vitest configuration.</td>
+</tr>
+<tr>
+<td>Vitest</td>
+<td><strong>5.0.0</strong></td>
+<td>2026-09-03</td>
+<td>Mentisflow <code>^4.1.8</code>; Casey Journals <code>4.1.11</code></td>
+<td>Version 5 is three days old at the time of writing; both products are on the 4 line (<code>V4</code> dist-tag <code>4.1.11</code>). Courses target 4 and name 5. <code>defineConfig</code> comes from <code>vitest/config</code>, not <code>vite</code>.</td>
+</tr>
+<tr>
+<td>Zod</td>
+<td><strong>4.5.4</strong></td>
+<td>2026-08-29</td>
+<td>Casey Journals <code>4.5.4</code></td>
+<td>Top-level format functions: <code>z.email()</code>, <code>z.uuid()</code>, <code>z.url()</code>, <code>z.iso.date()</code>. <code>{ error: ... }</code> replaces <code>{ message: ... }</code> and <code>{ invalid_type_error: ... }</code> as the single customisation channel, though <code>{ message: ... }</code> still works on refinements. <code>z.treeifyError</code>, <code>z.prettifyError</code>, <code>z.flattenError</code> replace <code>.format()</code> and <code>.flatten()</code>. <code>z.strictObject</code> and <code>z.looseObject</code> replace <code>.strict()</code> and <code>.passthrough()</code>. Verified by running Zod 4.5.4 locally.</td>
+</tr>
+<tr>
+<td>TanStack Query</td>
+<td><strong>5.102.8</strong></td>
+<td>2026-08-27</td>
+<td>not used by either product</td>
+<td><code>queryOptions()</code> gives one typed, reusable query definition. <code>isPending</code> replaces <code>isLoading</code>; <code>isLoading</code> now means &quot;pending and fetching&quot;. <code>cacheTime</code> is <code>gcTime</code>. The object signature is the only signature.</td>
+</tr>
+<tr>
+<td>React Router</td>
+<td><strong>8.3.1</strong></td>
+<td>2026-08-28</td>
+<td>Mentisflow <code>react-router-dom@^7.14.1</code> (<code>version-7</code> tag is 7.18.3)</td>
+<td>From version 7 everything is importable from <code>react-router</code>; <code>react-router-dom</code> is a re-export kept for compatibility. Mentisflow still imports from <code>react-router-dom</code>, so the course teaches both and says which is which.</td>
+</tr>
+<tr>
+<td>Next.js</td>
+<td><strong>16.3.4</strong></td>
+<td>2026-08-31</td>
+<td>Casey Journals <code>16.3.4</code></td>
+<td>App Router. <code>typedRoutes</code> is a stable <code>next.config.ts</code> option. Server Components by default; <code>&quot;use client&quot;</code> opts in. Server Actions with <code>&quot;use server&quot;</code>. Route handlers under <code>app/**/route.ts</code>. Only <code>NEXT_PUBLIC_</code>-prefixed variables reach the browser.</td>
+</tr>
+<tr>
+<td>Tailwind CSS</td>
+<td><strong>4.3.3</strong></td>
+<td>2026-07-16</td>
+<td>Both products pin <code>3.4.19</code> (the <code>v3-lts</code> dist-tag)</td>
+<td>Version 4 configures in CSS with <code>@theme</code> rather than in <code>tailwind.config.js</code>. Both products are deliberately on the 3 LTS line, so course samples use v3 syntax and name v4.</td>
+</tr>
+<tr>
+<td>Firebase JS SDK</td>
+<td><strong>12.18.0</strong></td>
+<td>2026-08-19</td>
+<td>Mentisflow <code>firebase@^12.12.0</code></td>
+<td>Modular, tree-shaken API: <code>import { getFirestore, doc, getDoc } from &#39;firebase/firestore&#39;</code>.</td>
+</tr>
+<tr>
+<td>supabase-js</td>
+<td><strong>2.115.0</strong></td>
+<td>2026-09-03</td>
+<td>Casey Journals <code>2.115.0</code></td>
+<td>Version 3 exists on the <code>next</code> tag (<code>3.0.0-next.29</code>) and is not what the product uses.</td>
+</tr>
+<tr>
+<td>Capacitor</td>
+<td><strong>8.5.1</strong></td>
+<td>2026-08-31</td>
+<td>Mentisflow <code>@capacitor/core@^8.5.0</code></td>
+<td>One web bundle inside a native WebView. Mentisflow&#39;s <code>capacitor.config.ts</code> freezes the plugin set; a JavaScript-only update cannot add native code.</td>
+</tr>
+</tbody></table>
+<h3>Dates that matter</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Event</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2026-04-30</td>
+<td>Node 20 end of life</td>
+<td><code>nodejs/Release</code> <code>schedule.json</code></td>
+</tr>
+<tr>
+<td>2026-07-08</td>
+<td>TypeScript 7.0.2 published</td>
+<td>npm registry <code>time</code> field</td>
+</tr>
+<tr>
+<td>2026-07-21</td>
+<td>React 19.2.8 published</td>
+<td>npm registry <code>time</code> field</td>
+</tr>
+<tr>
+<td>2026-08-26</td>
+<td>Node 24.20.0 published</td>
+<td><code>nodejs.org/dist/index.json</code></td>
+</tr>
+<tr>
+<td>2026-09-03</td>
+<td>Vitest 5.0.0 published</td>
+<td>npm registry <code>time</code> field</td>
+</tr>
+<tr>
+<td>2026-10-20</td>
+<td>Node 24 enters maintenance</td>
+<td><code>nodejs/Release</code> <code>schedule.json</code></td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td>Node 26 becomes Active LTS</td>
+<td><code>nodejs/Release</code> <code>schedule.json</code></td>
+</tr>
+<tr>
+<td>2027-04-30</td>
+<td>Node 22 end of life</td>
+<td><code>nodejs/Release</code> <code>schedule.json</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. Evidence for the TypeScript 7 claims</h2>
+<p>The TypeScript 7 row above is the one most likely to be wrong if taken from a
+blog post, so each claim was run against <code>typescript@7.0.2</code> in a scratch
+project on 6 September 2026. The probes and their output:</p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Probe</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>strict</code> is on by default</td>
+<td><code>tsc --noEmit probe.ts</code> with no <code>tsconfig.json</code>, where <code>probe.ts</code> is <code>function f(x) { return x; }</code></td>
+<td><code>error TS7006: Parameter &#39;x&#39; implicitly has an &#39;any&#39; type.</code></td>
+</tr>
+<tr>
+<td><code>target</code> defaults to <code>esnext</code></td>
+<td>Compile a file using <code>Set.prototype.union</code>, <code>Object.groupBy</code> and <code>RegExp.escape</code> with no config</td>
+<td>Type-checks clean; emitted JavaScript is byte-for-byte the input, nothing downlevelled</td>
+</tr>
+<tr>
+<td><code>module</code> defaults to an ES module format</td>
+<td>Compile a file using <code>import.meta.url</code> and top-level <code>await</code> with no config</td>
+<td>Both accepted; <code>export</code> statements survive emit</td>
+</tr>
+<tr>
+<td><code>moduleResolution</code> defaults to <code>bundler</code></td>
+<td>Set <code>&quot;module&quot;: &quot;amd&quot;</code></td>
+<td><code>error TS5095: Option &#39;bundler&#39; can only be used when &#39;module&#39; is set to &#39;preserve&#39;, &#39;commonjs&#39;, or &#39;es2015&#39; or later.</code></td>
+</tr>
+<tr>
+<td><code>types</code> defaults to <code>[]</code></td>
+<td>Install <code>@types/node</code>, then compile a file using <code>process.env</code> with no <code>types</code> field</td>
+<td><code>error TS2591: Cannot find name &#39;process&#39;. ... add &#39;node&#39; to the types field in your tsconfig.</code> Adding <code>&quot;types&quot;: [&quot;node&quot;]</code> makes it pass.</td>
+</tr>
+<tr>
+<td><code>target: &quot;es5&quot;</code> is removed</td>
+<td><code>&quot;target&quot;: &quot;es5&quot;</code></td>
+<td><code>error TS5108: Option &#39;target=ES5&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td><code>moduleResolution: &quot;node&quot;</code> is removed</td>
+<td><code>&quot;moduleResolution&quot;: &quot;node&quot;</code></td>
+<td><code>error TS5108: Option &#39;moduleResolution=node10&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td><code>baseUrl</code> is removed</td>
+<td><code>&quot;baseUrl&quot;: &quot;.&quot;</code></td>
+<td><code>error TS5102: Option &#39;baseUrl&#39; has been removed.</code></td>
+</tr>
+<tr>
+<td>Six older options are gone entirely</td>
+<td><code>importsNotUsedAsValues</code>, <code>preserveValueImports</code>, <code>keyofStringsOnly</code>, <code>suppressImplicitAnyIndexErrors</code>, <code>noImplicitUseStrict</code>, <code>out</code>, <code>charset</code></td>
+<td><code>error TS5023: Unknown compiler option</code> for each</td>
+</tr>
+<tr>
+<td><code>erasableSyntaxOnly</code> rejects non-erasable syntax</td>
+<td>Compile an <code>enum</code>, a parameter property and a value <code>namespace</code> with the flag on</td>
+<td><code>error TS1294: This syntax is not allowed when &#39;erasableSyntaxOnly&#39; is enabled.</code> on all three</td>
+</tr>
+<tr>
+<td><code>tsc --init</code> writes the modern shape</td>
+<td><code>tsc --init</code></td>
+<td>Writes <code>module: nodenext</code>, <code>target: esnext</code>, <code>types: []</code>, <code>strict</code>, <code>verbatimModuleSyntax</code>, <code>isolatedModules</code>, <code>noUncheckedIndexedAccess</code>, <code>exactOptionalPropertyTypes</code>, <code>noUncheckedSideEffectImports</code>, <code>moduleDetection: force</code></td>
+</tr>
+</tbody></table>
+<p>Node feature availability was checked the same way on Node 24.20.0:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Node 24.20.0</th>
+<th>Node 22.22.2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Object.groupBy</code>, <code>Promise.withResolvers</code>, <code>Set.prototype.union</code>, iterator helpers, <code>Array.prototype.toSorted</code>, <code>Array.fromAsync</code></td>
+<td>present</td>
+<td>present</td>
+</tr>
+<tr>
+<td><code>Promise.try</code>, <code>RegExp.escape</code>, <code>Error.isError</code>, <code>Float16Array</code></td>
+<td>present</td>
+<td>absent</td>
+</tr>
+<tr>
+<td><code>Temporal</code></td>
+<td>present behind <code>--harmony-temporal</code> only</td>
+<td>absent</td>
+</tr>
+<tr>
+<td><code>Math.sumPrecise</code>, <code>Uint8Array.fromBase64</code></td>
+<td>absent</td>
+<td>absent</td>
+</tr>
+<tr>
+<td>Direct <code>.ts</code> execution</td>
+<td><code>process.features.typescript === &#39;strip&#39;</code></td>
+<td>not by default</td>
+</tr>
+</tbody></table>
+<p>This is why the JavaScript course teaches to <strong>Node 24</strong> and marks <code>Promise.try</code>,
+<code>RegExp.escape</code> and <code>Error.isError</code> as needing it, and why <code>Temporal</code> is a
+preview rather than a lesson.</p>
+<hr>
+<h2>5. What the courses take from each product</h2>
+<p>Products are worked examples. No lesson requires access to a product
+repository, and no product code is copied.</p>
+<table>
+<thead>
+<tr>
+<th>Course</th>
+<th>Anchor product</th>
+<th>What it borrows</th>
+<th>What it does not borrow</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JavaScript</td>
+<td>Mentisflow</td>
+<td>The shape of the Tools suite: daily check-in, mood, habits with cues, sticky-note tasks. The capstone is a local CLI over JSON fixtures.</td>
+<td>Firebase, any real patient data, the design system</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td>Casey Legal Tools</td>
+<td>The idea of a deterministic statutory calculator kept apart from legal reasoning, and money in integer cents. The capstone is a mora interest engine tested with <code>node:test</code>.</td>
+<td>Any legal wording, any prompt, any rate treated as authoritative</td>
+</tr>
+<tr>
+<td>React</td>
+<td>Casey Journals for the Next.js path, Mentisflow for the Vite path</td>
+<td>A tiered publication with a server-enforced paywall, a subscribe form, optimistic bookmarks.</td>
+<td>Supabase, Paystack, real article text, the editorial design system</td>
+</tr>
+</tbody></table>
+<p>Both React paths exist because both are real here: Casey Journals runs Next.js
+16 App Router, and Mentisflow runs React 19 on Vite 8 with React Router. A
+course that taught only one would be wrong about one of the two products a
+reader is likely to work on.</p>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>

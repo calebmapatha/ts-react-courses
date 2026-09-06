@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test · Casey Learning Hub</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="./">Casey Learning Hub</a>
+    <nav>
+      <a href="./">Hub</a>
+      <a href="./test.html" aria-current="page">Test</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+<script>
+const app = document.getElementById("app");
+const LENGTHS = [10, 20, 40];
+
+let run = null; /* { topic, items, index, answers[] } */
+
+/* ------------------------------------------------------------------ start */
+
+function screenStart() {
+  const p = Progress.all();
+  const params = new URLSearchParams(location.search);
+  const preset = params.get("topic");
+  if (preset && (preset === "all" || TOPICS.some((t) => t.id === preset))) {
+    return start(preset, 10);
+  }
+
+  setKids(app,
+    el("h1", { text: "Test yourself" }),
+    el("p", { class: "lede" },
+      "Every test is half straightforward and half not, drawn at random from ",
+      String(QUESTIONS.length), " questions. You get the reasoning after each answer."),
+
+    el("h2", { text: "Everything", style: "margin-top:8px" }),
+    el("div", { class: "btns", style: "margin-top:0" },
+      ...LENGTHS.map((n) =>
+        el("button", { class: n === 20 ? "btn" : "btn ghost", onclick: () => start("all", n) },
+          n + " questions"))),
+
+    el("h2", { id: "topics", text: "One topic" }),
+    el("div", { class: "cards two" },
+      ...TOPICS.map((t) => {
+        const s = p.scores[t.id];
+        const pool = QUESTIONS.filter((q) => q.topic === t.id).length;
+        return el("button", {
+          class: "card", style: "cursor:pointer;font:inherit;text-align:left",
+          onclick: () => start(t.id, Math.min(10, pool))
+        },
+          el("h3", {}, t.name, s ? el("span", { class: "small", text: "  best " + s.pct + "%" }) : null),
+          el("p", { text: t.blurb }),
+          el("div", { class: "meta", text: pool + " questions" }),
+          s ? bar(s.pct) : null);
+      })),
+
+    el("footer", { class: "foot" },
+      el("p", { class: "small" },
+        "Scores are kept in this browser only. Your best score per topic is what is remembered."))
+  );
+}
+
+/* ------------------------------------------------------------------- quiz */
+
+function start(topic, count) {
+  const pool = topic === "all" ? QUESTIONS : QUESTIONS.filter((q) => q.topic === topic);
+  run = { topic, items: pickBalanced(pool, count), index: 0, answers: [] };
+  screenQuestion();
+}
+
+function screenQuestion() {
+  const q = run.items[run.index];
+  const total = run.items.length;
+  const topicName = (TOPICS.find((t) => t.id === q.topic) || {}).name || q.topic;
+
+  const opts = el("div", { class: "opts" });
+  const why = el("div");
+
+  q.options.forEach((text, i) => {
+    opts.append(el("button", {
+      class: "opt", type: "button",
+      onclick: () => answer(i, opts, why)
+    },
+      el("span", { class: "key", text: "ABCD"[i] }),
+      el("span", { text })));
+  });
+
+  setKids(app,
+    el("div", { class: "qmeta" },
+      el("span", { class: "small", text: "Question " + (run.index + 1) + " of " + total }),
+      el("span", {},
+        el("span", { class: "pill", text: topicName }), " ",
+        el("span", { class: "pill", text: q.level === "easy" ? "Straightforward" : "Harder" }))),
+    bar((run.index / total) * 100),
+    el("div", { style: "height:24px" }),
+    q.scenario ? el("div", { class: "scenario", text: q.scenario }) : null,
+    el("p", { class: "qtext", text: q.q }),
+    opts,
+    why
+  );
+  window.scrollTo(0, 0);
+}
+
+function answer(chosen, opts, why) {
+  const q = run.items[run.index];
+  const correct = chosen === q.answer;
+  run.answers.push({ id: q.id, chosen, correct });
+
+  [...opts.children].forEach((button, i) => {
+    button.disabled = true;
+    if (i === q.answer) button.classList.add("right");
+    else if (i === chosen) button.classList.add("wrong");
+    else button.classList.add("dim");
+  });
+
+  const last = run.index === run.items.length - 1;
+  setKids(why,
+    el("div", { class: "why" },
+      el("b", { class: correct ? "right" : "wrong", text: correct ? "Correct. " : "Not this one. " }),
+      q.why),
+    el("div", { class: "btns" },
+      el("button", { class: "btn", onclick: next }, last ? "See your score" : "Next question"))
+  );
+  why.querySelector("button").focus();
+}
+
+function next() {
+  run.index += 1;
+  if (run.index < run.items.length) screenQuestion();
+  else screenResult();
+}
+
+/* ----------------------------------------------------------------- result */
+
+function screenResult() {
+  const correct = run.answers.filter((a) => a.correct).length;
+  const total = run.answers.length;
+  const pct = Math.round((correct / total) * 100);
+
+  /* A mixed test records against every topic it actually asked about. */
+  const topics = run.topic === "all"
+    ? [...new Set(run.items.map((q) => q.topic))]
+    : [run.topic];
+
+  for (const t of topics) {
+    const asked = run.items.map((q, i) => ({ q, a: run.answers[i] })).filter((x) => x.q.topic === t);
+    if (asked.length >= 3 || run.topic !== "all") {
+      Progress.recordScore(t, asked.filter((x) => x.a.correct).length, asked.length);
+    }
+  }
+
+  const wrong = run.items
+    .map((q, i) => ({ q, a: run.answers[i] }))
+    .filter((x) => !x.a.correct);
+
+  setKids(app,
+    el("p", { class: "small", text: "Result" }),
+    el("div", { class: "score", text: pct + "%" }),
+    el("p", { class: "lede", style: "margin-top:6px" },
+      correct + " of " + total + " correct" +
+      (run.topic === "all" ? "" : " · " + (TOPICS.find((t) => t.id === run.topic) || {}).name)),
+    bar(pct),
+
+    el("div", { class: "btns" },
+      el("button", { class: "btn", onclick: () => start(run.topic, total) }, "Try again"),
+      el("a", { class: "btn ghost", href: "test.html" }, "Another test"),
+      el("a", { class: "btn ghost", href: "./" }, "Back to the hub")),
+
+    wrong.length
+      ? el("div", {},
+          el("h2", { text: "What to look at again" }),
+          ...wrong.map((x) =>
+            el("div", { class: "review" },
+              el("h4", { text: x.q.q }),
+              el("p", { class: "small", style: "margin-bottom:6px" },
+                "You chose: ", x.q.options[x.a.chosen]),
+              el("p", { class: "small", style: "margin-bottom:6px" },
+                el("b", {}, "Answer: "), x.q.options[x.q.answer]),
+              el("p", { style: "margin:0", text: x.q.why })))
+        )
+      : el("p", { style: "margin-top:28px" }, el("b", { class: "tick", text: "Nothing wrong. " }),
+          "Try a longer test, or a topic you have not done."),
+
+    el("footer", { class: "foot" },
+      el("p", { class: "small", text: "Only your best score per topic is kept." }))
+  );
+  window.scrollTo(0, 0);
+}
+
+screenStart();
+</script>
+</body>
+</html>

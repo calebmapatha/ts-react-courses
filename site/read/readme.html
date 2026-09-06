@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>README · Casey Learning Hub</title>
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='72' x='50' text-anchor='middle' font-size='64' fill='%23fff' font-family='sans-serif'>C</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="../">Casey Learning Hub</a>
+    <nav><a href="../">Hub</a><a href="../test.html">Test</a></nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>Modern JavaScript, TypeScript, and React Courses</h1>
+<p>Three practical, open-source courses that take you from modern JavaScript
+fundamentals through TypeScript and into production React, plus a workbook on
+everything that comes after the code compiles.</p>
+<p><strong>Revised September 2026.</strong> Material added or changed in that revision is
+marked <strong>(2026)</strong> throughout. The version baseline, and the audit of the
+products these courses draw their examples from, is in
+<a href="stack.html">STACK.md</a>.</p>
+<hr>
+<h2>Baseline</h2>
+<p>Every sample in these courses was run or type-checked against these versions
+before publication. Full table, with publication dates and how each was
+checked, in <a href="stack.html">STACK.md</a>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Version</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Node.js</td>
+<td><strong>24</strong> (Active LTS)</td>
+<td>Runs <code>.ts</code> files directly. Node 20 reached end of life on 30 April 2026.</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td><strong>7.0.2</strong></td>
+<td>Native Go compiler. <code>strict</code> on by default, <code>target</code>/<code>module</code> default to <code>esnext</code>, <code>types</code> defaults to <code>[]</code>.</td>
+</tr>
+<tr>
+<td>React</td>
+<td><strong>19.2</strong></td>
+<td><code>ref</code> as a prop, <code>use()</code>, Actions, <code>useEffectEvent</code>, <code>Activity</code></td>
+</tr>
+<tr>
+<td>Next.js</td>
+<td><strong>16.3</strong></td>
+<td>App Router, Server Components, Server Actions</td>
+</tr>
+<tr>
+<td>Vite</td>
+<td><strong>8</strong></td>
+<td>Rolldown bundler</td>
+</tr>
+<tr>
+<td>Vitest</td>
+<td><strong>4</strong></td>
+<td>Configured from <code>vitest/config</code></td>
+</tr>
+<tr>
+<td>Zod</td>
+<td><strong>4.5</strong></td>
+<td>Top-level formats, one <code>error</code> option, <code>prettifyError</code></td>
+</tr>
+<tr>
+<td>React Router</td>
+<td><strong>7</strong> and <strong>8</strong></td>
+<td>Everything importable from <code>react-router</code></td>
+</tr>
+<tr>
+<td>TanStack Query</td>
+<td><strong>5</strong></td>
+<td><code>queryOptions</code>, <code>isPending</code>, <code>gcTime</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Courses</h2>
+<h3>1. Modern JavaScript</h3>
+<p>Every modern JavaScript feature you need before tackling TypeScript and React,
+including everything added between ES2023 and ES2025.</p>
+<ul>
+<li><a href="javascript-course.html">Course content</a></li>
+<li><a href="javascript-course-solutions.html">Exercise solutions</a></li>
+</ul>
+<p><strong>What you will learn:</strong> <code>let</code>, <code>const</code> and block scope; arrow functions,
+template literals, destructuring; default, rest and spread; array and object
+methods including <strong>(2026)</strong> <code>at</code>, <code>findLast</code>, <code>toSorted</code>, <code>with</code> and
+<code>Object.groupBy</code>; optional chaining and nullish coalescing; classes; modules
+and <strong>(2026)</strong> import attributes; promises and <strong>(2026)</strong>
+<code>Promise.withResolvers</code>, <code>Promise.try</code> and <code>Array.fromAsync</code>; async/await;
+<code>fetch</code> against local fixtures and a fixture server you run yourself; <code>Map</code>,
+<code>Set</code> and <strong>(2026)</strong> the seven Set operations; iterators and <strong>(2026)</strong>
+iterator helpers; <strong>(2026)</strong> <code>RegExp.escape</code>, <code>Error.isError</code>, <code>Error</code> cause
+and <code>structuredClone</code>; <strong>(2026)</strong> a Temporal preview.</p>
+<p><strong>Capstone (2026):</strong> a Tools CLI modelled on Mentisflow&#39;s habit and task
+tools, using local JSON, no dependencies, and <code>node:test</code>.</p>
+<p><strong>Estimated time:</strong> 14 to 20 hours including exercises.</p>
+<h3>2. TypeScript Fundamentals</h3>
+<p>The language from primitives through advanced types, rewritten for
+TypeScript 7.</p>
+<ul>
+<li><a href="typescript-course.html">Course content</a></li>
+<li><a href="typescript-course-solutions.html">Exercise solutions</a></li>
+</ul>
+<p><strong>What you will learn:</strong> <strong>(2026)</strong> the TypeScript 7 defaults and the options
+that were removed; running <code>.ts</code> directly with <code>node</code> and why checking is a
+separate command; <code>verbatimModuleSyntax</code>, <code>isolatedModules</code> and
+<code>erasableSyntaxOnly</code>; types, inference and the strict mode mindset; functions,
+objects, interfaces and type aliases; discriminated unions and exhaustive
+narrowing; generics and constraints; classes and modules; <strong>(2026)</strong> <code>as const</code>
+and <code>satisfies</code> in place of enums; utility and advanced types; <strong>(2026)</strong> Zod 4
+at the boundary; <strong>(2026)</strong> branded types; <strong>(2026)</strong> the strictness options
+beyond <code>strict</code>.</p>
+<p><strong>Capstone (2026):</strong> Casey Recover, a mora interest engine modelled on the
+<code>packages/legal-calc</code> carve-out in Casey Legal Tools. Branded integer cents,
+validated ISO days, segmentation at every rate change, rounding once, and 17
+<code>node:test</code> cases.</p>
+<p><strong>Estimated time:</strong> 12 to 18 hours including exercises.</p>
+<h3>3. React with TypeScript</h3>
+<p>Production React on both of the toolchains the Casey products actually run.</p>
+<ul>
+<li><a href="react-typescript-course.html">Course content</a></li>
+<li><a href="react-typescript-course-solutions.html">Exercise solutions</a></li>
+</ul>
+<p><strong>What you will learn:</strong> typing function components and props; every core hook
+with type safety; <strong>(2026)</strong> <code>ref</code> as an ordinary prop, ref cleanup functions
+and <code>useEffectEvent</code>; <strong>(2026)</strong> the context as its own provider and <code>use()</code>;
+custom hooks and generic components; forms with React Hook Form and Zod 4;
+<strong>(2026)</strong> TanStack Query 5; <strong>(2026)</strong> React Router 7 from <code>react-router</code>;
+component patterns; <strong>(2026)</strong> Vitest 4 and testing an optimistic update;
+project structure; <strong>(2026)</strong> React 19 Actions, <code>useActionState</code>,
+<code>useFormStatus</code>, <code>useOptimistic</code>, <code>useSyncExternalStore</code>, <code>Activity</code> and the
+React Compiler; <strong>(2026)</strong> a full lesson on Next.js and the App Router.</p>
+<p><strong>Capstone (2026):</strong> Casey Journal, a tiered publication on Next.js 16 whose
+paywall is enforced on the server, with a Server Action form, optimistic
+bookmarks, 17 Vitest cases, and a <code>curl</code> proof that no withheld text reaches an
+unentitled reader.</p>
+<p><strong>Estimated time:</strong> 18 to 24 hours including exercises.</p>
+<h3>0. The learning hub and the interactive test (2026)</h3>
+<p>A static site holding all of the above, plus a test over it.</p>
+<ul>
+<li><a href="../"><code>site/</code></a> · open <code>site/index.html</code>, or deploy the folder anywhere</li>
+</ul>
+<p>Seventy-six questions across nine topics, drawn at random and split evenly
+between straightforward and harder. Most of the harder ones are scenarios: a
+stolen laptop, a paywall that leaks, a webhook that grants twice, a
+cancellation that cannot reach the payment gateway. The reasoning appears after
+every answer, right or wrong.</p>
+<p>Progress is kept in the browser. No account, no cookies, no tracking, no build
+step. Deployment instructions are in <a href="https://github.com/calebmapatha/ts-react-courses/blob/main/site/README.md"><code>site/README.md</code></a>.</p>
+<h3>4. The Casey Workbook (2026)</h3>
+<p>Ten parts on what a professional does with the language: architecture,
+security, data protection, operations, payments, and building alongside AI.</p>
+<ul>
+<li><a href="workbook.html">Workbook</a> · <a href="https://github.com/calebmapatha/ts-react-courses/blob/main/casey-workbook/workbook.pdf">PDF</a></li>
+<li><a href="workbook-solutions.html">Worked answers</a> · <a href="https://github.com/calebmapatha/ts-react-courses/blob/main/casey-workbook/solutions.pdf">PDF</a></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Title</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>Setting up to work</td>
+</tr>
+<tr>
+<td>1</td>
+<td>JavaScript in anger</td>
+</tr>
+<tr>
+<td>2</td>
+<td>TypeScript that carries meaning</td>
+</tr>
+<tr>
+<td>3</td>
+<td>React that ships</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Architecture: trust boundaries, the BaaS concept map, data modelling, webhooks and idempotency, environments, delivery shells, decision records</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Security standards: OWASP Top 10:2025 mapped to controls and to checks, authorisation in the database, secrets, injection, supply chain, logging and alerting, exceptional conditions, edge protections, STRIDE, reviewing AI-generated code</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Data protection engineering: POPIA&#39;s eight conditions mapped to GDPR and to controls, data inventory, minimisation, consent as events, retention and deletion, data subject rights, encryption, the breach runbook</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Operations: review, CI/CD, testing layers, observability, backups and restore drills, performance and accessibility, cost, documentation and agent instructions</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Payments and entitlements: provider-agnostic checkout, the webhook, derived entitlements, what cancelling means, failing loudly</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Building with AI: the model as an untrusted component, prompt injection as injection, typed human approval gates, eval sets, working with coding agents</td>
+</tr>
+</tbody></table>
+<p>Products appear only as worked examples. It ends with a time estimate table,
+three pacing schedules, shortcuts, and a transferable skills matrix.</p>
+<p><strong>Estimated time:</strong> 60 hours, of which 13 is reading.</p>
+<hr>
+<h2>Recommended path</h2>
+<p>JavaScript, then TypeScript, then React, then the workbook. Each course assumes
+the previous one.</p>
+<p>If you already know modern JavaScript well, skim the first course but read the
+sections marked <strong>(2026)</strong>: <code>at</code>, <code>findLast</code>, the non-mutating array methods,
+<code>Object.groupBy</code>, Set operations and iterator helpers are all newer than most
+material you will have read.</p>
+<p>If you know TypeScript from before 2026, <strong>read Lesson 0 of the TypeScript
+course anyway.</strong> The defaults changed.</p>
+<p>Do the exercises as you go. They are designed to take 15 to 30 minutes each.
+Reading without practising is the slowest way to learn.</p>
+<h2>How to use the solutions</h2>
+<p>Every exercise has a working solution. Try the exercise first. Reading a
+solution before attempting the problem robs you of most of the benefit.</p>
+<p>When you do look, do not copy. Read it, close the tab, and rewrite it from
+scratch.</p>
+<p>The workbook&#39;s solutions are different in kind: many of its exercises are
+audits of your own system, so the answers give the <strong>method</strong>, a worked example,
+and the traps, rather than a single correct answer.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Basic programming knowledge: variables, loops, functions, conditionals, in
+any language</li>
+<li><strong>Node.js 24</strong> or newer (<code>node --version</code>)</li>
+<li>A code editor with TypeScript support</li>
+<li><code>git</code> and <code>curl</code></li>
+</ul>
+<p>Some workbook exercises want Docker or the Firebase emulators. Each says so,
+and each has an alternative that does not.</p>
+<p>The JavaScript course assumes no prior JavaScript. The TypeScript course
+assumes the JavaScript course. The React course assumes both. The workbook
+assumes all three.</p>
+<h2>Repository structure</h2>
+<pre><code>ts-react-courses/
+├── README.md                       (this file)
+├── STACK.md                        (2026) the verified stack of the three
+│                                   products, the version baseline, and what
+│                                   could not be verified
+├── LICENSE
+├── javascript-course/
+│   ├── course.md
+│   └── solutions.md
+├── typescript-course/
+│   ├── course.md
+│   └── solutions.md
+├── react-typescript-course/
+│   ├── course.md
+│   └── solutions.md
+├── casey-workbook/                 (2026)
+│   ├── workbook.md
+│   ├── workbook.pdf
+│   ├── solutions.md
+│   └── solutions.pdf
+└── site/                           (2026) the static learning hub
+    ├── index.html                  the hub, with progress tracking
+    ├── test.html                   the interactive test
+    ├── questions.js                76 questions, 38 easy and 38 hard
+    ├── read/                       the courses, rendered from the markdown
+    └── README.md                   how to run and deploy it
+</code></pre>
+<h2>How the 2026 revision was verified</h2>
+<p>Claims in teaching material expire, so each was checked rather than recalled.</p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it was checked</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Current versions</td>
+<td>The npm registry <code>dist-tags</code> and <code>time</code> fields, and <code>nodejs.org/dist/index.json</code>, read on 2026-09-06</td>
+</tr>
+<tr>
+<td>TypeScript 7 defaults and removals</td>
+<td>Running <code>tsc</code> 7.0.2 against probe files. The probes and their exact output are in <a href="stack.html">STACK.md</a> section 4.</td>
+</tr>
+<tr>
+<td>Node feature availability</td>
+<td>Running Node 24.20.0 and 22.22.2</td>
+</tr>
+<tr>
+<td>JavaScript samples</td>
+<td>Executed on Node 24.20.0</td>
+</tr>
+<tr>
+<td>TypeScript samples</td>
+<td><code>tsc --noEmit</code> in isolation against the documented <code>tsconfig.json</code></td>
+</tr>
+<tr>
+<td>React samples</td>
+<td>Type-checked against React 19.2.8 and <code>@types/react</code> 19.2.18</td>
+</tr>
+<tr>
+<td>Each capstone</td>
+<td>Rebuilt from <code>solutions.md</code> into a clean directory, then built and tested</td>
+</tr>
+<tr>
+<td>The React paywall</td>
+<td><code>curl</code> against the running production server, counting occurrences of withheld text</td>
+</tr>
+<tr>
+<td>Product facts</td>
+<td>Read from the repositories, with the file recorded per fact</td>
+</tr>
+</tbody></table>
+<p>Three drafting errors were caught this way and corrected: <code>Activity</code> and
+<code>useEffectEvent</code> are plain exports in React 19.2 rather than prefixed;
+<code>grep -c</code> counts lines rather than occurrences, so a recorded figure came from
+a different command than the one printed; and <code>Object.values</code> on a <code>const</code>
+object infers an array of the union rather than a tuple.</p>
+<p>Where something could not be verified, <a href="stack.html">STACK.md</a> says so and the
+courses carry a marked placeholder. Nothing was invented to fill a gap.</p>
+<h2>Contributing</h2>
+<p>Improvements are welcome. If you spot an error, find a clearer explanation, or
+want to add an exercise, open an issue or a pull request.</p>
+<p>Two conventions if you do. Mark new or changed material with <strong>(2026)</strong> or the
+year of your revision. And verify version claims against the registry rather
+than against memory, because everything in the baseline table above will be
+wrong eventually.</p>
+<h2>Licence</h2>
+<p>MIT. See <a href="https://github.com/calebmapatha/ts-react-courses/blob/main/LICENSE">LICENSE</a> for the full text. You are free to use, modify,
+share and teach from this material, including for commercial training, as long
+as you keep the licence notice intact.</p>
+
+
+<footer class="foot"><p><a href="../">Back to the hub</a> · <a href="../test.html">Test yourself</a></p></footer>
+</main>
+
+</body>
+</html>
